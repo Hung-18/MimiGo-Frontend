@@ -9,6 +9,7 @@ import 'api_failure.dart';
 import 'learning_models.dart';
 import 'learning_screens.dart';
 import 'learning_session_memory.dart';
+import 'parent_home.dart';
 
 export 'api_failure.dart';
 
@@ -883,7 +884,11 @@ class _MimiGoAppState extends State<MimiGoApp> {
             TextButton(
               key: const Key('cancelAccountEntry'),
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Stay in Child Mode'),
+              child: Text(
+                page == Page.parent
+                    ? 'Stay in Parent Home'
+                    : 'Stay in Child Mode',
+              ),
             ),
             FilledButton(
               key: const Key('confirmAccountEntry'),
@@ -1184,6 +1189,24 @@ class _MimiGoAppState extends State<MimiGoApp> {
               ],
             ),
             Page.parent => ParentArea(
+              home: ParentHome(
+                api: api,
+                parent: authenticatedParent!,
+                children: children,
+                fixture: config.mode == ApiMode.fixture,
+                accountEntry: returnToAccountEntry,
+                add: () => setState(() {
+                  attempt = null;
+                  draft = null;
+                  page = Page.privacy;
+                }),
+                enterChild: (child) => setState(() {
+                  active = child;
+                  selectedCategory = null;
+                  selectedLessonId = null;
+                  page = Page.child;
+                }),
+              ),
               children: children,
               active: active,
               currentTermsAccepted: authenticatedParent!.currentTermsAccepted,
@@ -1973,6 +1996,7 @@ class ParentArea extends StatefulWidget {
     required this.refresh,
     required this.add,
     required this.select,
+    this.home,
   });
   final List<ChildSummary> children;
   final ChildSummary? active;
@@ -1980,6 +2004,7 @@ class ParentArea extends StatefulWidget {
   final Future<void> Function() refresh;
   final VoidCallback add;
   final Future<void> Function(ChildSummary) select;
+  final Widget? home;
   @override
   State<ParentArea> createState() => _ParentAreaState();
 }
@@ -2003,45 +2028,49 @@ class _ParentAreaState extends State<ParentArea> {
 
   @override
   Widget build(BuildContext c) => Frame(
-    title: 'Authenticated Parent Area',
-    children: [
-      const Text(
-        'Access relies on the in-memory authenticated bearer session. Backend does not implement Parent PIN, refresh/logout, consent withdrawal or terms re-acceptance.',
-      ),
-      SizedBox(
-        height: 52,
-        child: OutlinedButton(
-          onPressed: busy ? null : reload,
-          child: Text(busy ? 'Loading profiles…' : 'Refresh child profiles'),
-        ),
-      ),
-      ErrorText(error),
-      if (!widget.currentTermsAccepted)
-        const Text(
-          'Current Terms acceptance is required to add a child. Terms re-acceptance is not available in this development API.',
-        ),
-      if (widget.children.isEmpty)
-        const Text('No child profiles returned.')
-      else
-        ...widget.children.map(
-          (x) => ListTile(
-            title: Text(x.alias),
-            subtitle: Text('${dateText(x.dateOfBirth)} · ${x.state}'),
-            trailing: x.id == widget.active?.id
-                ? const Icon(Icons.check)
-                : null,
-            onTap: () => widget.select(x),
-          ),
-        ),
-      SizedBox(
-        height: 64,
-        child: FilledButton(
-          key: const Key('addChild'),
-          onPressed: widget.currentTermsAccepted ? widget.add : null,
-          child: const Text('Add another child'),
-        ),
-      ),
-    ],
+    title: widget.home == null ? 'Authenticated Parent Area' : 'Parent Home',
+    children: widget.home != null
+        ? [widget.home!]
+        : [
+            const Text(
+              'Access relies on the in-memory authenticated bearer session. Backend does not implement Parent PIN, refresh/logout, consent withdrawal or terms re-acceptance.',
+            ),
+            SizedBox(
+              height: 52,
+              child: OutlinedButton(
+                onPressed: busy ? null : reload,
+                child: Text(
+                  busy ? 'Loading profiles…' : 'Refresh child profiles',
+                ),
+              ),
+            ),
+            ErrorText(error),
+            if (!widget.currentTermsAccepted)
+              const Text(
+                'Current Terms acceptance is required to add a child. Terms re-acceptance is not available in this development API.',
+              ),
+            if (widget.children.isEmpty)
+              const Text('No child profiles returned.')
+            else
+              ...widget.children.map(
+                (x) => ListTile(
+                  title: Text(x.alias),
+                  subtitle: Text('${dateText(x.dateOfBirth)} · ${x.state}'),
+                  trailing: x.id == widget.active?.id
+                      ? const Icon(Icons.check)
+                      : null,
+                  onTap: () => widget.select(x),
+                ),
+              ),
+            SizedBox(
+              height: 64,
+              child: FilledButton(
+                key: const Key('addChild'),
+                onPressed: widget.currentTermsAccepted ? widget.add : null,
+                child: const Text('Add another child'),
+              ),
+            ),
+          ],
   );
 }
 

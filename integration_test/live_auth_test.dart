@@ -270,6 +270,8 @@ void main() {
       expect(returning.calls, ['login', 'me', 'list']);
       await tester.ensureVisible(find.text(alias));
       await tester.tap(find.text(alias));
+      await waitFor(tester, find.byKey(const Key('parentEnterLearning')));
+      await tap(tester, 'parentEnterLearning');
       await waitFor(tester, find.text('Hi, $alias!'));
       expect(returning.calls.last, 'detail');
       final authenticatedCalls = List<String>.of(returning.calls);

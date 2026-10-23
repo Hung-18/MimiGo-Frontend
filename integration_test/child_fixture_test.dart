@@ -59,6 +59,8 @@ void main() {
       await tap(tester, 'signInSubmit');
       await waitFor(tester, find.text('SYN-Bee'));
       await tester.tap(find.text('SYN-Bee'));
+      await waitFor(tester, find.byKey(const Key('parentEnterLearning')));
+      await tap(tester, 'parentEnterLearning');
       await waitFor(tester, find.text('Hi, SYN-Bee!'));
       for (final category in LearningCategory.values) {
         await tap(tester, 'category-${category.name}');

@@ -2,7 +2,7 @@
 
 Date: 2026-10-23. Baseline: accepted VS-02 checkpoint `23bbada2f3ac5d975b7f47428b67936977f08209`.
 
-**Current status: S2 / DBQ-35 R0 Learning HARDENED / AUTOMATED_ANDROID_LIVE_VERIFIED, synthetic development only.** Clean analysis, **137 automated tests PASS**, Android fixture **1 PASS**, Android Learning Live E2E **1 PASS**, debug build/install/normal launch PASS. See the current hardening section below. Baseline: `358fc2e57acdaf19017ca248e54a6cc3c8b65745`. The current instruction authorizes one safe local checkpoint; no push, deploy or merge. This is not new PO acceptance or production approval.
+**Current status: S2 MVP modules — Parent Home AUTOMATED_VERIFIED; Curriculum Explorer next.** Analysis clean, **147 automated tests PASS**, debug APK build PASS. Start clean at `7bcac0108a65f7c2feb10731dc625e79f41e5cf4`; prior hardening/live evidence is preserved below and is not a new-device result for the new screens. Current instruction authorizes separate validated local checkpoints; no push, deploy or merge. Synthetic development only, not new PO acceptance or production approval.
 
 **Accepted baseline: CLOSED / PO_ACCEPTED — synthetic development scope only.** In the 2026-10-23 closeout instruction the PO confirmed clean analysis, 60 automated tests PASS, a successful Android build, real Learning Dev Smoke PASS, and manually accepted Parent → Child → Math → Lesson → Session → Answer → Feedback → Persisted Readback against the real Development Backend/PostgreSQL. This closes the previous baseline runtime acceptance blocker; it does not accept the new completion/replay continuation, establish production readiness or convert the earlier automated Android attempt into a pass.
 
@@ -276,3 +276,28 @@ The single authorized local checkpoint includes these **16 files** (the earlier 
 History/session identities and pending events remain memory-only, child-scoped and cleared on account return; no approved retention/offline recovery or exhaustive history endpoint exists. The current API has no pinned-old-revision detail route, so mismatches stop safely. Explicit completion continues to depend on server acknowledgment/readback; replay never overwrites completed-session history. Consent/ownership remain Backend-enforced and Parent Gate stays unavailable.
 
 Remaining verification/product limits: adverse live authentication/permission/missing-session/network/503 conditions were tested with mocks, not deliberately induced on the Dev runtime; physical-device/iOS and manual TalkBack checks are unrun. Backend's newer hardening real-PostgreSQL/Dev validation is separate operator work. Production security/legal/content approval and post-withdrawal policy decisions remain open. No Frontend implementation blocker remains for the exercised R0 synthetic journey; no production readiness or new PO acceptance is claimed.
+
+## S2 MVP app modules — 2026-10-24
+
+Started with a clean tree at `7bcac01`; the requested preservation check found no uncommitted work. No reset/discard, new task ID, new API, new content, database change or dependency. Current user instruction authorizes separate local checkpoints for validated modules.
+
+### Canonical scope check
+
+Read `.mimigo/r0_code_kickoff/references/MimiGo_SRS_v3_0_RC5_Canonical.md` §§6.1–6.4 and workflow WF-02, plus the R0 team handoff and existing Learning OpenAPI. FR-ID-02/03/07 support multiple children, server-derived profile data and per-request ownership; FR-CUR-01/02 specify Domain → Topic → Lesson and the six domains **Math, Language, English, Life skills, Logic, Discovery**. The read-only baseline seed `0009_s2_catalog_and_content.sql` confirms these domain codes. Existing Arts shortcut is a legacy demo discrepancy, not canonical curriculum metadata. No lesson/age-band inventory is inferred from the SRS target of six Free lessons.
+
+FR-ID-06/WF-02 require Parent Gate for switching from child context and viewing protected parent information. This work preserves the existing accepted synthetic login → parents/me boundary and disabled Parent Gate. Initial selection/reselection occurs only in the already-authenticated Parent area **before** entering Child Mode; no action from Child Mode can open these screens without the existing account-return/fresh-sign-in path. This is not implementation or approval of the missing PIN/step-up protocol.
+
+### Parent Home and Child Selection — implemented
+
+- New Parent Home welcome/roster and selected-child overview. Selecting a roster entry fetches authenticated `GET children/{id}`; the ID must match. Only explicit Enter Child Mode commits the selected profile to the learning context. A parent can choose another child before entering. Age and ACTIVE state are returned by the service, not locally invented; actual learning eligibility stays server-owned.
+- Coalesced/busy selection, inactive-profile entry disabled, safe 401/403/404/503 messages, empty roster, list refresh and mismatch rejection. Refresh clears stale selection; failed list requests hide stale profiles. Disposed parent views cannot accept late profile responses. Existing Add child and Terms checks continue into the approved consent/onboarding flow.
+- Account entry still clears bearer/account/child/learning memory. No DOB/email/PIN edits, new step-up, automatic child-mode parent return, local persistence or production-ready claims.
+- `lib/parent_home.dart` contains the new controller and screens; `lib/main.dart` composes them inside the existing ParentArea boundary. Existing helpers/scenarios now select → verify overview → explicitly enter Child Mode. No previous authorization or fixture assertion was removed.
+
+Actual checkpoint checks: `flutter analyze --no-pub` **PASS**, no issues; `flutter test test/parent_home_test.dart --no-pub --reporter expanded` **10 PASS**; full `flutter test --no-pub --reporter expanded` **147 PASS**; `flutter build apk --debug --no-pub --dart-define=MIMIGO_API_MODE=live --dart-define=MIMIGO_API_BASE_URL=http://10.0.2.2:5187/api/v1` **PASS**, exit 0. These are mock/widget and compilation results; new Parent Home Android E2E is not claimed yet.
+
+Checkpoint scope: `lib/parent_home.dart`, `lib/main.dart`, `test/parent_home_test.dart`, the existing `test/sign_in_test.dart`, `test/child_mode_test.dart`, `test/learning_widget_test.dart`, existing three Android integration scenarios, `AGENTS.md` and the two existing S2/work reports. Reviewed for secrets/generated/unrelated edits; none found. The containing local commit identifies this validated module; actual hash is reported in the handoff.
+
+### Parent Learning Activity — bounded dependency
+
+No exhaustive session-history endpoint or Parent Gate exists. Current-process completed-session snapshots are still child-scoped and intentionally erased on account return. Consequently a fresh parent authentication cannot legitimately display prior Child Mode memory. Retaining it across that boundary, enabling Parent navigation from the child player, or inventing cross-device/withdrawal visibility would change privacy/security policy. A populated live Parent Activity module is therefore deferred; existing read-only known-session view in the learning player remains intact. No aggregates, scores or artificial history were added. Curriculum Explorer is the next eligible module.

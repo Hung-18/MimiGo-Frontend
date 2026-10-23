@@ -171,7 +171,7 @@ void main() {
       await fillSignIn(tester);
       await submitSignIn(tester);
       expect(api.calls, ['login', 'me', 'children']);
-      expect(find.text('Authenticated Parent Area'), findsOneWidget);
+      expect(find.text('Parent Home'), findsOneWidget);
       expect(find.text('No child profiles returned.'), findsOneWidget);
       await tester.ensureVisible(find.byKey(const Key('addChild')));
       await tester.tap(find.byKey(const Key('addChild')));
@@ -200,6 +200,10 @@ void main() {
       await fillSignIn(tester);
       await submitSignIn(tester);
       await tester.tap(find.text('SYN-Bee'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('parentSelectedChild')), findsOneWidget);
+      await tester.ensureVisible(find.byKey(const Key('parentEnterLearning')));
+      await tester.tap(find.byKey(const Key('parentEnterLearning')));
       await tester.pumpAndSettle();
       expect(api.calls, ['login', 'me', 'children', 'detail:child-1']);
       expect(find.text('Hi, SYN-Bee!'), findsOneWidget);

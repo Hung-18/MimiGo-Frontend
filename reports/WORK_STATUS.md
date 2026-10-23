@@ -1,10 +1,19 @@
 # MimiGo Frontend work status
 
 **Updated:** 2026-10-24 (overnight session begun 2026-10-23)<br>
-**Current slice:** S2 / DBQ-35 R0 Learning experience hardening<br>
-**State:** IMPLEMENTED / AUTOMATED_ANDROID_LIVE_VERIFIED — synthetic development scope only. Clean analysis, 137 automated tests PASS, Android fixture regression PASS, Android Learning live completion/replay E2E PASS and normal debug app restored. This is agent-run evidence, not new PO acceptance or production readiness. The prior accepted S2 baseline is `358fc2e57acdaf19017ca248e54a6cc3c8b65745`; VS-02 remains closed at `23bbada2f3ac5d975b7f47428b67936977f08209`.
+**Current slice:** S2 MVP modules — Parent Home, then Curriculum Explorer<br>
+**State:** Parent Home IMPLEMENTED / AUTOMATED_VERIFIED; Explorer next. Start was clean at hardening checkpoint `7bcac0108a65f7c2feb10731dc625e79f41e5cf4`; no uncommitted work needed preservation. Prior hardening Android evidence below remains historical. No new PO acceptance or production-readiness claim.
 
-## Current R0 learning hardening evidence
+## Current MVP module evidence
+
+- Canonical SRS reviewed read-only: FR-ID-02/03/07 (parent/child ownership and server-derived age), FR-CUR-01/02 (Domain → Topic → Lesson; canonical six include English, not Arts), FR-LRN-02 and FR-ID-06 (activity evidence/Parent Gate boundaries). No new task IDs.
+- Parent Home now offers an authenticated roster, selected-child overview from `GET children/{id}`, explicit Enter Child Mode and pre-entry selection of another child. Loading, missing/inactive profiles, failed/forged detail responses, refresh and empty roster are handled. Terms-gated Add child reuses the existing consent flow. Parent authentication remains login → parents/me; no direct Parent access or sibling switch from Child Mode.
+- Parent Home checkpoint validation: analysis clean; 10 focused Parent Home tests PASS; full suite **147 PASS**; Android live-configured debug APK build PASS. Existing integration scenarios adapted to assert the new explicit parent overview/entry step, not remove checks. New Parent Home Android interaction remains pending at this checkpoint.
+- Current instruction authorizes separate local checkpoints per validated module, without push/deploy/merge. Parent Home includes only scoped source/tests/report updates; no real secrets, generated artifacts, unrelated edits or Backend/Database writes.
+- Parent Activity dependency: account return deliberately clears the in-memory learning cache; Parent Gate/history-list endpoints do not exist. Do not preserve that cache across authentication or invent populated cross-device history to make an activity screen appear functional. Continue with Explorer, using only actual returned lesson metadata.
+- Details, source references and remaining boundaries: `reports/S2_FRONTEND_INTEGRATION.md`, MVP modules section.
+
+## R0 learning hardening evidence (previous checkpoint)
 
 - Fixed overlapping start/read/answer requests across Back/reopen; retries retain an acknowledged start ID and the exact pending answer event. Continue replay fetches its known active ID without another start. Completed history/session ID/endedAt remain immutable in memory for the current authenticated lifetime.
 - Validates replay/readback cue and option membership before caching or rendering. Delayed 401/403/404/terminal-answer failures now reach revisited views; a stale read started before a denial cannot clear it. Only a fresh successful server read reconciles access/state. No consent-withdrawal or session-recovery policy was introduced.

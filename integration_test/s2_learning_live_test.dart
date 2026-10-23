@@ -131,6 +131,8 @@ void main() {
       await tap(tester, 'signInSubmit');
       await waitFor(tester, find.text(child.alias));
       await tester.tap(find.text(child.alias));
+      await waitFor(tester, find.byKey(const Key('parentEnterLearning')));
+      await tap(tester, 'parentEnterLearning');
       await waitFor(tester, find.text('Hi, ${child.alias}!'));
       expect(
         tester

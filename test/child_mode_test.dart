@@ -88,6 +88,7 @@ Future<SessionApi> openChild(
   await tester.ensureVisible(find.text('SYN-Bee'));
   await tester.tap(find.text('SYN-Bee'));
   await tester.pumpAndSettle();
+  await tapKey(tester, 'parentEnterLearning');
   return api;
 }
 
