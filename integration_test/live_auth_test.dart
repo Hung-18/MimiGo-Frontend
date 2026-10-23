@@ -5,12 +5,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:mimigo_frontend/main.dart';
 import 'package:mimigo_frontend/child_content.dart';
+import 'package:mimigo_frontend/learning_models.dart';
+import 'package:mimigo_frontend/learning_screens.dart';
 
 /// Opt-in Android test. Creates synthetic rows in the configured Development API.
 /// Run with MIMIGO_API_MODE=live; never supply real family data or credentials.
 class TracedLiveApi extends LiveMimiGoApi {
   TracedLiveApi(super.baseUri);
   final calls = <String>[];
+  LessonList? catalog;
+  @override
+  Future<LessonList> lessons(String childId) async {
+    catalog = await trace('lessons', () => super.lessons(childId));
+    return catalog!;
+  }
+
   RegistrationResult? registration;
   CreateChildRequest? createdRequest;
   ChildSummary? createdChild;
@@ -272,7 +281,13 @@ void main() {
       );
       for (final category in LearningCategory.values) {
         await tap(tester, 'category-${category.name}');
-        await waitFor(tester, find.byKey(const Key('categoryEmpty')));
+        if (category == LearningCategory.math) {
+          await waitFor(tester, find.byType(MathLessonCatalog));
+          expect(returning.catalog, isNotNull);
+          expect(find.byKey(const Key('learningError')), findsNothing);
+        } else {
+          await waitFor(tester, find.byKey(const Key('categoryEmpty')));
+        }
         expect(find.byKey(const Key('openCircleDemo')), findsNothing);
         expect(find.byType(CircleDemo), findsNothing);
         expect(find.byType(ParentArea), findsNothing);
@@ -281,8 +296,8 @@ void main() {
       }
       expect(
         returning.calls,
-        authenticatedCalls,
-        reason: 'Unsupported learning must not call speculative endpoints or record progress.',
+        [...authenticatedCalls, 'lessons'],
+        reason: 'Only Math fetches the verified catalog; no speculative endpoints or progress writes.',
       );
       await tap(tester, 'returnAccountEntry');
       await tap(tester, 'cancelAccountEntry');
@@ -308,7 +323,7 @@ void main() {
       await tap(tester, 'signInSubmit');
       await waitFor(tester, find.byType(ParentArea));
       debugPrint(
-        'VS023 LIVE CHILD NAV PASS: six unavailable categories; back; local session cleared; parent required fresh login.',
+        'VS023 LIVE CHILD NAV PASS: Math catalog; five unavailable categories; back; local session cleared; parent required fresh login.',
       );
       debugPrint(
         'VS023 ANDROID LIVE AUTH FLOW PASS; replay same child; changed payload rejected; no secrets logged.',

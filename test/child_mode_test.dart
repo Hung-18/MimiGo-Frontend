@@ -100,13 +100,22 @@ void main() {
         final calls = List<String>.of(api.calls);
         await tapKey(tester, 'category-${category.name}');
         expect(find.byKey(const Key('categoryEmpty')), findsOneWidget);
-        expect(find.textContaining('current live service'), findsOneWidget);
+        expect(
+          find.textContaining(
+            category == LearningCategory.math
+                ? 'No eligible Free Math'
+                : 'current live service',
+          ),
+          findsOneWidget,
+        );
         expect(find.byKey(const Key('openCircleDemo')), findsNothing);
         expect(find.byType(CircleDemo), findsNothing);
         expect(
           api.calls,
-          calls,
-          reason: 'No speculative catalog or progress call.',
+          category == LearningCategory.math
+              ? [...calls, 'lessons:child-1']
+              : calls,
+          reason: 'Only Math requests the verified child-scoped catalog.',
         );
         await tapKey(tester, 'categoryBack');
         expect(find.text('Hi, SYN-Bee!'), findsOneWidget);

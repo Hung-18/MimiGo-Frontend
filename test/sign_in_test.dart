@@ -3,8 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mimigo_frontend/main.dart';
+import 'package:mimigo_frontend/learning_models.dart';
 
 class AuthApi extends FixtureMimiGoApi {
+  @override
+  Future<LessonList> lessons(String childId) async {
+    calls.add('lessons:$childId');
+    return const LessonList([], 'NO_ELIGIBLE_CONTENT', 'Synthetic widget test');
+  }
+
   final calls = <String>[];
   ApiFailure? loginFailure, parentFailure, listFailure;
   Completer<LoginSession>? pendingLogin;

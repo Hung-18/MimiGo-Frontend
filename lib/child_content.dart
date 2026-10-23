@@ -28,8 +28,8 @@ class FixtureChildContentSource implements ChildContentSource {
       category == LearningCategory.logic ? [DemoLesson.findTheCircle] : [];
 }
 
-// No learning/catalog/progress endpoints exist in the implemented contract.
-// Do not send speculative requests or fall back to fixture content in live mode.
+// Categories outside the current live Math slice remain unavailable. Do not
+// send speculative requests or fall back to fixture content in live mode.
 class UnavailableLiveContentSource implements ChildContentSource {
   const UnavailableLiveContentSource();
 

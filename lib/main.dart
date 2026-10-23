@@ -5,11 +5,17 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import 'child_content.dart';
+import 'api_failure.dart';
+import 'learning_models.dart';
+import 'learning_screens.dart';
+
+export 'api_failure.dart';
 
 void main() => runApp(const MimiGoApp());
 
-/// VS-02.2 contract boundary. Fixture is the safe default; live mode is opt-in.
-abstract class MimiGoApi {
+/// Accepted auth/ChildProfile boundary plus the exact S2 Learning operations.
+/// Fixture remains the default; live mode is opt-in.
+abstract class MimiGoApi implements LearningApi {
   /// Discards the local bearer session only. No server logout/revocation exists.
   void clearSession();
   Future<OnboardingReference> onboardingReference();
@@ -45,25 +51,6 @@ class ApiConfiguration {
   MimiGoApi createClient() => mode == ApiMode.live
       ? LiveMimiGoApi(Uri.parse(baseUrl))
       : FixtureMimiGoApi();
-}
-
-class ApiFailure implements Exception {
-  const ApiFailure(
-    this.message, {
-    this.code,
-    this.status,
-    this.requestId,
-    this.retryable = false,
-  });
-  final String message;
-  final String? code, requestId;
-  final int? status;
-  final bool retryable;
-}
-
-class ApiInvalidResponse extends ApiFailure {
-  const ApiInvalidResponse(super.message, {super.requestId})
-    : super(code: 'INVALID_RESPONSE');
 }
 
 class Registration {
@@ -232,6 +219,47 @@ class ChildDetail extends ChildSummary {
 }
 
 class FixtureMimiGoApi implements MimiGoApi {
+  @override
+  Future<LessonList> lessons(String childId) async => const LessonList(
+    [],
+    'NO_ELIGIBLE_CONTENT',
+    'Fixture mode has no S2 Math catalog.',
+  );
+  @override
+  Future<LessonDetail> lesson(String childId, String lessonId) async =>
+      throw const ApiFailure(
+        'No S2 fixture lesson is available.',
+        code: 'LESSON_NOT_AVAILABLE',
+        status: 404,
+      );
+  @override
+  Future<LearningSession> startLearning(
+    String childId,
+    String lessonId,
+  ) async => throw const ApiFailure(
+    'S2 sessions require live mode.',
+    code: 'LESSON_NOT_AVAILABLE',
+    status: 404,
+  );
+  @override
+  Future<SessionDetail> learningSession(
+    String childId,
+    String sessionId,
+  ) async => throw const ApiFailure(
+    'No fixture learning session.',
+    code: 'SESSION_NOT_FOUND',
+    status: 404,
+  );
+  @override
+  Future<AnswerFeedback> submitAnswer(
+    String childId,
+    String sessionId,
+    AnswerRequest request,
+  ) async => throw const ApiFailure(
+    'No fixture learning session.',
+    code: 'SESSION_NOT_FOUND',
+    status: 404,
+  );
   static const termsId = '11111111-1111-4111-8111-111111111111',
       ageNoticeId = '22222222-2222-4222-8222-222222222222',
       learningNoticeId = '33333333-3333-4333-8333-333333333333';
@@ -424,6 +452,55 @@ class LiveMimiGoApi implements MimiGoApi {
   final HttpClient _client;
   String? _token;
   @override
+  Future<LessonList> lessons(String childId) async => LessonList.fromJson(
+    await _request('GET', 'children/$childId/lessons', auth: true),
+  );
+  @override
+  Future<LessonDetail> lesson(String childId, String lessonId) async =>
+      LessonDetail.fromJson(
+        await _request(
+          'GET',
+          'children/$childId/lessons/$lessonId',
+          auth: true,
+        ),
+      );
+  @override
+  Future<LearningSession> startLearning(
+    String childId,
+    String lessonId,
+  ) async => LearningSession.fromJson(
+    await _request(
+      'POST',
+      'children/$childId/learning-sessions',
+      auth: true,
+      body: {'lessonId': lessonId},
+    ),
+  );
+  @override
+  Future<SessionDetail> learningSession(
+    String childId,
+    String sessionId,
+  ) async => SessionDetail.fromJson(
+    await _request(
+      'GET',
+      'children/$childId/learning-sessions/$sessionId',
+      auth: true,
+    ),
+  );
+  @override
+  Future<AnswerFeedback> submitAnswer(
+    String childId,
+    String sessionId,
+    AnswerRequest request,
+  ) async => AnswerFeedback.fromJson(
+    await _request(
+      'POST',
+      'children/$childId/learning-sessions/$sessionId/answers',
+      auth: true,
+      body: request.toJson(),
+    ),
+  );
+  @override
   void clearSession() => _token = null;
   @override
   Future<OnboardingReference> onboardingReference() async =>
@@ -549,6 +626,12 @@ class LiveMimiGoApi implements MimiGoApi {
     Object? body,
     bool auth = false,
   }) async {
+    if (auth && _token == null)
+      throw const ApiFailure(
+        'A Parent session is required.',
+        code: 'UNAUTHENTICATED',
+        status: 401,
+      );
     final encoded = path.split('/').map(Uri.encodeComponent).join('/');
     final uri = baseUri.replace(
       path: '${baseUri.path.replaceFirst(RegExp(r'/+$'), '')}/$encoded',
@@ -571,7 +654,10 @@ class LiveMimiGoApi implements MimiGoApi {
       if (body != null) req.write(jsonEncode(body));
       final response = await req.close().timeout(const Duration(seconds: 20));
       final id = response.headers.value('x-request-id');
-      final raw = await utf8.decoder.bind(response).join();
+      final raw = await utf8.decoder
+          .bind(response)
+          .join()
+          .timeout(const Duration(seconds: 20));
       Map<String, dynamic> json;
       try {
         json = _map(jsonDecode(raw));
@@ -579,6 +665,7 @@ class LiveMimiGoApi implements MimiGoApi {
         throw ApiInvalidResponse(
           'The server returned malformed JSON.',
           requestId: id,
+          status: response.statusCode,
         );
       }
       if (response.statusCode < 200 || response.statusCode >= 300)
@@ -586,14 +673,22 @@ class LiveMimiGoApi implements MimiGoApi {
           json['message'] is String
               ? json['message'] as String
               : 'The request was rejected.',
-          code: json['code'] as String?,
+          code: json['code'] is String
+              ? json['code'] as String
+              : 'INVALID_RESPONSE',
           status: response.statusCode,
-          requestId: json['requestId'] as String? ?? id,
+          requestId: json['requestId'] is String
+              ? json['requestId'] as String
+              : id,
           retryable: response.statusCode >= 500 || response.statusCode == 429,
         );
       return json;
     } on ApiFailure {
       rethrow;
+    } on FormatException {
+      throw const ApiInvalidResponse(
+        'The service returned invalid response text.',
+      );
     } on TimeoutException {
       throw const ApiFailure(
         'The service did not respond in time. Check connectivity and retry.',
@@ -716,6 +811,7 @@ enum Page {
   review,
   child,
   category,
+  learningLesson,
   demo,
   parent,
   parentOnly,
@@ -744,6 +840,8 @@ class _MimiGoAppState extends State<MimiGoApp> {
   ParentSummary? authenticatedParent;
   List<ChildSummary> children = [];
   LearningCategory? selectedCategory;
+  String? selectedLessonId;
+  final pendingLearningAnswers = PendingLearningAnswers();
   int sessionGeneration = 0;
 
   Future<void> returnToAccountEntry() async {
@@ -781,12 +879,16 @@ class _MimiGoAppState extends State<MimiGoApp> {
       attempt = null;
       draft = null;
       selectedCategory = null;
+      selectedLessonId = null;
+      pendingLearningAnswers.clear();
       page = Page.welcome;
     });
   }
 
   void childBack() {
-    if (page == Page.demo) {
+    if (page == Page.learningLesson) {
+      setState(() => page = Page.category);
+    } else if (page == Page.demo) {
       setState(() => page = Page.category);
     } else if (page == Page.category) {
       setState(() => page = Page.child);
@@ -871,7 +973,11 @@ class _MimiGoAppState extends State<MimiGoApp> {
       ),
     ),
     home: PopScope(
-      canPop: page != Page.child && page != Page.category && page != Page.demo,
+      canPop:
+          page != Page.child &&
+          page != Page.category &&
+          page != Page.demo &&
+          page != Page.learningLesson,
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) childBack();
       },
@@ -954,18 +1060,29 @@ class _MimiGoAppState extends State<MimiGoApp> {
             Page.category => Frame(
               title: selectedCategory!.label,
               children: [
-                CategoryContent(
-                  key: ValueKey(selectedCategory),
-                  category: selectedCategory!,
-                  fixture: config.mode == ApiMode.fixture,
-                  source: config.mode == ApiMode.fixture
-                      ? const FixtureChildContentSource()
-                      : const UnavailableLiveContentSource(),
-                  openDemo: () {
-                    if (config.mode == ApiMode.fixture)
-                      setState(() => page = Page.demo);
-                  },
-                ),
+                if (config.mode == ApiMode.live &&
+                    selectedCategory == LearningCategory.math)
+                  MathLessonCatalog(
+                    api: api,
+                    childId: active!.id,
+                    openLesson: (id) => setState(() {
+                      selectedLessonId = id;
+                      page = Page.learningLesson;
+                    }),
+                  )
+                else
+                  CategoryContent(
+                    key: ValueKey(selectedCategory),
+                    category: selectedCategory!,
+                    fixture: config.mode == ApiMode.fixture,
+                    source: config.mode == ApiMode.fixture
+                        ? const FixtureChildContentSource()
+                        : const UnavailableLiveContentSource(),
+                    openDemo: () {
+                      if (config.mode == ApiMode.fixture)
+                        setState(() => page = Page.demo);
+                    },
+                  ),
                 SizedBox(
                   height: 64,
                   child: OutlinedButton(
@@ -991,6 +1108,29 @@ class _MimiGoAppState extends State<MimiGoApp> {
                 ),
                 OutlinedButton(
                   key: const Key('demoHome'),
+                  onPressed: () => setState(() => page = Page.child),
+                  child: const Text('Back to Child Mode'),
+                ),
+              ],
+            ),
+            Page.learningLesson => Frame(
+              title: 'Math learning · development/demo',
+              children: [
+                LearningLessonView(
+                  key: ValueKey((active!.id, selectedLessonId)),
+                  api: api,
+                  childId: active!.id,
+                  lessonId: selectedLessonId!,
+                  pending: pendingLearningAnswers,
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton(
+                  key: const Key('lessonBack'),
+                  onPressed: () => setState(() => page = Page.category),
+                  child: const Text('Back to Math'),
+                ),
+                OutlinedButton(
+                  key: const Key('lessonHome'),
                   onPressed: () => setState(() => page = Page.child),
                   child: const Text('Back to Child Mode'),
                 ),
