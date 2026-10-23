@@ -88,12 +88,24 @@ class LearningTestApi extends AuthApi {
   }
 }
 
-Future<void> tapVisible(WidgetTester tester, String key) async {
+Future<void> tapVisible(
+  WidgetTester tester,
+  String key, {
+  bool settle = true,
+}) async {
   final finder = find.byKey(Key(key));
   await tester.ensureVisible(finder);
-  await tester.pumpAndSettle();
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+  }
   await tester.tap(finder);
-  await tester.pumpAndSettle();
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+  }
 }
 
 Future<void> lessonScreen(
@@ -147,9 +159,9 @@ void main() {
       await tapVisible(tester, 'lesson-$lessonId');
       await tapVisible(tester, 'startLearning');
       await tapVisible(tester, 'option-$optionId');
-      await tapVisible(tester, 'submit-$cueId');
+      await tapVisible(tester, 'submit-$cueId', settle: false);
       final original = api.submitted.single;
-      await tapVisible(tester, 'lessonBack');
+      await tapVisible(tester, 'lessonBack', settle: false);
       api.saved[original.clientEventId] = feedbackJson();
       api.answerGate!.complete(AnswerFeedback.fromJson(feedbackJson()));
       await tester.pumpAndSettle();

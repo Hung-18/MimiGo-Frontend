@@ -14,6 +14,8 @@ class LearningLiveTrace extends TracedLiveApi {
   SessionDetail? readback;
   final sent = <AnswerRequest>[];
   final received = <AnswerFeedback>[];
+  LearningSession? completed;
+  int starts = 0;
   bool dropNextAck = true;
   @override
   Future<LessonDetail> lesson(String childId, String lessonId) async {
@@ -25,11 +27,14 @@ class LearningLiveTrace extends TracedLiveApi {
   }
 
   @override
-  Future<LearningSession> startLearning(String childId, String lessonId) =>
-      trace(
-        'learning.start-or-reuse',
-        () => super.startLearning(childId, lessonId),
-      );
+  Future<LearningSession> startLearning(String childId, String lessonId) {
+    starts++;
+    return trace(
+      'learning.start-or-reuse',
+      () => super.startLearning(childId, lessonId),
+    );
+  }
+
   @override
   Future<SessionDetail> learningSession(
     String childId,
@@ -40,6 +45,18 @@ class LearningLiveTrace extends TracedLiveApi {
       () => super.learningSession(childId, sessionId),
     );
     return readback!;
+  }
+
+  @override
+  Future<LearningSession> completeLearning(
+    String childId,
+    String sessionId,
+  ) async {
+    completed = await trace(
+      'learning.complete',
+      () => super.completeLearning(childId, sessionId),
+    );
+    return completed!;
   }
 
   @override
@@ -70,7 +87,7 @@ class LearningLiveTrace extends TracedLiveApi {
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   testWidgets(
-    'S2 Android live Math answer, exact retry and persisted session revisit',
+    'S2 Android live Math answer, completion, replay and preserved history',
     (tester) async {
       final config = ApiConfiguration.fromEnvironment();
       expect(config.mode, ApiMode.live);
@@ -129,7 +146,10 @@ void main() {
       await tap(tester, 'lesson-${listing.lessonId}');
       await waitFor(tester, find.byKey(const Key('startLearning')));
       expect(find.byKey(const Key('learningError')), findsNothing);
-      final cue = api.details!.cues.first;
+      final cues = List<LearningCue>.of(api.details!.cues)
+        ..sort((a, b) => a.seq.compareTo(b.seq));
+      expect(cues, isNotEmpty);
+      final cue = cues.first;
       expect(cue.options, isNotEmpty);
       expect(find.byKey(Key('feedback-${cue.cueId}')), findsNothing);
       await tap(tester, 'startLearning');
@@ -164,11 +184,62 @@ void main() {
       final latest = await api.learningSession(child.id, sessionId);
       expect(latest.answers, hasLength(1));
       expect(latest.state, 'IN_PROGRESS');
+      for (final remaining in cues.skip(1)) {
+        expect(remaining.options, isNotEmpty);
+        await tap(tester, 'option-${remaining.options.first.optionId}');
+        await tap(tester, 'submit-${remaining.cueId}');
+        await waitFor(tester, find.byKey(Key('feedback-${remaining.cueId}')));
+      }
+      expect(api.completed, isNull, reason: 'Completion must be explicit.');
+      await tap(tester, 'completeLearning');
+      await waitFor(tester, find.byKey(const Key('completionConfirmed')));
+      final completed = api.completed!;
+      expect(completed.sessionId, sessionId);
+      expect(completed.state, 'COMPLETED');
+      expect(completed.endedAt, isNotNull);
+      final repeated = await api.completeLearning(child.id, sessionId);
+      expect(repeated.sessionId, sessionId);
+      expect(repeated.endedAt, completed.endedAt);
+      await tap(tester, 'lessonBack');
+      await waitFor(tester, find.byKey(Key('lesson-${listing.lessonId}')));
+      await tap(tester, 'lesson-${listing.lessonId}');
+      await waitFor(tester, find.byKey(const Key('completionConfirmed')));
+      expect(api.readback!.sessionId, sessionId);
+      expect(api.readback!.endedAt, completed.endedAt);
+      await tap(tester, 'replayLearning');
+      await waitFor(tester, find.text('Session: IN_PROGRESS'));
+      final replay = api.readback!;
+      expect(replay.sessionId, isNot(sessionId));
+      expect(replay.endedAt, isNull);
+      expect(replay.answers, isEmpty);
+      expect(find.byKey(const Key('completeLearning')), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(find.byKey(const Key('completeLearning')))
+            .onPressed,
+        isNull,
+        reason: 'Previous session answers cannot complete a replay.',
+      );
+      await tap(tester, 'readCompleted-$sessionId');
+      await waitFor(tester, find.byKey(const Key('completionConfirmed')));
+      expect(api.readback!.sessionId, sessionId);
+      expect(api.readback!.endedAt, completed.endedAt);
+      expect(api.readback!.answers.length, api.details!.cues.length);
+      expect(find.byKey(Key('history-$sessionId')), findsOneWidget);
+      final startsBeforeContinue = api.starts;
+      await tap(tester, 'replayLearning');
+      await waitFor(tester, find.text('Session: IN_PROGRESS'));
+      expect(api.readback!.sessionId, replay.sessionId);
+      expect(
+        api.starts,
+        startsBeforeContinue,
+        reason: 'Continue replay reads its known ID; it must not start again.',
+      );
       await tap(tester, 'lessonHome');
       await waitFor(tester, find.text('Hi, ${child.alias}!'));
       expect(find.byType(ParentArea), findsNothing);
       debugPrint(
-        'S2 ANDROID LIVE PASS: server Math catalog/detail; session reuse/readback; real recorded answer; controlled lost-ack retry kept exact clientEventId and answerEventId; one persisted answer; no completion or media playback.',
+        'S2 ANDROID LIVE PASS: server Math catalog/detail; exact answer retry; explicit completion with server endedAt; idempotent completion; completed readback; new replay session without inherited answers; completed history preserved. No media playback.',
       );
     },
   );

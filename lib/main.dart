@@ -8,6 +8,7 @@ import 'child_content.dart';
 import 'api_failure.dart';
 import 'learning_models.dart';
 import 'learning_screens.dart';
+import 'learning_session_memory.dart';
 
 export 'api_failure.dart';
 
@@ -219,6 +220,15 @@ class ChildDetail extends ChildSummary {
 }
 
 class FixtureMimiGoApi implements MimiGoApi {
+  @override
+  Future<LearningSession> completeLearning(
+    String childId,
+    String sessionId,
+  ) async => throw const ApiFailure(
+    'No fixture learning session.',
+    code: 'SESSION_NOT_FOUND',
+    status: 404,
+  );
   @override
   Future<LessonList> lessons(String childId) async => const LessonList(
     [],
@@ -451,6 +461,17 @@ class LiveMimiGoApi implements MimiGoApi {
   final Uri baseUri;
   final HttpClient _client;
   String? _token;
+  @override
+  Future<LearningSession> completeLearning(
+    String childId,
+    String sessionId,
+  ) async => LearningSession.fromJson(
+    await _request(
+      'POST',
+      'children/$childId/learning-sessions/$sessionId/complete',
+      auth: true,
+    ),
+  );
   @override
   Future<LessonList> lessons(String childId) async => LessonList.fromJson(
     await _request('GET', 'children/$childId/lessons', auth: true),
@@ -842,30 +863,39 @@ class _MimiGoAppState extends State<MimiGoApp> {
   LearningCategory? selectedCategory;
   String? selectedLessonId;
   final pendingLearningAnswers = PendingLearningAnswers();
+  late final learningSessions = LearningSessionMemory(api);
   int sessionGeneration = 0;
+  bool accountEntryPending = false;
 
   Future<void> returnToAccountEntry() async {
-    final confirmed = await showDialog<bool>(
-      context: navigatorKey.currentState!.overlay!.context,
-      builder: (context) => AlertDialog(
-        title: const Text('Return to account entry?'),
-        content: const Text(
-          'A parent will need to sign in again to open the Parent Area. Saved profiles will stay available.',
+    if (accountEntryPending) return;
+    accountEntryPending = true;
+    bool? confirmed;
+    try {
+      confirmed = await showDialog<bool>(
+        context: navigatorKey.currentState!.overlay!.context,
+        builder: (context) => AlertDialog(
+          title: const Text('Return to account entry?'),
+          content: const Text(
+            'A parent will need to sign in again to open the Parent Area. Saved profiles will stay available.',
+          ),
+          actions: [
+            TextButton(
+              key: const Key('cancelAccountEntry'),
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Stay in Child Mode'),
+            ),
+            FilledButton(
+              key: const Key('confirmAccountEntry'),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Return to account entry'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            key: const Key('cancelAccountEntry'),
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Stay in Child Mode'),
-          ),
-          FilledButton(
-            key: const Key('confirmAccountEntry'),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Return to account entry'),
-          ),
-        ],
-      ),
-    );
+      );
+    } finally {
+      accountEntryPending = false;
+    }
     if (!mounted || confirmed != true) return;
     api.clearSession();
     messengerKey.currentState?.clearSnackBars();
@@ -881,6 +911,7 @@ class _MimiGoAppState extends State<MimiGoApp> {
       selectedCategory = null;
       selectedLessonId = null;
       pendingLearningAnswers.clear();
+      learningSessions.clear();
       page = Page.welcome;
     });
   }
@@ -895,6 +926,12 @@ class _MimiGoAppState extends State<MimiGoApp> {
     } else if (page == Page.child) {
       returnToAccountEntry();
     }
+  }
+
+  @override
+  void dispose() {
+    learningSessions.dispose();
+    super.dispose();
   }
 
   Future<void> start() async {
@@ -1065,10 +1102,13 @@ class _MimiGoAppState extends State<MimiGoApp> {
                   MathLessonCatalog(
                     api: api,
                     childId: active!.id,
-                    openLesson: (id) => setState(() {
-                      selectedLessonId = id;
-                      page = Page.learningLesson;
-                    }),
+                    openLesson: (id) {
+                      if (page != Page.category) return;
+                      setState(() {
+                        selectedLessonId = id;
+                        page = Page.learningLesson;
+                      });
+                    },
                   )
                 else
                   CategoryContent(
@@ -1083,8 +1123,8 @@ class _MimiGoAppState extends State<MimiGoApp> {
                         setState(() => page = Page.demo);
                     },
                   ),
-                SizedBox(
-                  height: 64,
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 64),
                   child: OutlinedButton(
                     key: const Key('categoryBack'),
                     onPressed: () => setState(() => page = Page.child),
@@ -1122,17 +1162,24 @@ class _MimiGoAppState extends State<MimiGoApp> {
                   childId: active!.id,
                   lessonId: selectedLessonId!,
                   pending: pendingLearningAnswers,
+                  sessions: learningSessions,
                 ),
                 const SizedBox(height: 16),
-                OutlinedButton(
-                  key: const Key('lessonBack'),
-                  onPressed: () => setState(() => page = Page.category),
-                  child: const Text('Back to Math'),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 64),
+                  child: OutlinedButton(
+                    key: const Key('lessonBack'),
+                    onPressed: () => setState(() => page = Page.category),
+                    child: const Text('Back to Math'),
+                  ),
                 ),
-                OutlinedButton(
-                  key: const Key('lessonHome'),
-                  onPressed: () => setState(() => page = Page.child),
-                  child: const Text('Back to Child Mode'),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 64),
+                  child: OutlinedButton(
+                    key: const Key('lessonHome'),
+                    onPressed: () => setState(() => page = Page.child),
+                    child: const Text('Back to Child Mode'),
+                  ),
                 ),
               ],
             ),

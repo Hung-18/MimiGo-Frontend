@@ -7,6 +7,7 @@ abstract class LearningApi {
   Future<LessonDetail> lesson(String childId, String lessonId);
   Future<LearningSession> startLearning(String childId, String lessonId);
   Future<SessionDetail> learningSession(String childId, String sessionId);
+  Future<LearningSession> completeLearning(String childId, String sessionId);
   Future<AnswerFeedback> submitAnswer(
     String childId,
     String sessionId,
@@ -152,6 +153,29 @@ class LessonDetail {
   final String revisionId, disclaimer;
   final List<LessonAsset> assets;
   final List<LearningCue> cues;
+
+  void validateSession(LearningSession value, String childId) {
+    if (value.childId != childId ||
+        value.lessonId != summary.lessonId ||
+        value.revisionId != revisionId) {
+      throw const ApiInvalidResponse(
+        'Session and loaded lesson revision do not match. Return to Math and reopen the lesson.',
+      );
+    }
+    if (value is SessionDetail) {
+      for (final answer in value.answers) {
+        if (!cues.any(
+          (cue) =>
+              cue.cueId == answer.cueId &&
+              cue.options.any((option) => option.optionId == answer.optionId),
+        )) {
+          throw const ApiInvalidResponse(
+            'Recorded answers do not match this lesson revision.',
+          );
+        }
+      }
+    }
+  }
 }
 
 class LearningSession {
@@ -162,9 +186,32 @@ class LearningSession {
       revisionId = _text(json, 'revisionId'),
       state = _text(json, 'state'),
       startedAt = _date(json, 'startedAt'),
-      lastActivityAt = _date(json, 'lastActivityAt');
+      lastActivityAt = _date(json, 'lastActivityAt'),
+      endedAt = _endedAt(json) {
+    if (!{'IN_PROGRESS', 'COMPLETED', 'ABANDONED'}.contains(state) ||
+        (state == 'COMPLETED' && endedAt == null) ||
+        (state == 'IN_PROGRESS' && endedAt != null)) {
+      throw const ApiInvalidResponse('Invalid session state or endedAt.');
+    }
+  }
+  LearningSession.copy(LearningSession value)
+    : sessionId = value.sessionId,
+      childId = value.childId,
+      lessonId = value.lessonId,
+      revisionId = value.revisionId,
+      state = value.state,
+      startedAt = value.startedAt,
+      lastActivityAt = value.lastActivityAt,
+      endedAt = value.endedAt;
   final String sessionId, childId, lessonId, revisionId, state;
   final DateTime startedAt, lastActivityAt;
+  final DateTime? endedAt;
+}
+
+DateTime? _endedAt(Map<String, dynamic> json) {
+  if (!json.containsKey('endedAt'))
+    throw const ApiInvalidResponse('Session response is missing endedAt.');
+  return json['endedAt'] == null ? null : _date(json, 'endedAt');
 }
 
 class RecordedAnswer {
@@ -183,6 +230,9 @@ class SessionDetail extends LearningSession {
   SessionDetail.fromJson(super.json)
     : answers = _items(json, 'answers', RecordedAnswer.fromJson),
       super.fromJson();
+  SessionDetail.fromSession(super.value, Iterable<RecordedAnswer> recorded)
+    : answers = List.unmodifiable(recorded),
+      super.copy();
   final List<RecordedAnswer> answers;
 }
 

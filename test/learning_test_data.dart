@@ -57,6 +57,7 @@ Map<String, dynamic> sessionJson({
   'state': 'IN_PROGRESS',
   'startedAt': '2026-10-23T12:00:00Z',
   'lastActivityAt': '2026-10-23T12:00:00Z',
+  'endedAt': null,
   'answers': answers,
 };
 Map<String, dynamic> feedbackJson() => {
