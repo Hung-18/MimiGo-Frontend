@@ -10,6 +10,7 @@ import 'learning_models.dart';
 import 'learning_screens.dart';
 import 'learning_session_memory.dart';
 import 'parent_home.dart';
+import 'curriculum_explorer.dart';
 
 export 'api_failure.dart';
 
@@ -834,6 +835,7 @@ enum Page {
   child,
   category,
   learningLesson,
+  explorer,
   demo,
   parent,
   parentOnly,
@@ -865,6 +867,9 @@ class _MimiGoAppState extends State<MimiGoApp> {
   String? selectedLessonId;
   final pendingLearningAnswers = PendingLearningAnswers();
   late final learningSessions = LearningSessionMemory(api);
+  CurriculumExplorerState? curriculum;
+  bool learningFromExplorer = false;
+  String learningDomain = 'MATH';
   int sessionGeneration = 0;
   bool accountEntryPending = false;
 
@@ -917,13 +922,21 @@ class _MimiGoAppState extends State<MimiGoApp> {
       selectedLessonId = null;
       pendingLearningAnswers.clear();
       learningSessions.clear();
+      curriculum?.dispose();
+      curriculum = null;
+      learningFromExplorer = false;
+      learningDomain = 'MATH';
       page = Page.welcome;
     });
   }
 
   void childBack() {
     if (page == Page.learningLesson) {
-      setState(() => page = Page.category);
+      setState(
+        () => page = learningFromExplorer ? Page.explorer : Page.category,
+      );
+    } else if (page == Page.explorer) {
+      if (curriculum?.back() != true) setState(() => page = Page.child);
     } else if (page == Page.demo) {
       setState(() => page = Page.category);
     } else if (page == Page.category) {
@@ -933,9 +946,20 @@ class _MimiGoAppState extends State<MimiGoApp> {
     }
   }
 
+  void openCurriculum([CurriculumDomain? domain]) {
+    if (page != Page.child) return;
+    curriculum?.dispose();
+    setState(() {
+      curriculum = CurriculumExplorerState(api, active!.id);
+      if (domain != null) curriculum!.chooseDomain(domain);
+      page = Page.explorer;
+    });
+  }
+
   @override
   void dispose() {
     learningSessions.dispose();
+    curriculum?.dispose();
     super.dispose();
   }
 
@@ -1019,7 +1043,8 @@ class _MimiGoAppState extends State<MimiGoApp> {
           page != Page.child &&
           page != Page.category &&
           page != Page.demo &&
-          page != Page.learningLesson,
+          page != Page.learningLesson &&
+          page != Page.explorer,
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) childBack();
       },
@@ -1094,9 +1119,13 @@ class _MimiGoAppState extends State<MimiGoApp> {
               child: active!,
               fixture: config.mode == ApiMode.fixture,
               category: (value) => setState(() {
+                learningFromExplorer = false;
+                learningDomain = 'MATH';
                 selectedCategory = value;
                 page = Page.category;
               }),
+              explore: openCurriculum,
+              english: () => openCurriculum(CurriculumDomain.english),
               accountEntry: returnToAccountEntry,
             ),
             Page.category => Frame(
@@ -1158,8 +1187,51 @@ class _MimiGoAppState extends State<MimiGoApp> {
                 ),
               ],
             ),
+            Page.explorer => Frame(
+              title: 'Curriculum Explorer',
+              children: [
+                CurriculumExplorer(
+                  model: curriculum!,
+                  childAlias: active!.alias,
+                  fixture: config.mode == ApiMode.fixture,
+                  openLesson: (lesson) {
+                    if (page != Page.explorer) return;
+                    setState(() {
+                      selectedLessonId = lesson.lessonId;
+                      learningDomain = lesson.domainCode;
+                      learningFromExplorer = true;
+                      page = Page.learningLesson;
+                    });
+                  },
+                ),
+                AnimatedBuilder(
+                  animation: curriculum!,
+                  builder: (context, _) => ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 64),
+                    child: OutlinedButton(
+                      key: const Key('explorerBack'),
+                      onPressed: childBack,
+                      child: Text(
+                        curriculum!.topic != null
+                            ? 'Back to topics'
+                            : curriculum!.domain != null
+                            ? 'Back to domains'
+                            : 'Back to Child Mode',
+                      ),
+                    ),
+                  ),
+                ),
+                TextButton(
+                  key: const Key('explorerHome'),
+                  onPressed: () => setState(() => page = Page.child),
+                  child: const Text('Back to Child Mode'),
+                ),
+              ],
+            ),
             Page.learningLesson => Frame(
-              title: 'Math learning · development/demo',
+              title: learningFromExplorer
+                  ? 'Learning · development/demo'
+                  : 'Math learning · development/demo',
               children: [
                 LearningLessonView(
                   key: ValueKey((active!.id, selectedLessonId)),
@@ -1168,14 +1240,19 @@ class _MimiGoAppState extends State<MimiGoApp> {
                   lessonId: selectedLessonId!,
                   pending: pendingLearningAnswers,
                   sessions: learningSessions,
+                  domainCode: learningDomain,
                 ),
                 const SizedBox(height: 16),
                 ConstrainedBox(
                   constraints: const BoxConstraints(minHeight: 64),
                   child: OutlinedButton(
                     key: const Key('lessonBack'),
-                    onPressed: () => setState(() => page = Page.category),
-                    child: const Text('Back to Math'),
+                    onPressed: childBack,
+                    child: Text(
+                      learningFromExplorer
+                          ? 'Back to curriculum'
+                          : 'Back to Math',
+                    ),
                   ),
                 ),
                 ConstrainedBox(
@@ -1201,6 +1278,8 @@ class _MimiGoAppState extends State<MimiGoApp> {
                   page = Page.privacy;
                 }),
                 enterChild: (child) => setState(() {
+                  curriculum?.dispose();
+                  curriculum = null;
                   active = child;
                   selectedCategory = null;
                   selectedLessonId = null;
@@ -1935,11 +2014,15 @@ class ChildHome extends StatelessWidget {
     required this.fixture,
     required this.category,
     required this.accountEntry,
+    this.explore,
+    this.english,
   });
   final ChildSummary child;
   final bool fixture;
   final ValueChanged<LearningCategory> category;
   final VoidCallback accountEntry;
+  final VoidCallback? explore;
+  final VoidCallback? english;
   @override
   Widget build(BuildContext c) => Frame(
     title: 'Hi, ${child.alias}!',
@@ -1950,21 +2033,47 @@ class ChildHome extends StatelessWidget {
             : 'Child Mode · live account',
       ),
       const SizedBox(height: 16),
+      if (explore != null)
+        ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 64),
+          child: FilledButton.icon(
+            key: const Key('openCurriculum'),
+            onPressed: explore,
+            icon: const Icon(Icons.explore_outlined),
+            label: const Text('Explore curriculum'),
+          ),
+        ),
+      Text(
+        fixture
+            ? 'Development shortcuts · legacy fixture demos'
+            : 'Learning shortcuts',
+      ),
       Wrap(
         spacing: 8,
         runSpacing: 8,
-        children: LearningCategory.values
-            .map(
-              (value) => SizedBox(
-                height: 64,
-                child: OutlinedButton(
-                  key: Key('category-${value.name}'),
-                  onPressed: () => category(value),
-                  child: Text(value.label),
+        children: [
+          ...LearningCategory.values
+              .where((value) => fixture || value != LearningCategory.arts)
+              .map(
+                (value) => SizedBox(
+                  height: 64,
+                  child: OutlinedButton(
+                    key: Key('category-${value.name}'),
+                    onPressed: () => category(value),
+                    child: Text(value.label),
+                  ),
                 ),
               ),
-            )
-            .toList(),
+          if (!fixture)
+            ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 64),
+              child: OutlinedButton(
+                key: const Key('category-english'),
+                onPressed: english,
+                child: const Text('English'),
+              ),
+            ),
+        ],
       ),
       const SizedBox(height: 16),
       const Text(

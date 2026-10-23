@@ -26,7 +26,7 @@ class LearningError extends StatelessWidget {
     if (failure.status == 404)
       return failure.code == 'CHILD_NOT_FOUND'
           ? 'This child profile is unavailable. Ask your parent for help.'
-          : 'This lesson or session is unavailable. Go back to Math.';
+          : 'This lesson or session is unavailable. Go back to the lesson list.';
     if (failure.code == 'SESSION_INCOMPLETE')
       return 'Some questions still need a saved answer. Refresh the session before trying again.';
     if (failure.code == 'SESSION_NOT_ACTIVE')
@@ -196,11 +196,13 @@ class LearningLessonView extends StatefulWidget {
     required this.lessonId,
     required this.pending,
     this.sessions,
+    this.domainCode = 'MATH',
   });
   final LearningApi api;
   final String childId, lessonId;
   final PendingLearningAnswers pending;
   final LearningSessionMemory? sessions;
+  final String domainCode;
   @override
   State<LearningLessonView> createState() => _LearningLessonViewState();
 }
@@ -316,10 +318,10 @@ class _LearningLessonViewState extends State<LearningLessonView> {
     try {
       final value = await widget.api.lesson(widget.childId, widget.lessonId);
       if (value.summary.lessonId != widget.lessonId ||
-          value.summary.domainCode != 'MATH' ||
+          value.summary.domainCode != widget.domainCode ||
           value.summary.access != 'FREE') {
         throw const ApiInvalidResponse(
-          'The service returned an unexpected Math lesson.',
+          'The service returned an unexpected Free lesson.',
         );
       }
       if (mounted) {
@@ -586,7 +588,7 @@ class _LearningLessonViewState extends State<LearningLessonView> {
             Text(
               session!.state == 'COMPLETED'
                   ? 'Your saved answers are read-only. Choose Replay lesson to try again.'
-                  : 'This session has ended and cannot accept answers. Go back to Math.',
+                : 'This session has ended and cannot accept answers. Go back to the lesson list.',
             ),
           if (memory.answering(widget.childId, session!.sessionId))
             const LinearProgressIndicator(

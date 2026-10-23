@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:mimigo_frontend/main.dart';
 import 'package:mimigo_frontend/child_content.dart';
+import 'package:mimigo_frontend/curriculum_explorer.dart';
+import 'package:mimigo_frontend/learning_screens.dart';
 
 import 'live_auth_test.dart' show waitFor, tap;
 
@@ -61,6 +63,18 @@ void main() {
       await tester.tap(find.text('SYN-Bee'));
       await waitFor(tester, find.byKey(const Key('parentEnterLearning')));
       await tap(tester, 'parentEnterLearning');
+      await waitFor(tester, find.text('Hi, SYN-Bee!'));
+      await tap(tester, 'openCurriculum');
+      await waitFor(tester, find.byKey(const Key('domain-MATH')));
+      expect(find.byKey(const Key('explorerEmpty')), findsOneWidget);
+      for (final domain in CurriculumDomain.values) {
+        await tap(tester, 'domain-${domain.code}');
+        await waitFor(tester, find.byKey(const Key('explorerEmpty')));
+        expect(find.byType(LearningLessonView), findsNothing);
+        await tap(tester, 'explorerBack');
+        await waitFor(tester, find.byKey(const Key('domain-MATH')));
+      }
+      await tap(tester, 'explorerHome');
       await waitFor(tester, find.text('Hi, SYN-Bee!'));
       for (final category in LearningCategory.values) {
         await tap(tester, 'category-${category.name}');

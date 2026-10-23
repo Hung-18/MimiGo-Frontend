@@ -16,6 +16,13 @@ class LearningLiveTrace extends TracedLiveApi {
   final received = <AnswerFeedback>[];
   LearningSession? completed;
   int starts = 0;
+  String? catalogChild;
+  @override
+  Future<LessonList> lessons(String childId) {
+    catalogChild = childId;
+    return super.lessons(childId);
+  }
+
   bool dropNextAck = true;
   @override
   Future<LessonDetail> lesson(String childId, String lessonId) async {
@@ -123,12 +130,31 @@ void main() {
               .toList(),
         ),
       );
+      final siblingAttempt = await api.beginOnboardingAttempt();
+      final sibling = await api.createChild(
+        CreateChildRequest(
+          attemptId: siblingAttempt.id,
+          idempotencyKey: 's2-sibling-$suffix',
+          childAlias: 'SYN-Sibling-$suffix',
+          dateOfBirth: DateTime(DateTime.now().year - 3, 1, 1),
+          stockAvatarKey: 'bear-blue',
+          guardianAffirmed: true,
+          purposeChoices: siblingAttempt.notices
+              .map((n) => PurposeChoice(n.purposeCode, n.versionId, true))
+              .toList(),
+        ),
+      );
       api.clearSession();
       await tester.pumpWidget(MimiGoApp(api: api, configuration: config));
       await tap(tester, 'welcomeSignIn');
       await tester.enterText(find.byKey(const Key('signInEmail')), email);
       await tester.enterText(find.byKey(const Key('signInPassword')), password);
       await tap(tester, 'signInSubmit');
+      await waitFor(tester, find.text(child.alias));
+      await tester.tap(find.text(sibling.alias));
+      await waitFor(tester, find.text('Selected child: ${sibling.alias}'));
+      expect(find.byType(ChildHome), findsNothing);
+      await tap(tester, 'parentChooseAnother');
       await waitFor(tester, find.text(child.alias));
       await tester.tap(find.text(child.alias));
       await waitFor(tester, find.byKey(const Key('parentEnterLearning')));
@@ -140,12 +166,25 @@ void main() {
             .onPressed,
         isNull,
       );
-      await tap(tester, 'category-math');
-      await waitFor(tester, find.textContaining('SYN-MATH-001'));
+      await tap(tester, 'openCurriculum');
+      await waitFor(tester, find.byKey(const Key('domain-MATH')));
+      expect(
+        api.catalogChild,
+        child.id,
+        reason: 'Pre-entry sibling selection must not leak into the learning context.',
+      );
       final listing = api.catalog!.items.singleWhere(
         (lesson) => lesson.lessonCode == 'SYN-MATH-001',
       );
-      await tap(tester, 'lesson-${listing.lessonId}');
+      await tap(tester, 'domain-MATH');
+      await waitFor(tester, find.byKey(Key('topic-${listing.topicCode}')));
+      await tap(tester, 'topic-${listing.topicCode}');
+      await waitFor(
+        tester,
+        find.byKey(Key('explorer-lesson-${listing.lessonId}')),
+      );
+      expect(find.textContaining('SYN-MATH-001'), findsOneWidget);
+      await tap(tester, 'explorer-lesson-${listing.lessonId}');
       await waitFor(tester, find.byKey(const Key('startLearning')));
       expect(find.byKey(const Key('learningError')), findsNothing);
       final cues = List<LearningCue>.of(api.details!.cues)
@@ -160,14 +199,18 @@ void main() {
         find.byKey(Key('option-${cue.options.first.optionId}')),
       );
       final sessionId = api.readback!.sessionId;
+      expect(api.readback!.childId, child.id);
       await tap(tester, 'option-${cue.options.first.optionId}');
       await tap(tester, 'submit-${cue.cueId}');
       await waitFor(tester, find.text('Retry same answer'));
       expect(api.sent, hasLength(1));
       expect(api.received, hasLength(1));
       await tap(tester, 'lessonBack');
-      await waitFor(tester, find.byKey(Key('lesson-${listing.lessonId}')));
-      await tap(tester, 'lesson-${listing.lessonId}');
+      await waitFor(
+        tester,
+        find.byKey(Key('explorer-lesson-${listing.lessonId}')),
+      );
+      await tap(tester, 'explorer-lesson-${listing.lessonId}');
       await waitFor(tester, find.byKey(const Key('startLearning')));
       await tap(tester, 'startLearning');
       await waitFor(tester, find.byKey(Key('recorded-${cue.cueId}-1')));
@@ -203,8 +246,11 @@ void main() {
       expect(repeated.sessionId, sessionId);
       expect(repeated.endedAt, completed.endedAt);
       await tap(tester, 'lessonBack');
-      await waitFor(tester, find.byKey(Key('lesson-${listing.lessonId}')));
-      await tap(tester, 'lesson-${listing.lessonId}');
+      await waitFor(
+        tester,
+        find.byKey(Key('explorer-lesson-${listing.lessonId}')),
+      );
+      await tap(tester, 'explorer-lesson-${listing.lessonId}');
       await waitFor(tester, find.byKey(const Key('completionConfirmed')));
       expect(api.readback!.sessionId, sessionId);
       expect(api.readback!.endedAt, completed.endedAt);

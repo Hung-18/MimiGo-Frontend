@@ -1,17 +1,22 @@
 # MimiGo Frontend work status
 
 **Updated:** 2026-10-24 (overnight session begun 2026-10-23)<br>
-**Current slice:** S2 MVP modules — Parent Home, then Curriculum Explorer<br>
-**State:** Parent Home IMPLEMENTED / AUTOMATED_VERIFIED; Explorer next. Start was clean at hardening checkpoint `7bcac0108a65f7c2feb10731dc625e79f41e5cf4`; no uncommitted work needed preservation. Prior hardening Android evidence below remains historical. No new PO acceptance or production-readiness claim.
+**Current slice:** S2 MVP modules — Parent Home and Curriculum Explorer<br>
+**State:** Both IMPLEMENTED / AUTOMATED_ANDROID_LIVE_VERIFIED, synthetic development only. Analysis clean, 163 tests PASS, debug build PASS, Android live and fixture scenarios PASS. Start was clean at `7bcac0108a65f7c2feb10731dc625e79f41e5cf4`; no work was discarded. No new PO acceptance or production-readiness claim.
 
 ## Current MVP module evidence
 
 - Canonical SRS reviewed read-only: FR-ID-02/03/07 (parent/child ownership and server-derived age), FR-CUR-01/02 (Domain → Topic → Lesson; canonical six include English, not Arts), FR-LRN-02 and FR-ID-06 (activity evidence/Parent Gate boundaries). No new task IDs.
 - Parent Home now offers an authenticated roster, selected-child overview from `GET children/{id}`, explicit Enter Child Mode and pre-entry selection of another child. Loading, missing/inactive profiles, failed/forged detail responses, refresh and empty roster are handled. Terms-gated Add child reuses the existing consent flow. Parent authentication remains login → parents/me; no direct Parent access or sibling switch from Child Mode.
 - Parent Home checkpoint validation: analysis clean; 10 focused Parent Home tests PASS; full suite **147 PASS**; Android live-configured debug APK build PASS. Existing integration scenarios adapted to assert the new explicit parent overview/entry step, not remove checks. New Parent Home Android interaction remains pending at this checkpoint.
+- Parent Home checkpoint: `2d7dd34ae74e8d26e8551ef02d527fbb13f72f1a`. Later batch Android evidence now verifies Parent Home, two owned synthetic profiles selected/reselected before Child Mode, and the final selected child's catalog/session identity.
+- Curriculum Explorer implements Domain → Topic → Lesson → existing player, using only existing authenticated `GET children/{id}/lessons` metadata and lesson/session APIs. It keeps breadcrumbs/child context on Back, revalidates catalog on player return, exposes primary skill/objective/revision, and shows honest unavailable/loading/error/retry states. Canonical English replaces Arts in live Child Mode; fixture Arts/Logic behavior remains intact.
+- Explorer: **16 focused tests PASS**, including fake-transport repository, state isolation, error/retry, domain validation and 320px/2x text accessibility. Final full suite **163 PASS** (137 starting + 10 Parent Home + 16 Explorer), analysis clean, Android debug APK build PASS. No assertion removals, fabricated live responses, content inventory or additional endpoints.
+- Android batch live scenario **1 PASS**, exit 0, 17s final test phase: fresh parent authentication → pre-entry child reselection → canonical Math domain → actual returned topic/lesson → player → answer retry → completion/replay/readback. Catalog and session child IDs checked against final selection. Compatibility probes before run: ready 200; unauthenticated Complete 401. Backend/Database were not restarted/edited; Backend's newer hardening readiness remains separate.
+- Android fixture scenario **1 PASS**, exit 0, 19s: Parent Home/explicit entry, six honest empty Explorer domains and original Logic demo/legacy fixture categories/account return. Normal live-configured debug app rebuilt/installed/launched successfully afterwards. No real credentials or family data were used/stored.
 - Current instruction authorizes separate local checkpoints per validated module, without push/deploy/merge. Parent Home includes only scoped source/tests/report updates; no real secrets, generated artifacts, unrelated edits or Backend/Database writes.
 - Parent Activity dependency: account return deliberately clears the in-memory learning cache; Parent Gate/history-list endpoints do not exist. Do not preserve that cache across authentication or invent populated cross-device history to make an activity screen appear functional. Continue with Explorer, using only actual returned lesson metadata.
-- Details, source references and remaining boundaries: `reports/S2_FRONTEND_INTEGRATION.md`, MVP modules section.
+- Explorer is included in a separate validated local checkpoint; the containing commit identifies it and its actual hash is reported in the final handoff. No push/deploy/publish/merge/history rewrite. Details, changed-file inventories, exact commands and dependencies: `reports/S2_FRONTEND_INTEGRATION.md`, MVP modules section.
 
 ## R0 learning hardening evidence (previous checkpoint)
 

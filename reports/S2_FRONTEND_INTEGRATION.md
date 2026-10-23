@@ -2,7 +2,7 @@
 
 Date: 2026-10-23. Baseline: accepted VS-02 checkpoint `23bbada2f3ac5d975b7f47428b67936977f08209`.
 
-**Current status: S2 MVP modules — Parent Home AUTOMATED_VERIFIED; Curriculum Explorer next.** Analysis clean, **147 automated tests PASS**, debug APK build PASS. Start clean at `7bcac0108a65f7c2feb10731dc625e79f41e5cf4`; prior hardening/live evidence is preserved below and is not a new-device result for the new screens. Current instruction authorizes separate validated local checkpoints; no push, deploy or merge. Synthetic development only, not new PO acceptance or production approval.
+**Current status: S2 MVP modules — Parent Home and Curriculum Explorer IMPLEMENTED / AUTOMATED_ANDROID_LIVE_VERIFIED.** Analysis clean, **163 automated tests PASS**, debug build PASS, Android live **1 scenario PASS**, Android fixture **1 scenario PASS**. Start clean at `7bcac0108a65f7c2feb10731dc625e79f41e5cf4`; no work discarded. Parent Home checkpoint is `2d7dd34`; Explorer has a separate validated local checkpoint containing the final batch evidence below. No push, deploy, publish or merge. Synthetic development only, not new PO acceptance or production approval.
 
 **Accepted baseline: CLOSED / PO_ACCEPTED — synthetic development scope only.** In the 2026-10-23 closeout instruction the PO confirmed clean analysis, 60 automated tests PASS, a successful Android build, real Learning Dev Smoke PASS, and manually accepted Parent → Child → Math → Lesson → Session → Answer → Feedback → Persisted Readback against the real Development Backend/PostgreSQL. This closes the previous baseline runtime acceptance blocker; it does not accept the new completion/replay continuation, establish production readiness or convert the earlier automated Android attempt into a pass.
 
@@ -294,10 +294,73 @@ FR-ID-06/WF-02 require Parent Gate for switching from child context and viewing 
 - Account entry still clears bearer/account/child/learning memory. No DOB/email/PIN edits, new step-up, automatic child-mode parent return, local persistence or production-ready claims.
 - `lib/parent_home.dart` contains the new controller and screens; `lib/main.dart` composes them inside the existing ParentArea boundary. Existing helpers/scenarios now select → verify overview → explicitly enter Child Mode. No previous authorization or fixture assertion was removed.
 
-Actual checkpoint checks: `flutter analyze --no-pub` **PASS**, no issues; `flutter test test/parent_home_test.dart --no-pub --reporter expanded` **10 PASS**; full `flutter test --no-pub --reporter expanded` **147 PASS**; `flutter build apk --debug --no-pub --dart-define=MIMIGO_API_MODE=live --dart-define=MIMIGO_API_BASE_URL=http://10.0.2.2:5187/api/v1` **PASS**, exit 0. These are mock/widget and compilation results; new Parent Home Android E2E is not claimed yet.
+Actual initial checkpoint checks: `flutter analyze --no-pub` **PASS**, no issues; `flutter test test/parent_home_test.dart --no-pub --reporter expanded` **10 PASS**; full `flutter test --no-pub --reporter expanded` **147 PASS**; `flutter build apk --debug --no-pub --dart-define=MIMIGO_API_MODE=live --dart-define=MIMIGO_API_BASE_URL=http://10.0.2.2:5187/api/v1` **PASS**, exit 0. Initial checkpoint `2d7dd34ae74e8d26e8551ef02d527fbb13f72f1a` contained these mock/widget and compilation results; new-device results followed in the final batch below.
 
 Checkpoint scope: `lib/parent_home.dart`, `lib/main.dart`, `test/parent_home_test.dart`, the existing `test/sign_in_test.dart`, `test/child_mode_test.dart`, `test/learning_widget_test.dart`, existing three Android integration scenarios, `AGENTS.md` and the two existing S2/work reports. Reviewed for secrets/generated/unrelated edits; none found. The containing local commit identifies this validated module; actual hash is reported in the handoff.
 
 ### Parent Learning Activity — bounded dependency
 
-No exhaustive session-history endpoint or Parent Gate exists. Current-process completed-session snapshots are still child-scoped and intentionally erased on account return. Consequently a fresh parent authentication cannot legitimately display prior Child Mode memory. Retaining it across that boundary, enabling Parent navigation from the child player, or inventing cross-device/withdrawal visibility would change privacy/security policy. A populated live Parent Activity module is therefore deferred; existing read-only known-session view in the learning player remains intact. No aggregates, scores or artificial history were added. Curriculum Explorer is the next eligible module.
+No exhaustive session-history endpoint or Parent Gate exists. Current-process completed-session snapshots are still child-scoped and intentionally erased on account return. Consequently a fresh parent authentication cannot legitimately display prior Child Mode memory. Retaining it across that boundary, enabling Parent navigation from the child player, or inventing cross-device/withdrawal visibility would change privacy/security policy. A populated live Parent Activity module is therefore deferred; existing read-only known-session view in the learning player remains intact. No aggregates, scores or artificial history were added. Curriculum Explorer was selected as the next eligible module and implemented below.
+
+### Curriculum Explorer — implemented
+
+New functional screens provide **Domain → Topic → Lesson**, followed by the existing authenticated Learning Player. New `lib/curriculum_explorer.dart` contains the canonical domain framework, child-scoped controller and screens; the existing Page navigation owns its in-memory lifetime. No new endpoint or JSON field was introduced.
+
+- Fetch the selected child's existing authenticated `GET /api/v1/children/{childId}/lessons`. Group its actual Free entries by domainCode and topicCode. Canonical codes are MATH, LANGUAGE, ENGLISH, LIFE_SKILLS, LOGIC, DISCOVERY. Unknown domains and Premium items are not promoted into this R0 Free UI.
+- Six framework entries explicitly distinguish returned eligible content from unavailable content; they are not claims that six reviewed lessons exist. Topic display names and lesson age-band fields are absent from the current API, so the UI labels actual topic codes and leaves age/access decisions with the Backend. Lesson cards show returned title, lessonCode, objective, primarySkill and revisionNo.
+- Lesson selection fetches details through the existing player; selecting a catalog card does not implicitly start a session. The player validates the selected domain, lesson and child/revision context instead of hardcoding Math for Explorer entry. Completion, endedAt, immutable completed records, answer event retry and replay behavior are preserved.
+- Domain/topic breadcrumbs survive player Back. Catalog GET is revalidated on return; errors hide old items and never fall back to fixture data. Loading/empty/401/403/404/503/retry, duplicate action guards, stale/disposed-child responses, named loading states, heading semantics and 64dp expanding controls are covered.
+- Live Child Mode now uses the canonical English shortcut rather than Arts. Fixture mode retains the accepted legacy Arts shortcut and local Logic mini-game; its separate Explorer has no fabricated published fixture catalog. English/other-domain DTO variations are test-only mocks, not new approved curriculum or live results. No new lesson text/media or production content was added.
+- System Back and explicit Back step through lesson → topic → domain → Child Mode. Parent Area/child switching remains unavailable from Child Mode. Account return disposes the Explorer with the existing token/learning-state clearing; no local persistence or cross-device history.
+
+### Final batch validation — actual results
+
+| Check | Result and boundary |
+|---|---|
+| `flutter analyze --no-pub` | **PASS**, no issues, exit 0; includes the aligned Android scenarios. |
+| Parent Home focused `test/parent_home_test.dart` | **10 PASS** at its module checkpoint. Controller + widget tests, synthetic doubles. |
+| Explorer focused `test/curriculum_explorer_test.dart` | **16 PASS**, exit 0. State, real client/fake HTTP transport, screens, 320×740/2x typography, heading semantics and Android tap-target guideline. |
+| Full `flutter test --no-pub --reporter expanded` | **163 PASS**, exit 0: retained 137 baseline + 10 Parent Home + 16 Explorer. No assertion deletion/relaxation. Legacy live Arts expectation was replaced with canonical English; fixture Arts remains tested. |
+| `flutter build apk --debug --no-pub --dart-define=MIMIGO_API_MODE=live --dart-define=MIMIGO_API_BASE_URL=http://10.0.2.2:5187/api/v1` | **PASS**, exit 0; build artifact stays ignored. Final normal-app build/install/launch also PASS via `flutter run ... --no-resident --no-pub`. |
+| Live availability before E2E | GET readiness **200**, credential-free dummy-ID Complete POST **401**, against the already verified compatible Development API. No token or state write in probes; Backend/Database not restarted/edited. Prior operator Dev smoke and earlier Frontend E2E supported readiness; newer Backend hardening changes are not certified by this batch. |
+| Aligned S2 Android live scenario | **1 PASS**, exit 0, final test phase **17s** on emulator-5554. Real synthetic Parent Home + two owned profiles/reselection before Child Mode; selected child verified for catalog/session; Domain/Topic/Lesson → answer → explicit/idempotent completion → replay + preserved readback. |
+| Updated Android fixture scenario | **1 PASS**, exit 0, **19s**. New Parent Home entry, all six empty Explorer domains, existing Logic demo/feedback, five empty legacy fixture categories, navigation and secure account return. No Backend calls. |
+| Scope/secret/generated-file review | Whitespace check clean; scoped source/tests/reports only. No real credentials, tokens, signing secrets, DB connection strings, generated APK/cache files or unrelated changes. No push/deploy/publish/merge. |
+
+Sanitized final live actions (2026-10-24; no identity/OTP/token/credential values saved):
+
+```text
+register / mock verify / login -> OK
+two explicit consent/onboarding attempts / two synthetic ChildProfiles -> OK
+UI login / parents-me / child list -> OK
+select sibling -> authenticated detail; still in Parent Home
+choose another -> target child detail; explicit Enter Child Mode
+Explorer catalog -> target child ID checked
+Math -> returned topic code -> returned SYN-MATH-001 lesson
+detail / start / session readback -> target child ID checked
+answer -> controlled lost acknowledgment -> Back via Explorer -> same-event retry
+remaining questions / explanation -> explicit Complete -> COMPLETED + endedAt
+repeat Complete / completed GET -> original identity and endedAt
+Replay -> new empty IN_PROGRESS session; completed history retained
+Continue replay -> existing replay ID without another start
+Back to Child Mode -> no Parent Area
+All tests passed! (1 scenario, exit 0)
+```
+
+The live test uses real API persistence and generated synthetic accounts/children, not mock success. Its lost-ack fault is injected by the test wrapper after a real server response. Adverse authorization/network states and extra domain DTO variants are automated mock evidence only; no manual TalkBack, physical-device or iOS verification is claimed. Only the actually returned synthetic Math lesson is live-content verified; no English curriculum release is implied.
+
+Exact executed Android live command:
+
+```powershell
+flutter test integration_test/s2_learning_live_test.dart -d emulator-5554 --no-pub --reporter expanded --dart-define=MIMIGO_API_MODE=live --dart-define=MIMIGO_API_BASE_URL=http://10.0.2.2:5187/api/v1
+```
+
+Final normal app command:
+
+```powershell
+flutter run -d emulator-5554 --debug --no-resident --no-pub --dart-define=MIMIGO_API_MODE=live --dart-define=MIMIGO_API_BASE_URL=http://10.0.2.2:5187/api/v1
+```
+
+Explorer checkpoint files: `lib/curriculum_explorer.dart`, `lib/main.dart`, `lib/learning_screens.dart`, `lib/learning_models.dart`, `test/curriculum_explorer_test.dart`, `test/child_mode_test.dart`, three existing Android integration scenarios, `AGENTS.md`, `reports/WORK_STATUS.md` and this report. Parent Home was checkpointed separately as `2d7dd34`; the containing Explorer commit's actual hash is returned in the handoff. Across both modules there are 16 unique changed files. No unrelated refactor, new task ID, content seeding, sensitive profile edit, real-data retention or Backend/Database modification.
+
+Remaining dependencies: Parent Activity needs an approved parent-access/history handoff that respects the current clearing boundary; topic display names/age-band metadata and further domain lesson inventory need exact Backend/Curriculum handoffs; Parent Gate/step-up remains unsupported. Privacy/legal/content/security production approval, broader device/accessibility review and newer Backend hardening verification are outside this synthetic module acceptance. No production-readiness or additional PO-acceptance claim.

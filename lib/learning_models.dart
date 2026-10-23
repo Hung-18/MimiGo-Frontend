@@ -159,7 +159,7 @@ class LessonDetail {
         value.lessonId != summary.lessonId ||
         value.revisionId != revisionId) {
       throw const ApiInvalidResponse(
-        'Session and loaded lesson revision do not match. Return to Math and reopen the lesson.',
+        'Session and loaded lesson revision do not match. Return to the lesson list and reopen the lesson.',
       );
     }
     if (value is SessionDetail) {

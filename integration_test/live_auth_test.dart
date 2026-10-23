@@ -282,24 +282,30 @@ void main() {
         isNull,
       );
       for (final category in LearningCategory.values) {
-        await tap(tester, 'category-${category.name}');
+        final english = category == LearningCategory.arts;
+        await tap(
+          tester,
+          english ? 'category-english' : 'category-${category.name}',
+        );
         if (category == LearningCategory.math) {
           await waitFor(tester, find.byType(MathLessonCatalog));
           expect(returning.catalog, isNotNull);
           expect(find.byKey(const Key('learningError')), findsNothing);
+        } else if (english) {
+          await waitFor(tester, find.byKey(const Key('explorerEmpty')));
         } else {
           await waitFor(tester, find.byKey(const Key('categoryEmpty')));
         }
         expect(find.byKey(const Key('openCircleDemo')), findsNothing);
         expect(find.byType(CircleDemo), findsNothing);
         expect(find.byType(ParentArea), findsNothing);
-        await tap(tester, 'categoryBack');
+        await tap(tester, english ? 'explorerHome' : 'categoryBack');
         await waitFor(tester, find.text('Hi, $alias!'));
       }
       expect(
         returning.calls,
-        [...authenticatedCalls, 'lessons'],
-        reason: 'Only Math fetches the verified catalog; no speculative endpoints or progress writes.',
+        [...authenticatedCalls, 'lessons', 'lessons'],
+        reason: 'Math and English Explorer fetch the same verified catalog; no speculative endpoints or progress writes.',
       );
       await tap(tester, 'returnAccountEntry');
       await tap(tester, 'cancelAccountEntry');

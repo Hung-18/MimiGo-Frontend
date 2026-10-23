@@ -94,16 +94,25 @@ Future<SessionApi> openChild(
 
 void main() {
   for (final category in LearningCategory.values) {
+    final english = category == LearningCategory.arts;
     testWidgets(
-      'live ${category.label} opens an honest empty state and returns to Child Mode',
+      'live ${english ? 'English' : category.label} opens an honest empty state and returns to Child Mode',
       (tester) async {
         final api = await openChild(tester);
         final calls = List<String>.of(api.calls);
-        await tapKey(tester, 'category-${category.name}');
-        expect(find.byKey(const Key('categoryEmpty')), findsOneWidget);
+        await tapKey(
+          tester,
+          english ? 'category-english' : 'category-${category.name}',
+        );
+        expect(
+          find.byKey(Key(english ? 'explorerEmpty' : 'categoryEmpty')),
+          findsOneWidget,
+        );
         expect(
           find.textContaining(
-            category == LearningCategory.math
+            english
+                ? 'No eligible Free lessons'
+                : category == LearningCategory.math
                 ? 'No eligible Free Math'
                 : 'current live service',
           ),
@@ -113,12 +122,12 @@ void main() {
         expect(find.byType(CircleDemo), findsNothing);
         expect(
           api.calls,
-          category == LearningCategory.math
+          category == LearningCategory.math || english
               ? [...calls, 'lessons:child-1']
               : calls,
-          reason: 'Only Math requests the verified child-scoped catalog.',
+          reason: 'Math and the canonical English Explorer use the existing child-scoped catalog.',
         );
-        await tapKey(tester, 'categoryBack');
+        await tapKey(tester, english ? 'explorerHome' : 'categoryBack');
         expect(find.text('Hi, SYN-Bee!'), findsOneWidget);
       },
     );
