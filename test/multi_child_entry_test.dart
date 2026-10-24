@@ -130,7 +130,7 @@ void main() {
         final model = ParentHomeState(api)
           ..seedWorkspace(
             ParentWorkspace([
-              WorkspaceChildMetadata(api.profiles.single, status),
+              WorkspaceChildMetadata(api.profiles.single, status, 'READY'),
             ], 'Synthetic'),
           );
         await model.choose('A');
@@ -152,7 +152,10 @@ void main() {
         ..seedWorkspace(
           ParentWorkspace(
             api.profiles
-                .map((child) => WorkspaceChildMetadata(child, 'AVAILABLE'))
+                .map(
+                  (child) =>
+                      WorkspaceChildMetadata(child, 'AVAILABLE', 'READY'),
+                )
                 .toList(),
             'Synthetic',
           ),

@@ -22,7 +22,7 @@ class AuthApi extends FixtureMimiGoApi {
     if (listFailure != null) throw listFailure!;
     return ParentWorkspace(
       profiles
-          .map((child) => WorkspaceChildMetadata(child, 'AVAILABLE'))
+          .map((child) => WorkspaceChildMetadata(child, 'AVAILABLE', 'READY'))
           .toList(),
       'Synthetic workspace',
     );

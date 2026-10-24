@@ -15,6 +15,7 @@ class ParentHomeState extends ChangeNotifier {
   ApiFailure? error;
   bool busy = false;
   Map<String, String> catalogStatuses = const {};
+  Map<String, String?> learningEntryStatuses = const {};
   String? disclaimer;
   int _generation = 0;
   bool get canEnter {
@@ -26,7 +27,11 @@ class ParentHomeState extends ChangeNotifier {
         {
           'AVAILABLE',
           'NO_ELIGIBLE_CONTENT',
-        }.contains(catalogStatuses[child.id]);
+        }.contains(catalogStatuses[child.id]) &&
+        {
+          'READY',
+          'NO_ELIGIBLE_CONTENT',
+        }.contains(learningEntryStatuses[child.id]);
   }
 
   void seed(List<ChildSummary> profiles) {
@@ -37,6 +42,10 @@ class ParentHomeState extends ChangeNotifier {
     seed(workspace.children.map((item) => item.child).toList());
     catalogStatuses = Map.unmodifiable({
       for (final item in workspace.children) item.child.id: item.catalogStatus,
+    });
+    learningEntryStatuses = Map.unmodifiable({
+      for (final item in workspace.children)
+        item.child.id: item.learningEntryStatus,
     });
     disclaimer = workspace.disclaimer;
   }
@@ -49,6 +58,7 @@ class ParentHomeState extends ChangeNotifier {
     selected = null;
     children = const [];
     catalogStatuses = const {};
+    learningEntryStatuses = const {};
     disclaimer = null;
     notifyListeners();
     try {
@@ -116,6 +126,7 @@ class ParentHome extends StatefulWidget {
     required this.accountEntry,
     required this.fixture,
     this.workspace,
+    this.resumeOnboarding,
   });
   final MimiGoApi api;
   final ParentSummary parent;
@@ -124,6 +135,7 @@ class ParentHome extends StatefulWidget {
   final ValueChanged<ChildDetail> enterChild;
   final bool fixture;
   final ParentWorkspace? workspace;
+  final VoidCallback? resumeOnboarding;
   @override
   State<ParentHome> createState() => _ParentHomeState();
 }
@@ -147,6 +159,17 @@ class _ParentHomeState extends State<ParentHome> {
     'PERMISSION_NOT_GRANTED' => 'Catalog permission is not granted',
     'CHILD_NOT_ACTIVE' => 'Child profile is not active',
     _ => 'Refresh to check catalog availability',
+  };
+  String entryAvailability(String? status) => switch (status) {
+    'READY' => 'Learning entry ready · service eligibility checked',
+    'PERMISSION_NOT_GRANTED' =>
+      'Learning entry is not permitted by the service',
+    'CHILD_NOT_ACTIVE' => 'Learning entry unavailable · child is not active',
+    'CHILD_OUTSIDE_PROGRAM_AGE' =>
+      'Learning entry unavailable · outside program age',
+    'NO_ELIGIBLE_CONTENT' =>
+      'No eligible learning content · Child Mode can show empty discovery',
+    _ => 'Learning entry unknown · refresh before entering',
   };
   @override
   void dispose() {
@@ -247,6 +270,10 @@ class _ParentHomeState extends State<ParentHome> {
               availability(model.catalogStatuses[child.id]),
               key: const Key('parentCatalogAvailability'),
             ),
+            Text(
+              entryAvailability(model.learningEntryStatuses[child.id]),
+              key: const Key('parentLearningEntry'),
+            ),
             ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 64),
               child: FilledButton(
@@ -289,6 +316,14 @@ class _ParentHomeState extends State<ParentHome> {
                   : 'Add another child',
             ),
           ),
+          if (widget.resumeOnboarding != null)
+            OutlinedButton(
+              key: const Key('parentResumeOnboarding'),
+              onPressed: model.busy || leaving ? null : widget.resumeOnboarding,
+              child: const Text(
+                'Check pending child onboarding · this app session',
+              ),
+            ),
           TextButton(
             key: const Key('parentAccountEntry'),
             onPressed: model.busy || leaving ? null : widget.accountEntry,

@@ -2,11 +2,71 @@
 
 Date: 2026-10-23. Baseline: accepted VS-02 checkpoint `23bbada2f3ac5d975b7f47428b67936977f08209`.
 
-**Current status: R0 Parent onboarding / multi-child batch IMPLEMENTED / AUTOMATED_VERIFIED.** From clean `f808941`, Parent checkpoint `1950318`, child onboarding checkpoint `37026ca`; final multi-child checkpoint contains this report. Analysis clean, **230 automated tests PASS**. Android live onboarding and Learning **2 scenarios PASS**; Android new onboarding fixture, Terms mock and original fixture **3 scenarios PASS**. Debug build/install/normal launch PASS. Earlier acceptance remains historical; no new PO/production approval, push, deploy, publish or merge.
+**Current status: S2 additive attempt resume / learningEntry IMPLEMENTED / AUTOMATED_VERIFIED.** From clean `b14f5c4`, analysis clean and **261 tests PASS** (230 retained + 31 focused). New Android live resume/consumed/READY and preserved Learning **2 scenarios PASS**; Android permission mock/original fixture **2 scenarios PASS**. Final debug build/install/normal launch PASS. Earlier accepted onboarding/Terms/Learning work retained; no new PO/production approval, push, deploy, publish or merge.
 
 **Accepted baseline: CLOSED / PO_ACCEPTED — synthetic development scope only.** In the 2026-10-23 closeout instruction the PO confirmed clean analysis, 60 automated tests PASS, a successful Android build, real Learning Dev Smoke PASS, and manually accepted Parent → Child → Math → Lesson → Session → Answer → Feedback → Persisted Readback against the real Development Backend/PostgreSQL. This closes the previous baseline runtime acceptance blocker; it does not accept the new completion/replay continuation, establish production readiness or convert the earlier automated Android attempt into a pass.
 
-## R0 Parent onboarding and multi-child continuation — 2026-10-24
+## Additive onboarding resume and learningEntry — 2026-10-24
+
+Start clean at `b14f5c4762611e331f51ef1d55051213b190ee5a`. The operator reports Backend HEAD **79135a8 VERIFIED**, PostgreSQL integration **28/28 PASS** and Dev HTTP **LEARNING SMOKE PASS**, exit 0; API PID 12704 / port 5187, including attempt resume and READY/PERMISSION_NOT_GRANTED smoke coverage. These are operator-reported Backend results, not audits or Backend tests rerun by Frontend. Read only the exact updated VS-01 resume and VS-02.2 workspace OpenAPI sections; no Backend/Database repository, runtime/config or SQL change. Synthetic data is created through the already-authorized real API during Android tests.
+
+### Implemented additive contracts
+
+| Contract | Frontend behavior |
+|---|---|
+| Authenticated `GET /api/v1/children/onboarding-attempts/{attemptId}` | Decodes exact required attemptId/status/expiresAt/nullable childId/notices; validates allowed statuses, consumed child identity and requested attempt identity. No POST, consumption, expiry extension or consent implied by a read. |
+| `OPEN` | Existing Parent Home/privacy can re-review the same snapshot/expiry, with guardian and purposes unchecked before new DOB input. A pending already-submitted creation instead returns to its original locked request/body/key; OPEN cannot prove a delayed POST will never commit. |
+| `ATTEMPT_ALREADY_CONSUMED` | Offers authorized Parent Home roster refresh/selection. Clears the local pending pointer; never repeats creation or automatically enters Child Mode. Does not invent a ChildSummary from the returned childId. |
+| `TERMS_ACCEPTANCE_REQUIRED` | Explicit action opens the existing current-account Terms flow, separate from child purposes; subsequent child onboarding starts fresh. |
+| `ATTEMPT_EXPIRED`, `ATTEMPT_NOTICES_INCOMPLETE`, `NOTICE_CHANGED_REDISPLAY_REQUIRED` | Explicit fresh-attempt/privacy action, without copying old choices or DOB draft. |
+| `PARENT_NOT_ACTIVE`, HTTP 401/404/network/server or malformed responses | No resumable/created success assumed. Safe account-entry, read retry or fresh-attempt guidance as applicable; stale read state cleared, busy/disposed results guarded. |
+| Workspace `children[].learningEntry.status` | Parsed independently from catalog using READY / CHILD_NOT_ACTIVE / PERMISSION_NOT_GRANTED / CHILD_OUTSIDE_PROGRAM_AGE / NO_ELIGIBLE_CONTENT. Missing/unknown is invalid, never derived from an AVAILABLE catalog. Parent entry fails closed for denial/inactive/out-of-age/unknown. |
+
+The resume entry is available only for an ID already known in the current authenticated app process, from Parent Home, privacy or failed creation review. No arbitrary-ID input, disk persistence, child draft retention, new endpoint or recovery policy. Account return clears the ID along with existing account/learning memory. Process-restart recovery remains outside scope until approved retention/discovery requirements exist.
+
+READY is an eligibility snapshot, not a Parent Gate or permanent authorization. Existing profile/catalog checks remain and all Learning operations still recheck server permission. NO_ELIGIBLE_CONTENT preserves accepted empty Child Mode/fixture discovery; it does **not** promise an available lesson/session. Parent Home displays the service entry state only after authorized profile selection. Protected openSessions/status/items and adult history remain discarded and unrendered; no history-list endpoint or PIN protocol added.
+
+### Actual Frontend validation
+
+| Check | Result and limit |
+|---|---|
+| `flutter analyze --no-pub` | **PASS**, no issues, exit 0. |
+| Focused `test/additive_onboarding_contract_test.dart` | **31 PASS**, exit 0: exact authenticated read/no body, all documented resume statuses, malformed and mismatched identity, 401/404/503, busy/disposal, OPEN fresh choices, pending exact retry, consumed recovery/no duplicate POST, Terms route, account clearing, independent learningEntry gate, unknown/missing rejection and stale READY removal. |
+| Full `flutter test --no-pub --reporter expanded` | **261 PASS**, exit 0: 230 retained + 31 focused additions. Existing synthetic adapters explicitly supply new metadata; no assertion deletion, fallback or test weakening. |
+| `integration_test/additive_contracts_live_test.dart` | **1 PASS**, exit 0, **18s** test phase, emulator-5554 / Android 17 API 37 x86_64 through **10.0.2.2:5187**. Real OPEN read preserves original expiry/version IDs, fresh unticked choices, real POST creation with only test-wrapper loss of acknowledgment, real CONSUMED read recovers the same child with **one creation POST**, actual READY workspace, correct selected-child curriculum/lesson/session, Parent/switch controls locked. |
+| `integration_test/additive_contracts_fixture_test.dart` | **1 PASS**, exit 0, **5s**. Explicit Android mock: AVAILABLE catalog plus PERMISSION_NOT_GRANTED learningEntry disables entry, issues no learning calls and exposes no protected history. **Not** Frontend live denied-permission evidence. |
+| Existing `s2_learning_live_test.dart` | **1 PASS**, exit 0, **20s**. Real parent/workspace/two-child selection → curriculum/player → exact answer retry → server feedback → explicit/idempotent Complete → persisted endedAt/completed readback → new replay identity. Real current-version Terms replay and both documented 422 responses also pass; no genuine Terms rollover claimed. |
+| Existing `child_fixture_test.dart` | **1 PASS**, exit 0, **25s**. Original Logic demo/feedback, empty canonical Explorer, category navigation, locked controls and safe account return retained. No Backend learning progress claimed. |
+| Final Android debug build | **PASS**, exit 0, **10.5s** Gradle: `flutter build apk --debug --no-pub --dart-define=MIMIGO_API_MODE=live --dart-define=MIMIGO_API_BASE_URL=http://10.0.2.2:5187/api/v1`. Outputs ignored. |
+| Normal app restored | **PASS**, exit 0: `flutter run -d emulator-5554 --debug --no-resident --no-pub` with the same live defines. Normal `lib/main.dart` built (6.9s Gradle), installed/launched after the integration harness. |
+| Scope/secret/artifact review | All **12** scoped files reviewed; whitespace clean. No real credentials/OTP/token, signing keys, connection strings, generated artifacts, new dependencies or unrelated edits. Own temporary test logs removed. One authorized local checkpoint contains this report; actual hash/tree status in final handoff. No Backend/Database repository/config edits, Backend audit/test rerun, push, merge, deploy or history rewrite. |
+
+Actual sanitized new live trace:
+
+```text
+synthetic reference/register/mock verify -> UI login/me/workspace
+start PII-free attempt -> return Parent Home -> read known attempt OPEN
+same attempt ID, original expiry and notice version IDs -> fresh unticked review
+real child creation POST -> server succeeds; test wrapper drops acknowledgment
+read same attempt -> ATTEMPT_ALREADY_CONSUMED + matching created child identity
+authorized roster refresh -> exactly the created child; no second creation POST
+workspace catalog AVAILABLE / learningEntry READY -> owner detail -> explicit Child Mode
+selected-child curriculum -> real SYN-MATH-001 detail/start/readback -> IN_PROGRESS
+Parent Gate/switch controls remain disabled; no history endpoint
+All tests passed! (1 scenario, exit 0)
+```
+
+Real PERMISSION_NOT_GRANTED is covered by the operator's successful Backend smoke. This Frontend run independently verified READY and mock Android denial. Fully real Android denial needs an operator-prepared synthetic account/child with that returned state; no undocumented withdrawal endpoint or permission/Database mutation is manufactured. Other rule statuses/adverse auth/network remain focused automated mock evidence. Parent Gate/step-up, production legal/guardian/retention policy and full Terms/notice text remain external dependencies; no production readiness or new PO acceptance implied.
+
+Files in this checkpoint: `lib/main.dart`, `lib/parent_home.dart`, new `lib/onboarding_resume.dart`; new `test/additive_onboarding_contract_test.dart`, aligned `test/backend_modules_test.dart`, `test/multi_child_entry_test.dart`, `test/sign_in_test.dart`; new Android live/mock scenarios; `AGENTS.md`, `reports/WORK_STATUS.md`, this report. Twelve scoped files; no repeated onboarding implementation, unrelated refactor or new task ID. Local checkpoint authorized; no push/merge/deploy/history rewrite.
+
+Exact new Android live command:
+
+```powershell
+flutter test integration_test/additive_contracts_live_test.dart -d emulator-5554 --no-pub --reporter expanded --dart-define=MIMIGO_API_MODE=live --dart-define=MIMIGO_API_BASE_URL=http://10.0.2.2:5187/api/v1
+```
+
+## R0 Parent onboarding and multi-child continuation — 2026-10-24 (historical)
 
 Baseline clean `f808941f7bbd5b0f74f3327f04605b2a4ed6c2a4`. Scope inventory found existing register/verify/login, notice checkbox, DOB/avatar form and review; Parent Home, Explorer, Terms and Learning were already implemented and retained. Missing usable verification recovery, fuller notice metadata, creation recovery/success and safe multi-child handoff are implemented sequentially here. Read exact VS-01 OpenAPI, accepted Learning candidate, relevant Auth/Child DTO/service validation and canonical SRS FR-ID-01/02/03/06/07, WF-01/02 read-only. No new task ID or API invented; no Backend/Database write.
 

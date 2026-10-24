@@ -22,6 +22,7 @@ Map<String, dynamic> workspaceJson({String status = 'AVAILABLE'}) => {
         'createdAt': '2026-10-24T00:00:00Z',
       },
       'catalog': {'status': status, 'eligibleLessonCount': 1},
+      'learningEntry': {'status': 'READY'},
       'openSessions': {
         'status': 'AVAILABLE',
         'items': [

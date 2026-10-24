@@ -14,6 +14,7 @@ import 'curriculum_explorer.dart';
 import 'terms_reacceptance.dart';
 import 'parent_onboarding.dart';
 import 'child_onboarding.dart';
+import 'onboarding_resume.dart';
 
 export 'api_failure.dart';
 
@@ -36,6 +37,7 @@ abstract class MimiGoApi implements LearningApi {
   Future<LoginSession> login({required String email, required String password});
   Future<ParentSummary> parentMe();
   Future<OnboardingAttempt> beginOnboardingAttempt();
+  Future<OnboardingAttemptStatus> getOnboardingAttempt(String attemptId);
   Future<ChildSummary> createChild(CreateChildRequest value);
   Future<List<ChildSummary>> listChildren();
   Future<ChildDetail> getChild(String childId);
@@ -116,7 +118,11 @@ class ParentSummary {
 /// Safe Parent Home projection. Deliberately does not model, cache or expose
 /// openSessions, lesson-history items or progress received in the workspace.
 class WorkspaceChildMetadata {
-  const WorkspaceChildMetadata(this.child, this.catalogStatus);
+  const WorkspaceChildMetadata(
+    this.child,
+    this.catalogStatus, [
+    this.learningEntryStatus,
+  ]);
   factory WorkspaceChildMetadata.fromJson(Map<String, dynamic> json) {
     final child = _child(_map(json['child']));
     final status = _string(_map(json['catalog']), 'status');
@@ -128,10 +134,20 @@ class WorkspaceChildMetadata {
       'CHILD_NOT_ACTIVE',
     }.contains(status))
       throw const ApiInvalidResponse('Invalid catalog availability.');
-    return WorkspaceChildMetadata(child, status);
+    final entry = _string(_map(json['learningEntry']), 'status');
+    if (!{
+      'READY',
+      'CHILD_NOT_ACTIVE',
+      'PERMISSION_NOT_GRANTED',
+      'CHILD_OUTSIDE_PROGRAM_AGE',
+      'NO_ELIGIBLE_CONTENT',
+    }.contains(entry))
+      throw const ApiInvalidResponse('Invalid learning entry availability.');
+    return WorkspaceChildMetadata(child, status, entry);
   }
   final ChildSummary child;
   final String catalogStatus;
+  final String? learningEntryStatus;
 }
 
 class ParentWorkspace {
@@ -217,6 +233,47 @@ class OnboardingAttempt {
   final String id;
   final DateTime expiresAt;
   final List<Notice> notices;
+}
+
+class OnboardingAttemptStatus {
+  const OnboardingAttemptStatus(this.attempt, this.status, this.childId);
+  factory OnboardingAttemptStatus.fromJson(Map<String, dynamic> json) {
+    final status = _string(json, 'status');
+    if (!{
+      'OPEN',
+      'ATTEMPT_ALREADY_CONSUMED',
+      'PARENT_NOT_ACTIVE',
+      'TERMS_ACCEPTANCE_REQUIRED',
+      'ATTEMPT_EXPIRED',
+      'ATTEMPT_NOTICES_INCOMPLETE',
+      'NOTICE_CHANGED_REDISPLAY_REQUIRED',
+    }.contains(status))
+      throw const ApiInvalidResponse('Invalid onboarding attempt status.');
+    if (!json.containsKey('childId') ||
+        (json['childId'] != null && json['childId'] is! String))
+      throw const ApiInvalidResponse(
+        'Invalid onboarding attempt child identity.',
+      );
+    final child = json['childId'] as String?;
+    if ((status == 'ATTEMPT_ALREADY_CONSUMED') !=
+            (child != null && child.isNotEmpty) ||
+        (status != 'ATTEMPT_ALREADY_CONSUMED' && child != null))
+      throw const ApiInvalidResponse(
+        'Onboarding status and child identity do not match.',
+      );
+    return OnboardingAttemptStatus(
+      OnboardingAttempt(
+        _string(json, 'attemptId'),
+        _date(json, 'expiresAt'),
+        _notices(json['notices']),
+      ),
+      status,
+      child,
+    );
+  }
+  final OnboardingAttempt attempt;
+  final String status;
+  final String? childId;
 }
 
 class PurposeChoice {
@@ -338,6 +395,9 @@ class FixtureMimiGoApi implements MimiGoApi {
             child.withinProgramAgeRange
                 ? 'NO_ELIGIBLE_CONTENT'
                 : 'CHILD_OUTSIDE_PROGRAM_AGE',
+            child.withinProgramAgeRange
+                ? 'NO_ELIGIBLE_CONTENT'
+                : 'CHILD_OUTSIDE_PROGRAM_AGE',
           ),
         )
         .toList(growable: false),
@@ -402,6 +462,7 @@ class FixtureMimiGoApi implements MimiGoApi {
   final _children = <ChildSummary>[];
   final _attempts = <String, OnboardingAttempt>{};
   final _usedAttempts = <String>{};
+  final _attemptChildren = <String, String>{};
   final _createdRequests = <String, (String, ChildSummary)>{};
   List<Notice> get _fixtureNotices => [
     for (final item in const [
@@ -541,6 +602,29 @@ class FixtureMimiGoApi implements MimiGoApi {
   }
 
   @override
+  Future<OnboardingAttemptStatus> getOnboardingAttempt(String attemptId) async {
+    _auth();
+    await _wait();
+    final attempt = _attempts[attemptId];
+    if (attempt == null)
+      throw const ApiFailure(
+        'Unknown fixture attempt.',
+        code: 'ATTEMPT_NOT_FOUND',
+        status: 404,
+      );
+    final childId = _attemptChildren[attemptId];
+    return OnboardingAttemptStatus(
+      attempt,
+      childId != null
+          ? 'ATTEMPT_ALREADY_CONSUMED'
+          : attempt.expiresAt.isAfter(DateTime.now())
+          ? 'OPEN'
+          : 'ATTEMPT_EXPIRED',
+      childId,
+    );
+  }
+
+  @override
   Future<ChildSummary> createChild(CreateChildRequest value) async {
     _auth();
     await _wait();
@@ -620,6 +704,7 @@ class FixtureMimiGoApi implements MimiGoApi {
     );
     _children.add(child);
     _usedAttempts.add(value.attemptId);
+    _attemptChildren[value.attemptId] = child.id;
     _createdRequests[value.idempotencyKey] = (fingerprint, child);
     return child;
   }
@@ -661,6 +746,16 @@ class FixtureMimiGoApi implements MimiGoApi {
 }
 
 class LiveMimiGoApi implements MimiGoApi {
+  @override
+  Future<OnboardingAttemptStatus> getOnboardingAttempt(
+    String attemptId,
+  ) async => OnboardingAttemptStatus.fromJson(
+    await _request(
+      'GET',
+      'children/onboarding-attempts/${Uri.encodeComponent(attemptId)}',
+      auth: true,
+    ),
+  );
   @override
   Future<TermsAcceptance> acceptCurrentTerms(
     String termsVersionId, {
@@ -1091,6 +1186,7 @@ enum Page {
   parentOnly,
   terms,
   childCreated,
+  attemptResume,
 }
 
 class MimiGoApp extends StatefulWidget {
@@ -1110,6 +1206,7 @@ class _MimiGoAppState extends State<MimiGoApp> {
   Page page = Page.welcome;
   OnboardingReference? reference;
   OnboardingAttempt? attempt;
+  String? resumableAttemptId;
   RegistrationResult? registration;
   String? email, password, mockOtp;
   ChildDraft? draft;
@@ -1185,6 +1282,7 @@ class _MimiGoAppState extends State<MimiGoApp> {
       reference = null;
       registration = null;
       attempt = null;
+      resumableAttemptId = null;
       draft = null;
       creation?.dispose();
       creation = null;
@@ -1202,7 +1300,12 @@ class _MimiGoAppState extends State<MimiGoApp> {
   }
 
   void childBack() {
-    if (page == Page.childCreated) {
+    if (page == Page.attemptResume) {
+      if (creation?.sent == true)
+        setState(() => page = Page.review);
+      else
+        goParentHome();
+    } else if (page == Page.childCreated) {
       goParentHome();
     } else if (page == Page.review) {
       if (creation?.canEdit == true) setState(() => page = Page.input);
@@ -1311,7 +1414,10 @@ class _MimiGoAppState extends State<MimiGoApp> {
     try {
       final value = await api.beginOnboardingAttempt();
       if (mounted && generation == sessionGeneration && page == Page.privacy)
-        setState(() => attempt = value);
+        setState(() {
+          attempt = value;
+          resumableAttemptId = value.id;
+        });
     } on ApiFailure catch (e) {
       if (mounted && generation == sessionGeneration && page == Page.privacy) {
         if (e.code == 'TERMS_ACCEPTANCE_REQUIRED')
@@ -1324,10 +1430,16 @@ class _MimiGoAppState extends State<MimiGoApp> {
 
   void requireCurrentTerms() {
     if (authenticatedParent == null ||
-        !{Page.parent, Page.privacy, Page.review}.contains(page))
+        !{
+          Page.parent,
+          Page.privacy,
+          Page.review,
+          Page.attemptResume,
+        }.contains(page))
       return;
     setState(() {
       attempt = null;
+      resumableAttemptId = null;
       draft = null;
       creation?.dispose();
       creation = null;
@@ -1354,6 +1466,7 @@ class _MimiGoAppState extends State<MimiGoApp> {
     if (authenticatedParent == null || inChildMode) return;
     setState(() {
       attempt = null;
+      resumableAttemptId = null;
       draft = null;
       creation?.dispose();
       creation = null;
@@ -1361,6 +1474,15 @@ class _MimiGoAppState extends State<MimiGoApp> {
       active = null;
       page = Page.privacy;
     });
+  }
+
+  void openAttemptResume() {
+    if (authenticatedParent == null ||
+        inChildMode ||
+        resumableAttemptId == null ||
+        creation?.busy == true)
+      return;
+    setState(() => page = Page.attemptResume);
   }
 
   void reviewChild(ChildDraft value) {
@@ -1424,6 +1546,7 @@ class _MimiGoAppState extends State<MimiGoApp> {
           page != Page.review &&
           page != Page.parentOnly &&
           page != Page.childCreated &&
+          page != Page.attemptResume &&
           page != Page.terms,
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) childBack();
@@ -1488,6 +1611,7 @@ class _MimiGoAppState extends State<MimiGoApp> {
               attempt: attempt,
               begin: attemptStart,
               parentHome: goParentHome,
+              checkAttempt: openAttemptResume,
               declined: () => setState(() {
                 attempt = null;
                 draft = null;
@@ -1508,11 +1632,13 @@ class _MimiGoAppState extends State<MimiGoApp> {
               restart: beginChildOnboarding,
               parentHome: goParentHome,
               accountEntry: returnToAccountEntry,
+              checkAttempt: openAttemptResume,
               termsRequired: requireCurrentTerms,
               back: childBack,
               created: (v) async {
                 setState(() {
                   createdProfile = v;
+                  resumableAttemptId = null;
                   children = [
                     ...children.where((child) => child.id != v.id),
                     v,
@@ -1542,6 +1668,38 @@ class _MimiGoAppState extends State<MimiGoApp> {
                   child: createdProfile!,
                   parentHome: goParentHome,
                   addAnother: beginChildOnboarding,
+                ),
+              ],
+            ),
+            Page.attemptResume => Frame(
+              title: 'Check pending child onboarding',
+              children: [
+                OnboardingAttemptResume(
+                  api: api,
+                  attemptId: resumableAttemptId!,
+                  hasPendingCreation: creation?.sent == true,
+                  resume: (value) {
+                    if (!mounted || inChildMode) return;
+                    setState(() {
+                      if (creation?.sent == true) {
+                        page = Page.review;
+                      } else {
+                        attempt = value;
+                        draft = null;
+                        creation?.dispose();
+                        creation = null;
+                        page = Page.privacy;
+                      }
+                    });
+                  },
+                  consumed: () {
+                    resumableAttemptId = null;
+                    goParentHome();
+                  },
+                  termsRequired: requireCurrentTerms,
+                  restart: beginChildOnboarding,
+                  parentHome: childBack,
+                  accountEntry: returnToAccountEntry,
                 ),
               ],
             ),
@@ -1713,6 +1871,9 @@ class _MimiGoAppState extends State<MimiGoApp> {
                 workspace: parentWorkspace,
                 accountEntry: returnToAccountEntry,
                 add: beginChildOnboarding,
+                resumeOnboarding: resumableAttemptId == null
+                    ? null
+                    : openAttemptResume,
                 enterChild: (child) {
                   if (inChildMode ||
                       child.state != 'ACTIVE' ||
@@ -2328,11 +2489,13 @@ class Privacy extends StatefulWidget {
     required this.declined,
     required this.next,
     this.parentHome,
+    this.checkAttempt,
   });
   final OnboardingAttempt? attempt;
   final Future<void> Function() begin;
   final VoidCallback declined, next;
   final VoidCallback? parentHome;
+  final VoidCallback? checkAttempt;
   @override
   State<Privacy> createState() => _PrivacyState();
 }
@@ -2495,6 +2658,12 @@ class _PrivacyState extends State<Privacy> {
             onPressed: busy ? null : load,
             child: const Text('Restart with fresh privacy notices'),
           ),
+        if (widget.attempt != null && widget.checkAttempt != null)
+          OutlinedButton(
+            key: const Key('checkPrivacyAttempt'),
+            onPressed: busy ? null : widget.checkAttempt,
+            child: const Text('Check or resume this attempt'),
+          ),
         OnboardingError(error),
         TextButton(
           key: const Key('privacyDecline'),
@@ -2648,6 +2817,7 @@ class Review extends StatefulWidget {
     required this.restart,
     required this.parentHome,
     required this.accountEntry,
+    this.checkAttempt,
   });
   final MimiGoApi api;
   final OnboardingAttempt attempt;
@@ -2656,6 +2826,7 @@ class Review extends StatefulWidget {
   final VoidCallback? termsRequired;
   final ChildCreationState model;
   final VoidCallback restart, parentHome, accountEntry;
+  final VoidCallback? checkAttempt;
   final Future<void> Function(ChildSummary) created;
   @override
   State<Review> createState() => _ReviewState();
@@ -2733,6 +2904,14 @@ class _ReviewState extends State<Review> {
             key: const Key('creationParentHome'),
             onPressed: widget.model.busy || leaving ? null : widget.parentHome,
             child: const Text('Check profiles in Parent Home'),
+          ),
+        if (widget.model.sent && widget.checkAttempt != null)
+          OutlinedButton(
+            key: const Key('checkCreationAttempt'),
+            onPressed: widget.model.busy || leaving
+                ? null
+                : widget.checkAttempt,
+            child: const Text('Check whether this attempt created a profile'),
           ),
         TextButton(
           key: const Key('creationAccountEntry'),
