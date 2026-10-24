@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'main.dart' show MimiGoApi;
@@ -11,10 +13,17 @@ class EmailVerificationState extends ChangeNotifier {
   final String email;
   bool busy = false, verified = false;
   ApiFailure? error;
+  DateTime? retryAt;
+  Timer? _retryTimer;
+  int get retrySeconds => retryAt == null
+      ? 0
+      : (retryAt!.difference(DateTime.now()).inMilliseconds / 1000)
+            .ceil()
+            .clamp(0, 86400);
   int _generation = 0;
 
   Future<bool> submit(String code, Future<void> Function() authenticate) async {
-    if (busy) return false;
+    if (busy || retrySeconds > 0) return false;
     if (!verified && !RegExp(r'^[0-9]{6}$').hasMatch(code)) {
       error = const ApiFailure(
         'Enter exactly six digits.',
@@ -36,7 +45,22 @@ class EmailVerificationState extends ChangeNotifier {
       await authenticate();
       return generation == _generation;
     } on ApiFailure catch (failure) {
-      if (generation == _generation) error = failure;
+      if (generation == _generation) {
+        error = failure;
+        final retry = failure.retryAfterSeconds;
+        if (retry != null && retry > 0) {
+          retryAt = DateTime.now().add(Duration(seconds: retry));
+          _retryTimer?.cancel();
+          _retryTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+            if (generation != _generation) {
+              timer.cancel();
+              return;
+            }
+            notifyListeners();
+            if (retrySeconds == 0) timer.cancel();
+          });
+        }
+      }
       return false;
     } finally {
       if (generation == _generation) {
@@ -48,6 +72,7 @@ class EmailVerificationState extends ChangeNotifier {
 
   @override
   void dispose() {
+    _retryTimer?.cancel();
     _generation++;
     super.dispose();
   }
@@ -66,6 +91,10 @@ class OnboardingError extends StatelessWidget {
       'TERMS_VERSION_NOT_CURRENT' => 'Account Terms changed. Reload the current version and make a new explicit choice.',
       'TERMS_ACCEPTANCE_REQUIRED' => 'Explicit acceptance of current account Terms is required. This does not grant child consent.',
       'EMAIL_NOT_VERIFIED' => 'Verify this synthetic email before signing in.',
+      'SESSION_REVOKED' || 'UNAUTHENTICATED' =>
+        'Your device session could not be validated. Sign in again.',
+      'SECURE_STORAGE_UNAVAILABLE' => 'Secure credential storage is unavailable. No session is assumed; restore secure storage before signing in.',
+      'LOGOUT_UNCONFIRMED' => 'Local credentials were removed, but service sign-out could not be confirmed.',
       'INVALID_CREDENTIALS' =>
         'Email or password is incorrect. Return to sign-in to check them.',
       'ATTEMPT_EXPIRED' ||

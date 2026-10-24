@@ -5,11 +5,13 @@ class ApiFailure implements Exception {
     this.status,
     this.requestId,
     this.retryable = false,
+    this.retryAfterSeconds,
   });
   final String message;
   final String? code, requestId;
   final int? status;
   final bool retryable;
+  final int? retryAfterSeconds;
 }
 
 class ApiInvalidResponse extends ApiFailure {

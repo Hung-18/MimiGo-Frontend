@@ -15,6 +15,9 @@ import 'terms_reacceptance.dart';
 import 'parent_onboarding.dart';
 import 'child_onboarding.dart';
 import 'onboarding_resume.dart';
+import 'parent_gate_api.dart';
+import 'parent_gate_session.dart';
+import 'parent_gate_screens.dart';
 
 export 'api_failure.dart';
 
@@ -46,7 +49,11 @@ abstract class MimiGoApi implements LearningApi {
 enum ApiMode { fixture, live }
 
 class ApiConfiguration {
-  const ApiConfiguration(this.mode, this.baseUrl);
+  const ApiConfiguration(
+    this.mode,
+    this.baseUrl, {
+    this.parentGateEnabled = false,
+  });
   factory ApiConfiguration.fromEnvironment() => ApiConfiguration(
     const String.fromEnvironment(
               'MIMIGO_API_MODE',
@@ -59,11 +66,16 @@ class ApiConfiguration {
       'MIMIGO_API_BASE_URL',
       defaultValue: 'http://10.0.2.2:5187/api/v1',
     ),
+    parentGateEnabled: const bool.fromEnvironment(
+      'MIMIGO_PARENT_GATE_ENABLED',
+      defaultValue: false,
+    ),
   );
   final ApiMode mode;
   final String baseUrl;
+  final bool parentGateEnabled;
   MimiGoApi createClient() => mode == ApiMode.live
-      ? LiveMimiGoApi(Uri.parse(baseUrl))
+      ? LiveMimiGoApi(Uri.parse(baseUrl), parentGateEnabled: parentGateEnabled)
       : FixtureMimiGoApi();
 }
 
@@ -109,10 +121,12 @@ class ParentSummary {
     this.parentId,
     this.email,
     this.displayName,
-    this.currentTermsAccepted,
-  );
+    this.currentTermsAccepted, {
+    this.parentGate,
+  });
   final String parentId, email, displayName;
   final bool currentTermsAccepted;
+  final ParentGateStatus? parentGate;
 }
 
 /// Safe Parent Home projection. Deliberately does not model, cache or expose
@@ -123,8 +137,11 @@ class WorkspaceChildMetadata {
     this.catalogStatus, [
     this.learningEntryStatus,
   ]);
-  factory WorkspaceChildMetadata.fromJson(Map<String, dynamic> json) {
-    final child = _child(_map(json['child']));
+  factory WorkspaceChildMetadata.fromJson(
+    Map<String, dynamic> json, {
+    bool rosterOnly = false,
+  }) {
+    final child = _child(_map(json['child']), rosterOnly: rosterOnly);
     final status = _string(_map(json['catalog']), 'status');
     if (!{
       'AVAILABLE',
@@ -152,12 +169,20 @@ class WorkspaceChildMetadata {
 
 class ParentWorkspace {
   const ParentWorkspace(this.children, this.disclaimer);
-  factory ParentWorkspace.fromJson(Map<String, dynamic> json) {
+  factory ParentWorkspace.fromJson(
+    Map<String, dynamic> json, {
+    bool rosterOnly = false,
+  }) {
     final items = json['children'];
     if (items is! List)
       throw const ApiInvalidResponse('Invalid parent workspace children.');
     final children = items
-        .map((item) => WorkspaceChildMetadata.fromJson(_map(item)))
+        .map(
+          (item) => WorkspaceChildMetadata.fromJson(
+            _map(item),
+            rosterOnly: rosterOnly,
+          ),
+        )
         .toList(growable: false);
     if (children.map((item) => item.child.id).toSet().length != children.length)
       throw const ApiInvalidResponse('Duplicate workspace children.');
@@ -317,16 +342,16 @@ class ChildSummary {
   const ChildSummary({
     required this.id,
     required this.alias,
-    required this.dateOfBirth,
-    required this.ageYears,
+    this.dateOfBirth,
+    this.ageYears,
     required this.withinProgramAgeRange,
     required this.state,
-    required this.createdAt,
+    this.createdAt,
     this.stockAvatarKey,
   });
   final String id, alias, state;
-  final DateTime dateOfBirth, createdAt;
-  final int ageYears;
+  final DateTime? dateOfBirth, createdAt;
+  final int? ageYears;
   final bool withinProgramAgeRange;
   final String? stockAvatarKey;
 }
@@ -745,7 +770,53 @@ class FixtureMimiGoApi implements MimiGoApi {
   }
 }
 
-class LiveMimiGoApi implements MimiGoApi {
+class LiveMimiGoApi implements MimiGoApi, ParentGateApi {
+  @override
+  final bool parentGateEnabled;
+  @override
+  late final GateSessionCoordinator? gateSession = parentGateEnabled
+      ? GateSessionCoordinator(
+          _gateWire,
+          _vault,
+          credentialScope: baseUri.toString(),
+        )
+      : null;
+  late final ParentGateService? _gate = gateSession == null
+      ? null
+      : ParentGateService(gateSession!, _gateWire);
+  final CredentialVault _vault;
+  @override
+  Future<void> setParentPin(
+    PinAction action,
+    String password,
+    String pin,
+    String confirmation,
+  ) => _gate!.setPin(action, password, pin, confirmation);
+  @override
+  Future<void> verifyParentArea(String pin) => _gate!.parentArea(pin);
+  @override
+  Future<void> switchChildContext(String pin, String childId) =>
+      _gate!.enterChild(pin, childId);
+  @override
+  Future<List<ParentActivityItem>> parentActivity(String childId) =>
+      _gate!.activity(childId);
+  @override
+  Future<int> revokeOtherDevices() => _gate!.revokeOthers();
+  Future<Map<String, dynamic>> _gateWire(
+    String method,
+    String path, {
+    Object? body,
+    String? token,
+    String? proof,
+    Set<int>? statuses,
+  }) => _rawRequest(
+    method,
+    path,
+    body: body,
+    token: token,
+    proof: proof,
+    statuses: statuses,
+  );
   @override
   Future<OnboardingAttemptStatus> getOnboardingAttempt(
     String attemptId,
@@ -771,14 +842,30 @@ class LiveMimiGoApi implements MimiGoApi {
   @override
   Future<CurriculumCatalog> curriculum(String childId) async =>
       CurriculumCatalog.fromJson(
-        await _request('GET', 'children/$childId/curriculum', auth: true),
+        await _request(
+          'GET',
+          'children/$childId/curriculum',
+          auth: true,
+          learningChildId: childId,
+        ),
       );
   @override
   Future<ParentWorkspace> learningWorkspace() async => ParentWorkspace.fromJson(
-    await _request('GET', 'parents/me/learning-workspace', auth: true),
+    await _request(
+      'GET',
+      'parents/me/learning-workspace',
+      auth: true,
+      includeProof: true,
+    ),
+    rosterOnly: parentGateEnabled,
   );
-  LiveMimiGoApi(this.baseUri, {HttpClient? client})
-    : _client = client ?? HttpClient();
+  LiveMimiGoApi(
+    this.baseUri, {
+    HttpClient? client,
+    this.parentGateEnabled = false,
+    CredentialVault? vault,
+  }) : _client = client ?? HttpClient(),
+       _vault = vault ?? const PlatformCredentialVault();
   final Uri baseUri;
   final HttpClient _client;
   String? _token;
@@ -791,11 +878,17 @@ class LiveMimiGoApi implements MimiGoApi {
       'POST',
       'children/$childId/learning-sessions/$sessionId/complete',
       auth: true,
+      learningChildId: childId,
     ),
   );
   @override
   Future<LessonList> lessons(String childId) async => LessonList.fromJson(
-    await _request('GET', 'children/$childId/lessons', auth: true),
+    await _request(
+      'GET',
+      'children/$childId/lessons',
+      auth: true,
+      learningChildId: childId,
+    ),
   );
   @override
   Future<LessonDetail> lesson(String childId, String lessonId) async =>
@@ -804,6 +897,7 @@ class LiveMimiGoApi implements MimiGoApi {
           'GET',
           'children/$childId/lessons/$lessonId',
           auth: true,
+          learningChildId: childId,
         ),
       );
   @override
@@ -815,6 +909,7 @@ class LiveMimiGoApi implements MimiGoApi {
       'POST',
       'children/$childId/learning-sessions',
       auth: true,
+      learningChildId: childId,
       body: {'lessonId': lessonId},
     ),
   );
@@ -827,6 +922,7 @@ class LiveMimiGoApi implements MimiGoApi {
       'GET',
       'children/$childId/learning-sessions/$sessionId',
       auth: true,
+      learningChildId: childId,
     ),
   );
   @override
@@ -839,11 +935,19 @@ class LiveMimiGoApi implements MimiGoApi {
       'POST',
       'children/$childId/learning-sessions/$sessionId/answers',
       auth: true,
+      learningChildId: childId,
       body: request.toJson(),
     ),
   );
   @override
-  void clearSession() => _token = null;
+  void clearSession() {
+    _token = null;
+    if (gateSession != null) {
+      gateSession!.invalidateMemory();
+      unawaited(gateSession!.forget().catchError((Object _) {}));
+    }
+  }
+
   @override
   Future<OnboardingReference> onboardingReference() async =>
       _reference(await _request('GET', 'privacy/onboarding-reference'));
@@ -882,6 +986,11 @@ class LiveMimiGoApi implements MimiGoApi {
     required String email,
     required String password,
   }) async {
+    if (gateSession != null) {
+      await gateSession!.login(email, password);
+      final session = gateSession!.current!;
+      return LoginSession(session.token, session.expiresAt, session.parentId);
+    }
     final x = await _request(
       'POST',
       'auth/login',
@@ -903,11 +1012,23 @@ class LiveMimiGoApi implements MimiGoApi {
   @override
   Future<ParentSummary> parentMe() async {
     final x = await _request('GET', 'parents/me', auth: true);
+    ParentGateStatus? status;
+    if (parentGateEnabled) {
+      final session = _map(x['session']);
+      if (session['sessionMode'] != 'PARENT' ||
+          session['sessionId'] != gateSession!.current?.sessionId ||
+          x['parentId'] != gateSession!.current?.parentId) {
+        await gateSession!.forget();
+        throw const ApiInvalidResponse('Parent session identity mismatch.');
+      }
+      status = ParentGateStatus.fromJson(_map(x['parentGate']));
+    }
     return ParentSummary(
       _string(x, 'parentId'),
       _string(x, 'email'),
       _string(x, 'displayName'),
       _bool(x, 'currentTermsAccepted'),
+      parentGate: status,
     );
   }
 
@@ -935,7 +1056,9 @@ class LiveMimiGoApi implements MimiGoApi {
     final items = x['items'];
     if (items is! List)
       throw const ApiInvalidResponse('Child list response is missing items.');
-    return items.map((v) => _child(_map(v))).toList(growable: false);
+    return items
+        .map((v) => _child(_map(v), rosterOnly: parentGateEnabled))
+        .toList(growable: false);
   }
 
   @override
@@ -944,6 +1067,7 @@ class LiveMimiGoApi implements MimiGoApi {
       'GET',
       'children/${Uri.encodeComponent(id)}',
       auth: true,
+      requireProof: true,
     );
     final child = _child(x);
     final values = x['recordedDecisions'];
@@ -979,13 +1103,40 @@ class LiveMimiGoApi implements MimiGoApi {
     String path, {
     Object? body,
     bool auth = false,
+    String? learningChildId,
+    bool requireProof = false,
+    bool includeProof = false,
   }) async {
+    if (gateSession != null && auth) {
+      return gateSession!.authorized(
+        (token, proof) => _rawRequest(
+          method,
+          path,
+          body: body,
+          token: token,
+          proof: requireProof || includeProof ? proof : null,
+        ),
+        childId: learningChildId,
+        proofRequired: requireProof,
+      );
+    }
     if (auth && _token == null)
       throw const ApiFailure(
         'A Parent session is required.',
         code: 'UNAUTHENTICATED',
         status: 401,
       );
+    return _rawRequest(method, path, body: body, token: auth ? _token : null);
+  }
+
+  Future<Map<String, dynamic>> _rawRequest(
+    String method,
+    String path, {
+    Object? body,
+    String? token,
+    String? proof,
+    Set<int>? statuses,
+  }) async {
     final encoded = path.split('/').map(Uri.encodeComponent).join('/');
     final uri = baseUri.replace(
       path: '${baseUri.path.replaceFirst(RegExp(r'/+$'), '')}/$encoded',
@@ -996,18 +1147,18 @@ class LiveMimiGoApi implements MimiGoApi {
           .timeout(const Duration(seconds: 12));
       req.headers.contentType = ContentType.json;
       req.headers.set(HttpHeaders.acceptHeader, ContentType.json.mimeType);
-      if (auth) {
-        if (_token == null)
-          throw const ApiFailure(
-            'A Parent session is required.',
-            code: 'UNAUTHENTICATED',
-            status: 401,
-          );
-        req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $_token');
-      }
+      if (token != null)
+        req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
+      if (proof != null) req.headers.set('MimiGo-Parent-Proof', proof);
       if (body != null) req.write(jsonEncode(body));
       final response = await req.close().timeout(const Duration(seconds: 20));
       final id = response.headers.value('x-request-id');
+      if (response.statusCode == 204) {
+        await response.drain<void>().timeout(const Duration(seconds: 20));
+        if (statuses != null && !statuses.contains(204))
+          throw const ApiInvalidResponse('Unexpected response status.');
+        return <String, dynamic>{};
+      }
       final raw = await utf8.decoder
           .bind(response)
           .join()
@@ -1035,7 +1186,14 @@ class LiveMimiGoApi implements MimiGoApi {
               ? json['requestId'] as String
               : id,
           retryable: response.statusCode >= 500 || response.statusCode == 429,
+          retryAfterSeconds:
+              int.tryParse(response.headers.value('retry-after') ?? '') ??
+              (json['retryAfterSeconds'] is int
+                  ? json['retryAfterSeconds'] as int
+                  : null),
         );
+      if (statuses != null && !statuses.contains(response.statusCode))
+        throw const ApiInvalidResponse('Unexpected response status.');
       return json;
     } on ApiFailure {
       rethrow;
@@ -1146,24 +1304,28 @@ OnboardingReference _reference(Map<String, dynamic> x) {
   );
 }
 
-ChildSummary _child(Map<String, dynamic> x) => ChildSummary(
-  id: _string(x, 'childId'),
-  alias: _string(x, 'childAlias'),
-  dateOfBirth:
-      parseDate(_string(x, 'dateOfBirth')) ??
-      (throw const ApiInvalidResponse(
-        'Child response has an invalid dateOfBirth.',
-      )),
-  ageYears: x['ageYears'] is int
-      ? x['ageYears'] as int
-      : throw const ApiInvalidResponse(
-          'Child response has an invalid ageYears.',
-        ),
-  withinProgramAgeRange: _bool(x, 'withinProgramAgeRange'),
-  state: _string(x, 'state'),
-  createdAt: _date(x, 'createdAt'),
-  stockAvatarKey: x['stockAvatarKey'] as String?,
-);
+ChildSummary _child(Map<String, dynamic> x, {bool rosterOnly = false}) =>
+    ChildSummary(
+      id: _string(x, 'childId'),
+      alias: _string(x, 'childAlias'),
+      dateOfBirth: rosterOnly
+          ? null
+          : parseDate(_string(x, 'dateOfBirth')) ??
+                (throw const ApiInvalidResponse(
+                  'Child response has an invalid dateOfBirth.',
+                )),
+      ageYears: rosterOnly
+          ? null
+          : x['ageYears'] is int
+          ? x['ageYears'] as int
+          : throw const ApiInvalidResponse(
+              'Child response has an invalid ageYears.',
+            ),
+      withinProgramAgeRange: _bool(x, 'withinProgramAgeRange'),
+      state: _string(x, 'state'),
+      createdAt: rosterOnly ? null : _date(x, 'createdAt'),
+      stockAvatarKey: x['stockAvatarKey'] as String?,
+    );
 
 extension FirstOrNull<T> on Iterable<T> {
   T? get firstOrNull => isEmpty ? null : first;
@@ -1187,6 +1349,10 @@ enum Page {
   terms,
   childCreated,
   attemptResume,
+  gatePin,
+  gatedParent,
+  restoringSession,
+  sessionRecovery,
 }
 
 class MimiGoApp extends StatefulWidget {
@@ -1197,7 +1363,7 @@ class MimiGoApp extends StatefulWidget {
   State<MimiGoApp> createState() => _MimiGoAppState();
 }
 
-class _MimiGoAppState extends State<MimiGoApp> {
+class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
   late final config =
       widget.configuration ?? ApiConfiguration.fromEnvironment();
   late final MimiGoApi api = widget.api ?? config.createClient();
@@ -1228,13 +1394,278 @@ class _MimiGoAppState extends State<MimiGoApp> {
   bool startingRegistration = false;
   ApiFailure? registrationEntryError;
   bool verificationReturningParent = false;
-  bool get inChildMode => {
-    Page.child,
-    Page.category,
-    Page.explorer,
-    Page.learningLesson,
-    Page.demo,
-  }.contains(page);
+  ParentGateApi? get gate =>
+      api is ParentGateApi && (api as ParentGateApi).parentGateEnabled
+      ? api as ParentGateApi
+      : null;
+  GateSessionCoordinator? get gateSession => gate?.gateSession;
+  String get currentChildId => gateSession?.current?.mode == SessionMode.child
+      ? gateSession!.current!.childId!
+      : active!.id;
+  PinAction? gatePinAction;
+  ChildSummary? gateChildTarget;
+  ApiFailure? sessionRecoveryError;
+  bool _hadGateSession = false;
+  bool _openingGate = false;
+  SessionMode? _seenGateMode;
+  String? _seenGateChild;
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    gateSession?.addListener(gateChanged);
+    if (gateSession != null) {
+      page = Page.restoringSession;
+      unawaited(restoreGateSession());
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) gateSession?.dropProof();
+  }
+
+  void gateChanged() {
+    if (!mounted) return;
+    final current = gateSession?.current;
+    final lost = _hadGateSession && current == null;
+    final changed =
+        _seenGateMode != current?.mode || _seenGateChild != current?.childId;
+    _hadGateSession = current != null;
+    _seenGateMode = current?.mode;
+    _seenGateChild = current?.childId;
+    if (lost) {
+      setState(() {
+        sessionGeneration++;
+        authenticatedParent = null;
+        parentWorkspace = null;
+        children = [];
+        active = null;
+        attempt = null;
+        draft = null;
+        resumableAttemptId = null;
+        createdProfile = null;
+        creation?.dispose();
+        creation = null;
+        curriculum?.dispose();
+        curriculum = null;
+        pendingLearningAnswers.clear();
+        learningSessions.clear();
+        email = password = mockOtp = null;
+        registration = null;
+        reference = null;
+        gateChildTarget = null;
+        gatePinAction = null;
+        page = Page.welcome;
+        registrationEntryError = const ApiFailure(
+          'Sign in again.',
+          code: 'SESSION_REVOKED',
+          status: 401,
+        );
+      });
+    } else if (page == Page.gatedParent &&
+        !(gateSession?.hasParentProof ?? false)) {
+      setState(() {
+        parentWorkspace = null;
+        page = Page.parent;
+      });
+    } else if (changed &&
+        current?.mode == SessionMode.child &&
+        !{Page.gatePin, Page.restoringSession}.contains(page)) {
+      setState(() {
+        active = null;
+        curriculum?.dispose();
+        curriculum = null;
+        selectedLessonId = null;
+        selectedCategory = null;
+        page = Page.child;
+      });
+    } else if (changed && current?.mode == SessionMode.parent && inChildMode) {
+      setState(() {
+        active = null;
+        parentWorkspace = null;
+        page = Page.restoringSession;
+      });
+      unawaited(recoverGateParent());
+    }
+  }
+
+  Future<void> restoreGateSession() async {
+    try {
+      await gateSession!.restore();
+      if (!mounted) return;
+      if (gateSession!.current?.mode == SessionMode.child)
+        setState(() => page = Page.child);
+      else if (gateSession!.hasSession)
+        await recoverGateParent();
+      else
+        setState(() => page = Page.welcome);
+    } catch (_) {
+      if (mounted)
+        setState(() {
+          page = Page.welcome;
+          registrationEntryError = const ApiFailure(
+            'Session unavailable.',
+            code: 'SESSION_REVOKED',
+            status: 401,
+          );
+        });
+    }
+  }
+
+  Future<void> loadGateParent({bool protectedArea = false}) async {
+    final parent = await api.parentMe();
+    final workspace = await api.learningWorkspace();
+    if (!mounted || gateSession?.current?.mode != SessionMode.parent) return;
+    setState(() {
+      authenticatedParent = parent;
+      parentWorkspace = workspace;
+      children = workspace.children.map((c) => c.child).toList();
+      active = null;
+      page = protectedArea && (gateSession?.hasParentProof ?? false)
+          ? Page.gatedParent
+          : Page.parent;
+    });
+  }
+
+  Future<void> recoverGateParent() async {
+    try {
+      await loadGateParent();
+    } on ApiFailure catch (failure) {
+      if (mounted && gateSession?.hasSession == true)
+        setState(() {
+          sessionRecoveryError = failure;
+          page = Page.sessionRecovery;
+        });
+    }
+  }
+
+  Future<void> openGatePin({ChildSummary? child, PinAction? action}) async {
+    if (gate == null || _openingGate) return;
+    _openingGate = true;
+    if (gateSession?.current?.mode == SessionMode.parent) {
+      setState(() => page = Page.restoringSession);
+      try {
+        final parent = await api.parentMe();
+        if (!mounted) return;
+        authenticatedParent = parent;
+      } on ApiFailure catch (failure) {
+        if (mounted && gateSession?.hasSession == true)
+          setState(() {
+            sessionRecoveryError = failure;
+            page = Page.sessionRecovery;
+          });
+        _openingGate = false;
+        return;
+      }
+    }
+    _openingGate = false;
+    if (!mounted || gateSession?.hasSession != true) return;
+    setState(() {
+      gateChildTarget = child;
+      gatePinAction = action;
+      page = Page.gatePin;
+    });
+  }
+
+  void openProtectedParent() {
+    if (gateSession?.hasParentProof ?? false)
+      setState(() => page = Page.gatedParent);
+    else
+      openGatePin();
+  }
+
+  Future<void> gateSucceeded() async {
+    if (gateChildTarget != null) {
+      if (gateSession?.current?.mode != SessionMode.child ||
+          gateSession?.current?.childId != gateChildTarget!.id)
+        throw const ApiInvalidResponse('Child transition was not confirmed.');
+      setState(() {
+        active = gateChildTarget;
+        gateChildTarget = null;
+        gatePinAction = null;
+        resumableAttemptId = null;
+        attempt = null;
+        draft = null;
+        curriculum?.dispose();
+        curriculum = null;
+        page = Page.child;
+      });
+    } else {
+      final authorized = gatePinAction == null;
+      gatePinAction = null;
+      await loadGateParent(protectedArea: authorized);
+    }
+  }
+
+  void gateBack() {
+    if (gateSession?.current?.mode == SessionMode.child)
+      setState(() => page = Page.child);
+    else {
+      setState(() => page = Page.restoringSession);
+      unawaited(recoverGateParent());
+    }
+  }
+
+  void gateRecover() {
+    if (gateSession?.current?.mode == SessionMode.child) {
+      returnToAccountEntry();
+      return;
+    }
+    openGatePin(
+      action: authenticatedParent?.parentGate?.status == 'NOT_ENROLLED'
+          ? PinAction.enroll
+          : PinAction.reset,
+    );
+  }
+
+  Page get safePage {
+    final mode = gateSession?.current?.mode;
+    if (gate != null &&
+        mode == SessionMode.parent &&
+        {
+          Page.child,
+          Page.category,
+          Page.explorer,
+          Page.learningLesson,
+          Page.demo,
+        }.contains(page))
+      return authenticatedParent == null ? Page.sessionRecovery : Page.parent;
+    if (mode == SessionMode.child &&
+        !{
+          Page.child,
+          Page.category,
+          Page.explorer,
+          Page.learningLesson,
+          Page.demo,
+          Page.gatePin,
+          Page.restoringSession,
+        }.contains(page))
+      return Page.child;
+    if (gate != null &&
+        mode == null &&
+        !{
+          Page.welcome,
+          Page.signIn,
+          Page.register,
+          Page.otp,
+          Page.restoringSession,
+        }.contains(page))
+      return Page.welcome;
+    if (page == Page.gatedParent && !(gateSession?.hasParentProof ?? false))
+      return authenticatedParent == null ? Page.sessionRecovery : Page.parent;
+    return page;
+  }
+
+  bool get inChildMode =>
+      gateSession?.current?.mode == SessionMode.child ||
+      {
+        Page.child,
+        Page.category,
+        Page.explorer,
+        Page.learningLesson,
+        Page.demo,
+      }.contains(page);
 
   Future<void> returnToAccountEntry() async {
     if (accountEntryPending) return;
@@ -1270,7 +1701,20 @@ class _MimiGoAppState extends State<MimiGoApp> {
       accountEntryPending = false;
     }
     if (!mounted || confirmed != true) return;
-    api.clearSession();
+    if (gateSession != null) {
+      try {
+        await gateSession!.logout();
+      } on ApiFailure catch (failure) {
+        registrationEntryError = failure.code == 'SECURE_STORAGE_UNAVAILABLE'
+            ? failure
+            : const ApiFailure(
+                'Remote logout not confirmed. Local session ended.',
+                code: 'LOGOUT_UNCONFIRMED',
+              );
+      }
+    } else
+      api.clearSession();
+    if (!mounted) return;
     messengerKey.currentState?.clearSnackBars();
     setState(() {
       sessionGeneration++;
@@ -1300,7 +1744,11 @@ class _MimiGoAppState extends State<MimiGoApp> {
   }
 
   void childBack() {
-    if (page == Page.attemptResume) {
+    if (page == Page.gatePin) {
+      gateBack();
+    } else if (page == Page.gatedParent) {
+      goParentHome();
+    } else if (page == Page.attemptResume) {
       if (creation?.sent == true)
         setState(() => page = Page.review);
       else
@@ -1334,7 +1782,7 @@ class _MimiGoAppState extends State<MimiGoApp> {
     if (page != Page.child) return;
     curriculum?.dispose();
     setState(() {
-      curriculum = CurriculumExplorerState(api, active!.id);
+      curriculum = CurriculumExplorerState(api, currentChildId);
       if (domain != null) curriculum!.chooseDomain(domain);
       page = Page.explorer;
     });
@@ -1342,6 +1790,8 @@ class _MimiGoAppState extends State<MimiGoApp> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    gateSession?.removeListener(gateChanged);
     creation?.dispose();
     learningSessions.dispose();
     curriculum?.dispose();
@@ -1486,7 +1936,7 @@ class _MimiGoAppState extends State<MimiGoApp> {
   }
 
   void reviewChild(ChildDraft value) {
-    if (attempt == null || creation?.sent == true) return;
+    if (inChildMode || attempt == null || creation?.sent == true) return;
     creation?.dispose();
     setState(() {
       draft = value;
@@ -1547,13 +1997,58 @@ class _MimiGoAppState extends State<MimiGoApp> {
           page != Page.parentOnly &&
           page != Page.childCreated &&
           page != Page.attemptResume &&
+          page != Page.gatePin &&
+          page != Page.gatedParent &&
+          page != Page.restoringSession &&
           page != Page.terms,
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) childBack();
       },
       child: Scaffold(
         body: SafeArea(
-          child: switch (page) {
+          child: switch (safePage) {
+            Page.sessionRecovery => Frame(
+              title: 'Validate Parent session',
+              children: [
+                GateError(sessionRecoveryError),
+                FilledButton(
+                  key: const Key('retryParentSession'),
+                  onPressed: recoverGateParent,
+                  child: const Text('Retry session validation'),
+                ),
+                TextButton(
+                  onPressed: returnToAccountEntry,
+                  child: const Text('Sign out and return to account entry'),
+                ),
+              ],
+            ),
+            Page.restoringSession => const Frame(
+              title: 'Checking device session',
+              children: [
+                LinearProgressIndicator(semanticsLabel: 'Validating session'),
+              ],
+            ),
+            Page.gatePin => GatePinScreen(
+              key: ValueKey((gatePinAction, gateChildTarget?.id)),
+              api: gate!,
+              childId: gateChildTarget?.id,
+              pinAction: gatePinAction,
+              status: gateSession?.current?.mode == SessionMode.parent
+                  ? authenticatedParent?.parentGate
+                  : null,
+              done: gateSucceeded,
+              back: gateBack,
+              accountEntry: returnToAccountEntry,
+              recover: gateRecover,
+            ),
+            Page.gatedParent => GatedParentArea(
+              api: api,
+              gate: gate!,
+              home: goParentHome,
+              reverify: openProtectedParent,
+              changePin: () => openGatePin(action: PinAction.change),
+              resetPin: () => openGatePin(action: PinAction.reset),
+            ),
             Page.welcome => Welcome(
               live: config.mode == ApiMode.live,
               start: start,
@@ -1562,6 +2057,7 @@ class _MimiGoAppState extends State<MimiGoApp> {
               signIn: () => setState(() => page = Page.signIn),
             ),
             Page.signIn => SignIn(
+              parentGateEnabled: gate != null,
               back: () => setState(() => page = Page.welcome),
               submitted: (email, password) => authenticate(
                 email: email,
@@ -1649,7 +2145,9 @@ class _MimiGoAppState extends State<MimiGoApp> {
               },
             ),
             Page.child => ChildHome(
-              child: active!,
+              child: active,
+              gateAvailable: gate != null,
+              parentArea: openProtectedParent,
               fixture: config.mode == ApiMode.fixture,
               category: (value) => setState(() {
                 learningFromExplorer = false;
@@ -1710,7 +2208,7 @@ class _MimiGoAppState extends State<MimiGoApp> {
                     selectedCategory == LearningCategory.math)
                   MathLessonCatalog(
                     api: api,
-                    childId: active!.id,
+                    childId: currentChildId,
                     openLesson: (id) {
                       if (page != Page.category) return;
                       setState(() {
@@ -1767,7 +2265,7 @@ class _MimiGoAppState extends State<MimiGoApp> {
               children: [
                 CurriculumExplorer(
                   model: curriculum!,
-                  childAlias: active!.alias,
+                  childAlias: active?.alias ?? 'Child Mode',
                   fixture: config.mode == ApiMode.fixture,
                   openLesson: (lesson) {
                     if (page != Page.explorer) return;
@@ -1809,9 +2307,9 @@ class _MimiGoAppState extends State<MimiGoApp> {
                   : 'Math learning · development/demo',
               children: [
                 LearningLessonView(
-                  key: ValueKey((active!.id, selectedLessonId)),
+                  key: ValueKey((currentChildId, selectedLessonId)),
                   api: api,
-                  childId: active!.id,
+                  childId: currentChildId,
                   lessonId: selectedLessonId!,
                   pending: pendingLearningAnswers,
                   sessions: learningSessions,
@@ -1871,6 +2369,16 @@ class _MimiGoAppState extends State<MimiGoApp> {
                 workspace: parentWorkspace,
                 accountEntry: returnToAccountEntry,
                 add: beginChildOnboarding,
+                openParentArea: gate == null ? null : openProtectedParent,
+                setupPin: gate == null
+                    ? null
+                    : () => openGatePin(
+                        action:
+                            authenticatedParent?.parentGate?.status ==
+                                'NOT_ENROLLED'
+                            ? PinAction.enroll
+                            : PinAction.reset,
+                      ),
                 resumeOnboarding: resumableAttemptId == null
                     ? null
                     : openAttemptResume,
@@ -1879,6 +2387,10 @@ class _MimiGoAppState extends State<MimiGoApp> {
                       child.state != 'ACTIVE' ||
                       !child.withinProgramAgeRange)
                     return;
+                  if (gate != null) {
+                    openGatePin(child: child);
+                    return;
+                  }
                   setState(() {
                     curriculum?.dispose();
                     curriculum = null;
@@ -2047,10 +2559,12 @@ class SignIn extends StatefulWidget {
     required this.back,
     required this.submitted,
     this.verify,
+    this.parentGateEnabled = false,
   });
   final VoidCallback back;
   final Future<void> Function(String email, String password) submitted;
   final void Function(String email, String password)? verify;
+  final bool parentGateEnabled;
 
   @override
   State<SignIn> createState() => _SignInState();
@@ -2062,16 +2576,24 @@ class _SignInState extends State<SignIn> {
   final password = TextEditingController();
   bool busy = false;
   ApiFailure? error;
+  DateTime? retryAt;
+  Timer? retryTimer;
+  int get retrySeconds => retryAt == null
+      ? 0
+      : (retryAt!.difference(DateTime.now()).inMilliseconds / 1000)
+            .ceil()
+            .clamp(0, 86400);
 
   @override
   void dispose() {
+    retryTimer?.cancel();
     email.dispose();
     password.dispose();
     super.dispose();
   }
 
   Future<void> submit() async {
-    if (busy || !formKey.currentState!.validate()) return;
+    if (busy || retrySeconds > 0 || !formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
     setState(() {
       busy = true;
@@ -2080,6 +2602,19 @@ class _SignInState extends State<SignIn> {
     try {
       await widget.submitted(email.text.trim(), password.text);
     } on ApiFailure catch (failure) {
+      final retry = failure.retryAfterSeconds;
+      if (mounted && retry != null && retry > 0) {
+        retryAt = DateTime.now().add(Duration(seconds: retry));
+        retryTimer?.cancel();
+        retryTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+          if (!mounted) {
+            timer.cancel();
+            return;
+          }
+          setState(() {});
+          if (retrySeconds == 0) timer.cancel();
+        });
+      }
       if (mounted)
         setState(
           () => error = failure.code == 'INVALID_CREDENTIALS'
@@ -2139,7 +2674,15 @@ class _SignInState extends State<SignIn> {
                   : null,
               onFieldSubmitted: (_) => submit(),
             ),
-            ErrorText(error),
+            if (widget.parentGateEnabled)
+              GateError(error)
+            else
+              ErrorText(error),
+            if (retrySeconds > 0)
+              Text(
+                'Try again in $retrySeconds seconds.',
+                key: const Key('loginRetryAfter'),
+              ),
             if (error?.code == 'EMAIL_NOT_VERIFIED' && widget.verify != null)
               OutlinedButton(
                 key: const Key('resumeEmailVerification'),
@@ -2153,7 +2696,7 @@ class _SignInState extends State<SignIn> {
               height: 64,
               child: FilledButton(
                 key: const Key('signInSubmit'),
-                onPressed: busy ? null : submit,
+                onPressed: busy || retrySeconds > 0 ? null : submit,
                 child: busy
                     ? const Row(
                         mainAxisSize: MainAxisSize.min,
@@ -2462,11 +3005,13 @@ class _OtpState extends State<Otp> {
           decoration: const InputDecoration(labelText: 'Six-digit mock code'),
         ),
         OnboardingError(model.error),
+        if (model.retrySeconds > 0)
+          Text('Try again in ${model.retrySeconds} seconds.'),
         ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 64),
           child: FilledButton(
             key: const Key('otpVerify'),
-            onPressed: model.busy ? null : submit,
+            onPressed: model.busy || model.retrySeconds > 0 ? null : submit,
             child: Text(
               model.busy
                   ? 'Checking…'
@@ -2932,16 +3477,22 @@ class ChildHome extends StatelessWidget {
     required this.accountEntry,
     this.explore,
     this.english,
+    this.gateAvailable = false,
+    this.parentArea,
   });
-  final ChildSummary child;
+  final ChildSummary? child;
   final bool fixture;
   final ValueChanged<LearningCategory> category;
   final VoidCallback accountEntry;
   final VoidCallback? explore;
   final VoidCallback? english;
+  final bool gateAvailable;
+  final VoidCallback? parentArea;
   @override
   Widget build(BuildContext c) => Frame(
-    title: 'Hi, ${child.alias}!',
+    title: child == null
+        ? 'Welcome back to Child Mode!'
+        : 'Hi, ${child!.alias}!',
     children: [
       Text(
         fixture
@@ -2992,24 +3543,30 @@ class ChildHome extends StatelessWidget {
         ],
       ),
       const SizedBox(height: 16),
-      const Text(
-        'Parent verification is not available inside Child Mode yet. Return to account entry for a parent to sign in again.',
+      Text(
+        gateAvailable
+            ? 'Parent controls require PIN verification. Forgotten PIN: sign out and sign in again for password-authorized reset.'
+            : 'Parent verification is not available inside Child Mode yet. Return to account entry for a parent to sign in again.',
       ),
       Semantics(
         header: true,
         child: Text(
-          'Parent controls are locked',
+          gateAvailable
+              ? 'PIN-protected Parent controls'
+              : 'Parent controls are locked',
           style: Theme.of(c).textTheme.titleMedium,
         ),
       ),
-      const Text(
-        'Switching children and opening Parent Area require an approved Parent Gate. Its verification contract is unavailable; no PIN is accepted or simulated.',
+      Text(
+        gateAvailable
+            ? 'Verify the Parent Area PIN to leave Child Mode and choose another owned child. Entering the selected child uses a separate child-bound verification.'
+            : 'Switching children and opening Parent Area require an approved Parent Gate. Its verification contract is unavailable; no PIN is accepted or simulated.',
       ),
       ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 64),
         child: OutlinedButton.icon(
           key: const Key('childSwitchGate'),
-          onPressed: null,
+          onPressed: gateAvailable ? parentArea : null,
           icon: const Icon(Icons.lock_outline),
           label: const Text('Switch child · Parent Gate required'),
         ),
@@ -3018,7 +3575,7 @@ class ChildHome extends StatelessWidget {
         height: 64,
         child: OutlinedButton(
           key: const Key('childParentGate'),
-          onPressed: null,
+          onPressed: gateAvailable ? parentArea : null,
           child: const Text('Open authenticated Parent Area'),
         ),
       ),
@@ -3099,7 +3656,9 @@ class _ParentAreaState extends State<ParentArea> {
               ...widget.children.map(
                 (x) => ListTile(
                   title: Text(x.alias),
-                  subtitle: Text('${dateText(x.dateOfBirth)} · ${x.state}'),
+                  subtitle: Text(
+                    '${x.dateOfBirth == null ? 'Basic roster profile' : dateText(x.dateOfBirth!)} · ${x.state}',
+                  ),
                   trailing: x.id == widget.active?.id
                       ? const Icon(Icons.check)
                       : null,

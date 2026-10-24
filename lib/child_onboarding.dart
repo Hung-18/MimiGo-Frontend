@@ -49,7 +49,8 @@ class ChildCreationState extends ChangeNotifier {
       if (generation != _generation) return null;
       if (child.id.isEmpty ||
           child.alias != request.childAlias ||
-          dateText(child.dateOfBirth) != dateText(request.dateOfBirth) ||
+          child.dateOfBirth == null ||
+          dateText(child.dateOfBirth!) != dateText(request.dateOfBirth) ||
           child.stockAvatarKey != request.stockAvatarKey)
         throw const ApiInvalidResponse(
           'Created child does not match the submitted profile.',

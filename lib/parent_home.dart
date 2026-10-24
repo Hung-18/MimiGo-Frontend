@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'main.dart'
     show ChildDetail, ChildSummary, MimiGoApi, ParentSummary, ParentWorkspace;
+import 'parent_gate_api.dart';
 import 'api_failure.dart';
 import 'learning_screens.dart' show LearningError;
 
@@ -11,7 +12,7 @@ class ParentHomeState extends ChangeNotifier {
   ParentHomeState(this.api);
   final MimiGoApi api;
   List<ChildSummary> children = const [];
-  ChildDetail? selected;
+  ChildSummary? selected;
   ApiFailure? error;
   bool busy = false;
   Map<String, String> catalogStatuses = const {};
@@ -85,7 +86,11 @@ class ParentHomeState extends ChangeNotifier {
     selected = null;
     notifyListeners();
     try {
-      final value = await api.getChild(id);
+      final gated =
+          api is ParentGateApi && (api as ParentGateApi).parentGateEnabled;
+      final value = gated
+          ? children.firstWhere((child) => child.id == id)
+          : await api.getChild(id);
       if (value.id != id)
         throw const ApiInvalidResponse(
           'The service returned a different child profile.',
@@ -127,15 +132,18 @@ class ParentHome extends StatefulWidget {
     required this.fixture,
     this.workspace,
     this.resumeOnboarding,
+    this.openParentArea,
+    this.setupPin,
   });
   final MimiGoApi api;
   final ParentSummary parent;
   final List<ChildSummary> children;
   final VoidCallback add, accountEntry;
-  final ValueChanged<ChildDetail> enterChild;
+  final ValueChanged<ChildSummary> enterChild;
   final bool fixture;
   final ParentWorkspace? workspace;
   final VoidCallback? resumeOnboarding;
+  final VoidCallback? openParentArea, setupPin;
   @override
   State<ParentHome> createState() => _ParentHomeState();
 }
@@ -194,8 +202,10 @@ class _ParentHomeState extends State<ParentHome> {
                 ? 'DEMO / FIXTURE parent account'
                 : 'DEVELOPMENT / DEMO · authenticated parent account',
           ),
-          const Text(
-            'Choose a child before entering Child Mode. Returning from Child Mode requires a fresh parent sign-in; Parent Gate is not available.',
+          Text(
+            widget.openParentArea == null
+                ? 'Choose a child before entering Child Mode. Returning from Child Mode requires a fresh parent sign-in; Parent Gate is not available.'
+                : 'Basic child roster only. Entering Child Mode needs a child-bound PIN verification. Protected Parent details require a Parent Area proof.',
           ),
           const SizedBox(height: 16),
           if (model.busy)
@@ -204,8 +214,10 @@ class _ParentHomeState extends State<ParentHome> {
             ),
           if (model.error != null) LearningError(model.error!),
           if (model.disclaimer != null) Text(model.disclaimer!),
-          const Text(
-            'Learning activity is unavailable until Parent Gate is approved. No session history or progress is shown here.',
+          Text(
+            widget.openParentArea == null
+                ? 'Learning activity is unavailable until Parent Gate is approved. No session history or progress is shown here.'
+                : 'No protected profile details or learning activity are displayed in this basic roster.',
           ),
           if (child == null) ...[
             Semantics(
@@ -236,7 +248,7 @@ class _ParentHomeState extends State<ParentHome> {
                     _ => Icons.child_care,
                   }, semanticLabel: 'Predefined child avatar'),
                   subtitle: Text(
-                    'Profile: ${profile.state} · Age returned by service: ${profile.ageYears}\n'
+                    '${widget.openParentArea == null ? 'Profile: ${profile.state} · Age returned by service: ${profile.ageYears}' : 'Profile: ${profile.state}'}\n'
                     '${profile.withinProgramAgeRange ? 'Within program age range' : 'Outside program age range · profile only'}\n'
                     '${availability(model.catalogStatuses[profile.id])}',
                   ),
@@ -258,14 +270,17 @@ class _ParentHomeState extends State<ParentHome> {
               ),
             ),
             Text(
-              'Profile: ${child.state} · Age returned by service: ${child.ageYears}',
+              widget.openParentArea == null
+                  ? 'Profile: ${child.state} · Age returned by service: ${child.ageYears}'
+                  : 'Profile: ${child.state}',
             ),
             Text(
               child.withinProgramAgeRange
                   ? 'Lesson eligibility is checked by the service when you explore.'
                   : 'The service reports this child outside the program age range. No learning access is granted here.',
             ),
-            Text(child.disclaimer),
+            if (child is ChildDetail && widget.openParentArea == null)
+              Text(child.disclaimer),
             Text(
               availability(model.catalogStatuses[child.id]),
               key: const Key('parentCatalogAvailability'),
@@ -298,6 +313,25 @@ class _ParentHomeState extends State<ParentHome> {
             ),
           ],
           const SizedBox(height: 16),
+          if (widget.openParentArea != null) ...[
+            Text(
+              'Parent PIN status: ${widget.parent.parentGate?.status ?? 'UNAVAILABLE'}',
+            ),
+            OutlinedButton(
+              key: const Key('openParentArea'),
+              onPressed: model.busy || leaving ? null : widget.openParentArea,
+              child: const Text('Open Parent Area with PIN'),
+            ),
+            OutlinedButton(
+              key: const Key('manageParentPin'),
+              onPressed: model.busy || leaving ? null : widget.setupPin,
+              child: Text(
+                widget.parent.parentGate?.status == 'NOT_ENROLLED'
+                    ? 'Set up Parent PIN with password'
+                    : 'Reset PIN with password',
+              ),
+            ),
+          ],
           OutlinedButton(
             key: const Key('parentRefresh'),
             onPressed: model.busy || leaving ? null : model.refresh,
