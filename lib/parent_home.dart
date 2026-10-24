@@ -263,14 +263,11 @@ class _ParentHomeState extends State<ParentHome> {
           ),
           if (!widget.parent.currentTermsAccepted)
             const Text(
-              'Current Terms acceptance is required to add a child. Terms re-acceptance is not available in this development API.',
+              'Adding a child checks the current account Terms. Explicit acceptance will be requested only if the service requires it.',
             ),
           FilledButton(
             key: const Key('addChild'),
-            onPressed:
-                !model.busy && !leaving && widget.parent.currentTermsAccepted
-                ? widget.add
-                : null,
+            onPressed: !model.busy && !leaving ? widget.add : null,
             child: const Text('Add another child'),
           ),
           TextButton(

@@ -25,6 +25,15 @@ class TracedLiveApi extends LiveMimiGoApi {
   Future<ParentWorkspace> learningWorkspace() =>
       trace('workspace', super.learningWorkspace);
   @override
+  Future<TermsAcceptance> acceptCurrentTerms(
+    String termsVersionId, {
+    required bool termsAccepted,
+  }) => trace(
+    'terms.accept-current',
+    () =>
+        super.acceptCurrentTerms(termsVersionId, termsAccepted: termsAccepted),
+  );
+  @override
   Future<LessonList> lessons(String childId) async {
     catalog = await trace('lessons', () => super.lessons(childId));
     return catalog!;

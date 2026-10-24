@@ -11,6 +11,7 @@ import 'learning_screens.dart';
 import 'learning_session_memory.dart';
 import 'parent_home.dart';
 import 'curriculum_explorer.dart';
+import 'terms_reacceptance.dart';
 
 export 'api_failure.dart';
 
@@ -19,6 +20,10 @@ void main() => runApp(const MimiGoApp());
 /// Accepted auth/ChildProfile boundary plus the exact S2 Learning operations.
 /// Fixture remains the default; live mode is opt-in.
 abstract class MimiGoApi implements LearningApi {
+  Future<TermsAcceptance> acceptCurrentTerms(
+    String termsVersionId, {
+    required bool termsAccepted,
+  });
   Future<ParentWorkspace> learningWorkspace();
 
   /// Discards the local bearer session only. No server logout/revocation exists.
@@ -148,8 +153,27 @@ class ParentWorkspace {
 }
 
 class TermsReference {
-  const TermsReference(this.id, this.code);
+  const TermsReference(
+    this.id,
+    this.code, {
+    this.contentHash,
+    this.effectiveFrom,
+  });
   final String id, code;
+  final String? contentHash;
+  final DateTime? effectiveFrom;
+}
+
+class TermsAcceptance {
+  const TermsAcceptance(this.id, this.code, this.currentTermsAccepted);
+  factory TermsAcceptance.fromJson(Map<String, dynamic> json) =>
+      TermsAcceptance(
+        _string(json, 'termsVersionId'),
+        _string(json, 'code'),
+        _bool(json, 'currentTermsAccepted'),
+      );
+  final String id, code;
+  final bool currentTermsAccepted;
 }
 
 class Purpose {
@@ -266,6 +290,27 @@ class ChildDetail extends ChildSummary {
 
 class FixtureMimiGoApi implements MimiGoApi {
   @override
+  Future<TermsAcceptance> acceptCurrentTerms(
+    String termsVersionId, {
+    required bool termsAccepted,
+  }) async {
+    _auth();
+    if (!termsAccepted)
+      throw const ApiFailure(
+        'Explicit Terms acceptance is required.',
+        code: 'TERMS_ACCEPTANCE_REQUIRED',
+        status: 422,
+      );
+    if (termsVersionId != termsId)
+      throw const ApiFailure(
+        'Refresh current Terms.',
+        code: 'TERMS_VERSION_NOT_CURRENT',
+        status: 422,
+      );
+    return const TermsAcceptance(termsId, 'R0_MOCK_TERMS_V1', true);
+  }
+
+  @override
   Future<CurriculumCatalog> curriculum(String childId) async =>
       const CurriculumCatalog(
         [],
@@ -342,8 +387,14 @@ class FixtureMimiGoApi implements MimiGoApi {
   @override
   Future<OnboardingReference> onboardingReference() async {
     await _wait();
-    return const OnboardingReference(
-      TermsReference(termsId, 'R0_MOCK_TERMS_V1'),
+    return OnboardingReference(
+      TermsReference(
+        termsId,
+        'R0_MOCK_TERMS_V1',
+        contentHash:
+            '0000000000000000000000000000000000000000000000000000000000000000',
+        effectiveFrom: DateTime.utc(2026, 10, 1),
+      ),
       [Purpose('CHILD_PROFILE_AGE', true), Purpose('LEARNING_PROGRESS', true)],
       [
         Notice('CHILD_PROFILE_AGE', ageNoticeId, 'test-v1'),
@@ -515,6 +566,18 @@ class FixtureMimiGoApi implements MimiGoApi {
 }
 
 class LiveMimiGoApi implements MimiGoApi {
+  @override
+  Future<TermsAcceptance> acceptCurrentTerms(
+    String termsVersionId, {
+    required bool termsAccepted,
+  }) async => TermsAcceptance.fromJson(
+    await _request(
+      'POST',
+      'parents/me/terms-acceptances',
+      auth: true,
+      body: {'termsVersionId': termsVersionId, 'termsAccepted': termsAccepted},
+    ),
+  );
   @override
   Future<CurriculumCatalog> curriculum(String childId) async =>
       CurriculumCatalog.fromJson(
@@ -850,6 +913,8 @@ OnboardingReference _reference(Map<String, dynamic> x) {
       : TermsReference(
           _string(_map(termsJson), 'termsVersionId'),
           _string(_map(termsJson), 'code'),
+          contentHash: _string(_map(termsJson), 'contentHash'),
+          effectiveFrom: _date(_map(termsJson), 'effectiveFrom'),
         );
   final raw = x['purposes'];
   if (raw is! List)
@@ -905,6 +970,7 @@ enum Page {
   demo,
   parent,
   parentOnly,
+  terms,
 }
 
 class MimiGoApp extends StatefulWidget {
@@ -999,7 +1065,9 @@ class _MimiGoAppState extends State<MimiGoApp> {
   }
 
   void childBack() {
-    if (page == Page.learningLesson) {
+    if (page == Page.terms) {
+      setState(() => page = Page.parent);
+    } else if (page == Page.learningLesson) {
       setState(
         () => page = learningFromExplorer ? Page.explorer : Page.category,
       );
@@ -1080,8 +1148,26 @@ class _MimiGoAppState extends State<MimiGoApp> {
       final value = await api.beginOnboardingAttempt();
       if (mounted) setState(() => attempt = value);
     } on ApiFailure catch (e) {
-      if (mounted) error(e);
+      if (mounted) {
+        if (e.code == 'TERMS_ACCEPTANCE_REQUIRED')
+          requireCurrentTerms();
+        else
+          error(e);
+      }
     }
+  }
+
+  void requireCurrentTerms() {
+    if (authenticatedParent == null ||
+        !{Page.parent, Page.privacy, Page.review}.contains(page))
+      return;
+    setState(() {
+      attempt = null;
+      draft = null;
+      parentWorkspace = null;
+      children = [];
+      page = Page.terms;
+    });
   }
 
   Future<void> refresh() async {
@@ -1116,7 +1202,8 @@ class _MimiGoAppState extends State<MimiGoApp> {
           page != Page.category &&
           page != Page.demo &&
           page != Page.learningLesson &&
-          page != Page.explorer,
+          page != Page.explorer &&
+          page != Page.terms,
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) childBack();
       },
@@ -1178,6 +1265,7 @@ class _MimiGoAppState extends State<MimiGoApp> {
               api: api,
               attempt: attempt!,
               draft: draft!,
+              termsRequired: requireCurrentTerms,
               back: () => setState(() => page = Page.input),
               created: (v) async {
                 setState(() {
@@ -1334,6 +1422,28 @@ class _MimiGoAppState extends State<MimiGoApp> {
                     onPressed: () => setState(() => page = Page.child),
                     child: const Text('Back to Child Mode'),
                   ),
+                ),
+              ],
+            ),
+            Page.terms => Frame(
+              title: 'Review current account Terms',
+              children: [
+                TermsReacceptance(
+                  api: api,
+                  parentId: authenticatedParent!.parentId,
+                  accepted: (parent) {
+                    if (!mounted ||
+                        authenticatedParent?.parentId != parent.parentId)
+                      return;
+                    setState(() {
+                      authenticatedParent = parent;
+                      attempt = null;
+                      draft = null;
+                      page = Page.privacy;
+                    });
+                  },
+                  cancel: childBack,
+                  accountEntry: returnToAccountEntry,
                 ),
               ],
             ),
@@ -2004,11 +2114,13 @@ class Review extends StatefulWidget {
     required this.draft,
     required this.back,
     required this.created,
+    this.termsRequired,
   });
   final MimiGoApi api;
   final OnboardingAttempt attempt;
   final ChildDraft draft;
   final VoidCallback back;
+  final VoidCallback? termsRequired;
   final Future<void> Function(ChildSummary) created;
   @override
   State<Review> createState() => _ReviewState();
@@ -2037,7 +2149,13 @@ class _ReviewState extends State<Review> {
       final value = await widget.api.createChild(request);
       await widget.created(value);
     } on ApiFailure catch (e) {
-      if (mounted) setState(() => error = e);
+      if (mounted) {
+        if (e.code == 'TERMS_ACCEPTANCE_REQUIRED' &&
+            widget.termsRequired != null)
+          widget.termsRequired!();
+        else
+          setState(() => error = e);
+      }
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -2215,7 +2333,7 @@ class _ParentAreaState extends State<ParentArea> {
         ? [widget.home!]
         : [
             const Text(
-              'Access relies on the in-memory authenticated bearer session. Backend does not implement Parent PIN, refresh/logout, consent withdrawal or terms re-acceptance.',
+              'Access relies on the in-memory authenticated bearer session. Parent PIN, refresh/logout and consent withdrawal remain unavailable.',
             ),
             SizedBox(
               height: 52,
@@ -2229,7 +2347,7 @@ class _ParentAreaState extends State<ParentArea> {
             ErrorText(error),
             if (!widget.currentTermsAccepted)
               const Text(
-                'Current Terms acceptance is required to add a child. Terms re-acceptance is not available in this development API.',
+                'Adding a child requires the current account Terms. Parent Home handles any server-required re-acceptance.',
               ),
             if (widget.children.isEmpty)
               const Text('No child profiles returned.')

@@ -357,18 +357,19 @@ void main() {
   });
 
   testWidgets(
-    'outdated terms block adding a child without inventing re-acceptance',
+    'outdated Terms metadata does not open acceptance before a server requirement',
     (tester) async {
       final api = AuthApi()..termsAccepted = false;
       await openSignIn(tester, api);
       await fillSignIn(tester);
       await submitSignIn(tester);
       expect(find.byType(ParentArea), findsOneWidget);
+      expect(find.byKey(const Key('currentTermsVersion')), findsNothing);
       expect(
         tester
             .widget<FilledButton>(find.byKey(const Key('addChild')))
             .onPressed,
-        isNull,
+        isNotNull,
       );
     },
   );

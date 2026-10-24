@@ -116,6 +116,37 @@ void main() {
       expect(registration.mockOtp, isNotNull);
       await api.verifyMockEmail(email: email, otp: registration.mockOtp!);
       await api.login(email: email, password: password);
+      // Real current-version API checks. Registration already accepted it, so
+      // success here is an idempotent replay, NOT an outdated-account UI test.
+      await expectLater(
+        api.acceptCurrentTerms(reference.terms!.id, termsAccepted: false),
+        throwsA(
+          isA<ApiFailure>().having(
+            (e) => e.code,
+            'code',
+            'TERMS_ACCEPTANCE_REQUIRED',
+          ),
+        ),
+      );
+      await expectLater(
+        api.acceptCurrentTerms(
+          '00000000-0000-0000-0000-000000000001',
+          termsAccepted: true,
+        ),
+        throwsA(
+          isA<ApiFailure>().having(
+            (e) => e.code,
+            'code',
+            'TERMS_VERSION_NOT_CURRENT',
+          ),
+        ),
+      );
+      final acceptedTerms = await api.acceptCurrentTerms(
+        reference.terms!.id,
+        termsAccepted: true,
+      );
+      expect(acceptedTerms.id, reference.terms!.id);
+      expect(acceptedTerms.currentTermsAccepted, isTrue);
       final attempt = await api.beginOnboardingAttempt();
       final child = await api.createChild(
         CreateChildRequest(

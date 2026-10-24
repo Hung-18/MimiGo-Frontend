@@ -2,7 +2,7 @@
 
 Date: 2026-10-23. Baseline: accepted VS-02 checkpoint `23bbada2f3ac5d975b7f47428b67936977f08209`.
 
-**Current status: Backend MVP integration — workspace/discovery AUTOMATED_VERIFIED; Terms next.** Analysis clean, **173 automated tests PASS**, debug build PASS. Started clean at `cb9a44f`; new-route Android E2E pending. Prior module/device evidence is historical below. No push, deploy, publish or merge; synthetic development only, not production approval.
+**Current status: Backend MVP integration IMPLEMENTED / AUTOMATED_VERIFIED.** Analysis clean, **189 automated tests PASS**, Android debug build/install/normal launch PASS. Android real workspace/curriculum/complete/replay journey PASS; current-version Terms API checks PASS; full Terms UI Android mock PASS; original Android fixture regression PASS. Started clean at `cb9a44f`; older sections retain historical evidence. No push, deploy, publish or merge; synthetic development only, not production approval.
 
 **Accepted baseline: CLOSED / PO_ACCEPTED — synthetic development scope only.** In the 2026-10-23 closeout instruction the PO confirmed clean analysis, 60 automated tests PASS, a successful Android build, real Learning Dev Smoke PASS, and manually accepted Parent → Child → Math → Lesson → Session → Answer → Feedback → Persisted Readback against the real Development Backend/PostgreSQL. This closes the previous baseline runtime acceptance blocker; it does not accept the new completion/replay continuation, establish production readiness or convert the earlier automated Android attempt into a pass.
 
@@ -379,3 +379,71 @@ Start clean at `cb9a44f1f4d889fbf524cffddaeb75520429862a`. Read exact Backend `V
 Actual checkpoint evidence: `flutter analyze --no-pub` clean; full `flutter test --no-pub --reporter expanded` **173 PASS**, exit 0 (163 retained + 10 new); Android live-configured `flutter build apk --debug --no-pub --dart-define=MIMIGO_API_MODE=live --dart-define=MIMIGO_API_BASE_URL=http://10.0.2.2:5187/api/v1` **PASS**, exit 0. New-route Android live verification remains pending at this checkpoint. Changed files are scoped runtime/models, existing test doubles and scenarios, new `test/backend_modules_test.dart`, and management reports; no secrets/generated artifacts/unrelated changes. A separate local checkpoint is authorized; the final handoff identifies its hash.
 
 Terms contract readiness: `POST parents/me/terms-acceptances` with only `{termsVersionId,termsAccepted}`, 201/200 idempotent response `{termsVersionId,code,currentTermsAccepted}`. Reference Terms fields are id/code/contentHash/effectiveFrom; no full legal text/URL exists. The next stage must make that R0-only limitation explicit and must never generate child consent or simulate acceptance in live mode.
+
+### Account Terms implementation and final integration evidence
+
+Workspace/discovery checkpoint: `e92c0427a81f4ae1c042aaf6bb93e9872a041005`. The separate Terms checkpoint includes the source/tests and this final report. No new task ID, Backend/Database changes, push, merge or deployment.
+
+Implemented `lib/terms_reacceptance.dart` using the existing client, Parent authentication, Frame and visual theme:
+
+- Only an actual authenticated onboarding-attempt or child-create response with `TERMS_ACCEPTANCE_REQUIRED` opens the screen. An unaccepted status in `parents/me` alone does not fabricate that error or automatically accept anything. Parent Home allows the safe server-gated Add child operation.
+- Fetches `GET privacy/onboarding-reference`; displays current Terms code, version ID, contentHash and effectiveFrom plus the server disclaimer. Missing required metadata prevents acceptance. R0 has **mock metadata only, no full legal Terms text/URL**; the UI explicitly says this and restricts the claim to synthetic development. No document or legal approval invented.
+- Requires a fresh unchecked checkbox, sends exactly `{termsVersionId,termsAccepted:true}` to authenticated `POST parents/me/terms-acceptances`, validates acknowledgment and verifies `GET parents/me` returns the same parent with currentTermsAccepted=true. Accepts contract 201 and 200; no simulation/fallback in live mode.
+- Coalesces UI submissions; a lost acknowledgment retries the same version/body. `TERMS_VERSION_NOT_CURRENT` clears the displayed version and choice; reload needs a new explicit checkbox. Handles 401/403, connectivity, temporary server failures, invalid acknowledgment and stale parent readback without claiming success. Parent-facing errors do not show private server messages or Child Mode navigation advice. Disposed state ignores late replies.
+- Clears the interrupted onboarding attempt/draft and routes success to a **separate** child-consent screen with choices unchecked. Never sends purpose decisions, automatically creates/retries a child, or treats account Terms as child consent. Cancel and safe account return work. Child Mode still has no Parent Gate bypass; no activity/history UI is exposed.
+
+| Final executed check | Result and scope |
+|---|---|
+| `flutter analyze --no-pub` | **PASS**, no issues, exit 0. |
+| `flutter test --no-pub --reporter expanded` | **189 PASS**, exit 0: retained 163 + 10 workspace/curriculum + 16 Terms regressions. Repository exact paths/auth/body, state/error/isolation and widget navigation tests. Synthetic doubles only for these automated unit/widget tests. |
+| Development compatibility probes | `GET /api/v1/health/ready` **200**; new workspace/curriculum routes **401** without bearer; correctly JSON-encoded Terms POST **401** without bearer. Initial wrong readiness path `/health/ready` returned 404 and content-type-less Terms probe 415; corrected probes and real authenticated Android calls below establish compatibility. No service restart/DB access. |
+| Android `s2_learning_live_test.dart` with live defines | **1 PASS**, exit 0, **17s** test phase, emulator-5554 / Android 17 API 37 x86_64. Uses real synthetic API data and persistence through `10.0.2.2:5187`; no live fixture fallback. |
+| Real Terms API within the Android live scenario | Explicit false **422 TERMS_ACCEPTANCE_REQUIRED**; wrong version **422 TERMS_VERSION_NOT_CURRENT**; current already-accepted version successful idempotent acknowledgment. **Not** a new 201 acceptance or genuine outdated-account UI rollover. |
+| Android `terms_fixture_test.dart` | **1 PASS**, exit 0, **5s** final test phase. Full server-required Terms screen → unchecked/disabled → explicit submit → same-parent verification → separate unchecked child consent. Uses an explicitly injected synthetic API double; **MOCK**, no live Terms rollover claim. |
+| Android `child_fixture_test.dart` | **1 PASS**, exit 0, **20s** test phase. Parent Home/entry, six empty canonical Explorer domains, original Logic fixture feedback, legacy category navigation and safe account return preserved. No Backend calls. |
+| Final Android debug build | **PASS**, exit 0, 10.4s Gradle phase: `flutter build apk --debug --no-pub --dart-define=MIMIGO_API_MODE=live --dart-define=MIMIGO_API_BASE_URL=http://10.0.2.2:5187/api/v1`. Generated APK ignored. |
+| Normal app restored after integration tests | **PASS**, exit 0: `flutter run -d emulator-5554 --debug --no-resident --no-pub --dart-define=MIMIGO_API_MODE=live --dart-define=MIMIGO_API_BASE_URL=http://10.0.2.2:5187/api/v1`. Built/installed/launched `lib/main.dart`, replacing the integration harness. |
+| Scoped change review | All 11 current changed/untracked files and preceding scoped checkpoint reviewed; whitespace check clean. No real credentials/tokens, signing keys, connection strings, accidental generated files or unrelated modifications. Synthetic unit passwords and dynamically generated live-test credentials are test-only. Temporary test log removed; no push/Backend/Database change. |
+
+Actual sanitized Android live path (no passwords, tokens, OTPs or identities retained):
+
+```text
+reference / register / mock verify / login -> OK
+Terms false -> 422 TERMS_ACCEPTANCE_REQUIRED
+Terms wrong-version -> 422 TERMS_VERSION_NOT_CURRENT
+Terms current-version replay -> OK
+two explicit onboarding/consent attempts / synthetic ChildProfiles -> OK
+UI login / parents-me / learning-workspace -> OK
+owned sibling detail -> choose another -> target detail -> explicit Child Mode
+GET target-child curriculum -> actual returned Math/topic/SYN-MATH-001
+detail / start / session readback -> correct selected child
+real answer acknowledgment dropped only by controlled test wrapper
+Back / rediscovery / same-event answer retry -> OK
+remaining answer / server explanation / explicit Complete -> COMPLETED + endedAt
+repeat Complete / completed readback -> same session and endedAt
+Replay -> new IN_PROGRESS identity without inherited answers
+completed history preserved in process memory; Continue replay reuses active identity
+Back -> Child Mode; Parent Gate remains disabled
+All tests passed! (1 scenario, exit 0)
+```
+
+Current changed files across the two checkpoints: runtime `lib/main.dart`, `lib/parent_home.dart`, `lib/curriculum_explorer.dart`, `lib/learning_models.dart`, new `lib/terms_reacceptance.dart`; tests `test/backend_modules_test.dart`, `test/terms_reacceptance_test.dart`, `test/sign_in_test.dart`, `test/child_mode_test.dart`, `test/curriculum_explorer_test.dart`, `test/learning_test_data.dart`, `test/learning_widget_test.dart`; Android scenarios `integration_test/live_auth_test.dart`, `integration_test/s2_learning_live_test.dart`, new `integration_test/terms_fixture_test.dart`; management `AGENTS.md`, `reports/WORK_STATUS.md`, this report. No unrelated refactor or content invention.
+
+Remaining dependencies/limits:
+
+- Genuine stale-parent Terms UI against the real Backend remains **PENDING** an operator-prepared synthetic account whose previously accepted version is no longer current. Public registration accepts current Terms; manufacturing a rollover would require unauthorized Backend/Database changes. Live current-version idempotency and negative responses are verified separately from full UI mock evidence.
+- Parent Gate/step-up policy/contract is still absent. Parent learning activity remains inaccessible, even with new history endpoints; openSessions is discarded and history-list never requested. Learning memory is child-scoped, process-only and cleared on account return; no cross-device or exhaustive history claim.
+- Only the returned synthetic Free Math lesson is live content-verified. Other canonical domains show actual eligible responses or unavailable states; no lessons invented, Premium transactions, scores, mastery, rewards or media playback added. storageRef remains opaque.
+- Full legal content/delivery, legal/privacy/security/content approval, production authentication, physical-device/iOS/manual TalkBack coverage and adverse **live** auth/network cases remain outside this synthetic verification. Backend PostgreSQL 21/21 and Dev Smoke PASS are user/Backend-reported evidence, not Frontend reruns. No new PO acceptance or production-readiness claim.
+
+Executed live Android E2E command:
+
+```powershell
+flutter test integration_test/s2_learning_live_test.dart -d emulator-5554 --no-pub --reporter expanded --dart-define=MIMIGO_API_MODE=live --dart-define=MIMIGO_API_BASE_URL=http://10.0.2.2:5187/api/v1
+```
+
+Normal Android live command (build-time configuration only):
+
+```powershell
+flutter run -d emulator-5554 --debug --dart-define=MIMIGO_API_MODE=live --dart-define=MIMIGO_API_BASE_URL=http://10.0.2.2:5187/api/v1
+```

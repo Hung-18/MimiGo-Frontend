@@ -1,8 +1,8 @@
 # MimiGo Frontend work status
 
 **Updated:** 2026-10-24 (overnight session begun 2026-10-23)<br>
-**Current slice:** S2 Backend MVP contract integration — workspace/discovery, then Terms<br>
-**State:** Workspace/discovery IMPLEMENTED / AUTOMATED_VERIFIED: analysis clean, 173 tests PASS, debug build PASS. Terms re-acceptance next; new-route Android E2E pending. Started clean at `cb9a44f1f4d889fbf524cffddaeb75520429862a`; no discarded work or production-readiness claim.
+**Current slice:** S2 Backend MVP contract integration — Parent Workspace, Curriculum Discovery and account Terms<br>
+**State:** IMPLEMENTED / AUTOMATED_VERIFIED: analysis clean, **189 tests PASS**, Android debug build/install/normal launch PASS. Android real Parent-to-Learning scenario PASS with new workspace/curriculum routes and current-version Terms API checks; full Terms UI Android mock PASS; original Android fixture regression PASS. Started clean at `cb9a44f1f4d889fbf524cffddaeb75520429862a`; no discarded work or production-readiness claim.
 
 ## Current Backend MVP integration
 
@@ -10,7 +10,12 @@
 - New `GET children/{id}/curriculum` replaces local flat grouping. Uses returned domain/topic names, sortOrder and eligible Free lessons; rejects malformed/mismatched nested content. Canonical six remain clear framework entries when unavailable; no lesson invention or live fallback.
 - Parent Home now uses `GET parents/me/learning-workspace` child/catalog availability. The projection does not model/cache/render openSessions or history. No history-list call or Parent Gate bypass. Revoked/inactive catalog metadata disables entry; missing/stale authorization hides stale selections.
 - Checkpoint validation: analysis clean, full **173 tests PASS** (163 baseline + 10 contract/projection regressions), Android live-configured debug build PASS. Existing test doubles/scenarios updated to the real new contracts. This is mock/compilation evidence; new-route device evidence will be recorded after compatible runtime checks.
-- Terms endpoint and schemas read; next implementation only after actual TERMS_ACCEPTANCE_REQUIRED, with unticked acceptance, exact current version and no child purpose writes. Full Terms text is absent from the API; only R0 version/hash/effective metadata is available. No legal text will be invented.
+- Terms flow implemented only after actual TERMS_ACCEPTANCE_REQUIRED from onboarding attempt or child creation. Shows returned current version/hash/effective metadata, unticked checkbox, authenticated POST and same-parent verification. No automatic child creation or child-purpose acceptance; fresh consent choices remain unchecked. Handles lost-response retry, duplicate clicks, version changes, 401/403, server/connectivity failures and invalid acknowledgments safely.
+- Final automated suite **189 PASS** = 163 retained + 10 workspace/curriculum + 16 Terms regressions. No assertion weakening. Android real scenario **1 PASS** (17s test phase): login → workspace → two-child reselection → actual nested curriculum → player → exact answer retry → Complete → persisted endedAt/readback → new replay identity. Parent Gate remains disabled.
+- Real Android Terms API checks: explicit false → 422 TERMS_ACCEPTANCE_REQUIRED; wrong version → 422 TERMS_VERSION_NOT_CURRENT; current already-accepted version → successful idempotent response. This does **not** verify a real stale-parent rollover. Android full Terms UI **1 mock scenario PASS** (5s final run), with no live Backend substitution. Real outdated-account UI acceptance remains PENDING an operator-prepared account/version change; Backend/Database not modified.
+- Full Terms text/URL is absent from the API; R0 metadata-only synthetic warning remains. No legal text invented. Parent learning history remains gated even though the Backend now exposes history/workspace data; no history-list endpoint used and openSessions never modeled or displayed.
+- Workspace/discovery local checkpoint: `e92c0427a81f4ae1c042aaf6bb93e9872a041005`. Separate Terms checkpoint will contain the final source/tests/report; its hash is reported in the final handoff.
+- Final Android fixture regression **1 PASS** (20s); debug APK build **PASS** (10.4s), then normal `lib/main.dart` live-configured build/install/launch **PASS**, exit 0. Build artifacts remain ignored. Reviewed all 11 current changed/untracked files plus the preceding scoped checkpoint: no real credentials/secrets, generated artifacts, unrelated edits or whitespace errors. No Backend/Database modification or history rewrite.
 - Safe local checkpoints authorized; no Backend/Database edits, push, merge or release. Details: current integration section of `reports/S2_FRONTEND_INTEGRATION.md`.
 
 ## Previous MVP module evidence
@@ -75,7 +80,7 @@
 - Fixture is the default client mode. The original VS-01 no-media shape interaction is available under Logic and clearly labeled DEMO / FIXTURE; no demo progress is sent or saved.
 - Live mode targets the documented `/api/v1` contract. Android tests verified registration, mock email verification, login, `parents/me`, consent attempt, child creation, returning sign-in, list and detail using the actual Development API.
 - S2 live Math catalog, session, answer, feedback and persisted readback are PO_ACCEPTED in synthetic development scope. Fixture mode remains the local Logic demo; it is not evidence of Backend learning progress.
-- Parent PIN, consent withdrawal, Terms re-acceptance, token refresh/revocation and production email are not Backend-supported flows and remain unavailable in live mode.
+- Parent PIN/step-up, consent withdrawal, token refresh/revocation and production email remain unavailable. Account Terms re-acceptance is now supported in R0 synthetic scope as described above, separately from child consent.
 
 ## Configuration
 
