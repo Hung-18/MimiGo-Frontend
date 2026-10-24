@@ -17,6 +17,17 @@ class ParentHomeState extends ChangeNotifier {
   Map<String, String> catalogStatuses = const {};
   String? disclaimer;
   int _generation = 0;
+  bool get canEnter {
+    final child = selected;
+    return !busy &&
+        child != null &&
+        child.state == 'ACTIVE' &&
+        child.withinProgramAgeRange &&
+        {
+          'AVAILABLE',
+          'NO_ELIGIBLE_CONTENT',
+        }.contains(catalogStatuses[child.id]);
+  }
 
   void seed(List<ChildSummary> profiles) {
     children = List.unmodifiable(profiles);
@@ -183,6 +194,10 @@ class _ParentHomeState extends State<ParentHome> {
             ),
             if (model.children.isEmpty && !model.busy)
               const Text(
+                'Your parent account is ready. Add your first synthetic child after independent privacy review.',
+              ),
+            if (model.children.isEmpty && !model.busy)
+              const Text(
                 'No child profiles returned.',
                 key: Key('parentChildrenEmpty'),
               ),
@@ -192,8 +207,15 @@ class _ParentHomeState extends State<ParentHome> {
                   key: Key('parent-child-${profile.id}'),
                   minVerticalPadding: 16,
                   title: Text(profile.alias),
+                  leading: Icon(switch (profile.stockAvatarKey) {
+                    'bee-yellow' => Icons.emoji_nature_outlined,
+                    'bear-blue' => Icons.pets_outlined,
+                    _ => Icons.child_care,
+                  }, semanticLabel: 'Predefined child avatar'),
                   subtitle: Text(
-                    'Profile: ${profile.state}\n${availability(model.catalogStatuses[profile.id])}',
+                    'Profile: ${profile.state} · Age returned by service: ${profile.ageYears}\n'
+                    '${profile.withinProgramAgeRange ? 'Within program age range' : 'Outside program age range · profile only'}\n'
+                    '${availability(model.catalogStatuses[profile.id])}',
                   ),
                   isThreeLine: true,
                   trailing: const Icon(Icons.chevron_right),
@@ -229,14 +251,7 @@ class _ParentHomeState extends State<ParentHome> {
               constraints: const BoxConstraints(minHeight: 64),
               child: FilledButton(
                 key: const Key('parentEnterLearning'),
-                onPressed:
-                    model.busy ||
-                        leaving ||
-                        child.state != 'ACTIVE' ||
-                        {
-                          'PERMISSION_NOT_GRANTED',
-                          'CHILD_NOT_ACTIVE',
-                        }.contains(model.catalogStatuses[child.id])
+                onPressed: !model.canEnter || leaving
                     ? null
                     : () {
                         if (leaving) return;
@@ -268,7 +283,11 @@ class _ParentHomeState extends State<ParentHome> {
           FilledButton(
             key: const Key('addChild'),
             onPressed: !model.busy && !leaving ? widget.add : null,
-            child: const Text('Add another child'),
+            child: Text(
+              model.children.isEmpty
+                  ? 'Add your first child'
+                  : 'Add another child',
+            ),
           ),
           TextButton(
             key: const Key('parentAccountEntry'),

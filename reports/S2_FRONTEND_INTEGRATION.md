@@ -2,7 +2,7 @@
 
 Date: 2026-10-23. Baseline: accepted VS-02 checkpoint `23bbada2f3ac5d975b7f47428b67936977f08209`.
 
-**Current status: R0 Parent onboarding / multi-child batch IN_PROGRESS from clean `f808941`.** Registration checkpoint `1950318`; child notice/recovery/success implemented. Analysis clean, **216 automated tests PASS**. Additional children, age eligibility and safe-entry Android scenarios follow next. Earlier 189-test Backend MVP/live Learning evidence remains historical below. No push, deploy, publish or merge; synthetic development only, not production approval.
+**Current status: R0 Parent onboarding / multi-child batch IMPLEMENTED / AUTOMATED_VERIFIED.** From clean `f808941`, Parent checkpoint `1950318`, child onboarding checkpoint `37026ca`; final multi-child checkpoint contains this report. Analysis clean, **230 automated tests PASS**. Android live onboarding and Learning **2 scenarios PASS**; Android new onboarding fixture, Terms mock and original fixture **3 scenarios PASS**. Debug build/install/normal launch PASS. Earlier acceptance remains historical; no new PO/production approval, push, deploy, publish or merge.
 
 **Accepted baseline: CLOSED / PO_ACCEPTED — synthetic development scope only.** In the 2026-10-23 closeout instruction the PO confirmed clean analysis, 60 automated tests PASS, a successful Android build, real Learning Dev Smoke PASS, and manually accepted Parent → Child → Math → Lesson → Session → Answer → Feedback → Persisted Readback against the real Development Backend/PostgreSQL. This closes the previous baseline runtime acceptance blocker; it does not accept the new completion/replay continuation, establish production readiness or convert the earlier automated Android attempt into a pass.
 
@@ -29,6 +29,44 @@ Baseline clean `f808941f7bbd5b0f74f3327f04605b2a4ed6c2a4`. Scope inventory found
 - Fixture now also requires verification and a complete mock purpose snapshot, retains in-memory creation idempotency, and computes fixture-only eligibility. It never pretends to persist live results. Existing live auth scenario updated to assert the success → Parent Home → select → enter sequence, retaining replay/conflict assertions.
 - Checks: analysis clean; **17 focused child tests PASS**; full **216 tests PASS**, exit 0. Live-configured Android debug build **PASS**, exit 0, 5.8s Gradle phase. Android interaction evidence follows in the final batch section, not claimed from compilation.
 - Changed files: `lib/main.dart`, new `lib/child_onboarding.dart`, new `test/child_onboarding_test.dart`, aligned `integration_test/live_auth_test.dart`, existing status/integration reports. No secrets, generated artifacts or unrelated changes; no Backend/Database writes or push.
+
+### Additional children, eligibility and safe Child Mode entry
+
+- Additional-child CTA from success or Parent Home starts a fresh PII-free attempt, empty DOB draft and independent unchecked purposes. Returning to notices resets prior choices. Refusal/cancellation leaves the existing roster intact; no partial child or inherited sibling permissions. No five-child cap; seven independent synthetic profiles/replays verified in a fixture repository test.
+- Parent roster displays server-reported age/range/state/catalog availability and existing predefined avatars. Out-of-range profiles remain selectable/manageable in Parent Home, with Child Mode entry disabled. Entry state requires ACTIVE + returned withinProgramAgeRange + AVAILABLE/NO_ELIGIBLE_CONTENT catalog status. Denied/inactive/outside/unknown metadata fails closed. Server Boolean is authoritative; no client age supplied or silently used to override it.
+- Explicit locked child-switch and Parent Area controls explain the missing Parent Gate contract. No PIN input, fake authorization, sibling selector, DOB/settings/history/progress or purchase control inside Child Mode. Root Parent navigation also rejects Child Mode callers. Account return clears existing authentication/learning/pending memory and requires fresh parent sign-in.
+- Empty notice snapshot clearly locks DOB entry. Documented invalid-profile 400 errors offer a new privacy review/corrected form; unknown-outcome network/server/invalid responses retain the same locked request for exact retry. No session recovery or consent-withdrawal policy invented.
+- Full automated result **230 PASS**, exit 0 = 189 retained + **41 new** (10 Parent + 19 child + 12 multi-child). Analysis clean. Covers new/returning/unverified parent, first/additional child, denied purpose, ineligible profile, child isolation, replay/conflicts, duplicate/disposed state, missing metadata, empty notices, validation, Feb-29/Vietnam date boundaries, 320px/2x text and retained Terms regressions. Fake transport verifies exact public/authenticated paths, success acknowledgment and bodies without invented fields.
+
+### New-batch Android evidence and remaining dependencies
+
+| Executed check | Actual result / attribution |
+|---|---|
+| Development prerequisite | Credential-free `GET /api/v1/health/ready` **200**; existing verified compatible API reused. Backend/DB not edited/restarted. Backend PostgreSQL 21/21 and Dev Smoke are earlier Backend/PO evidence, not rerun here. |
+| Expanded `integration_test/live_auth_test.dart` with live defines | **1 PASS**, exit 0, **41s** test phase, emulator-5554 / Android 17 API 37 x86_64, host mapping `10.0.2.2:5187`. Actual UI registration, wrong OTP **400 INVALID_OTP**, unverified login **403 EMAIL_NOT_VERIFIED**, same-account verification recovery, login/me/workspace, refusal and empty roster, fresh first child, independent additional synthetic **2000-02-29** child with Sunny bee avatar, server-returned out-of-range eligibility and disabled entry, eligible-child entry, real creation replay + **409 IDEMPOTENCY_CONFLICT**, wrong password **401**, fresh parent login and safe account return. |
+| Initial expanded Android attempt | Stopped before registration POST: IME viewport changed after scrolling and submit tap missed. Corrected text-entry/scroll synchronization; no assertion/time-limit relaxation. Final full result above supersedes this attempt, without relabeling it a pass. Forms also dismiss the keyboard on drag/Done. |
+| Existing `s2_learning_live_test.dart` rerun | **1 PASS**, exit 0, **20s** test phase. Real parent login/workspace, two-child pre-entry selection, actual curriculum/detail, exact answer retry, server feedback/explanation, explicit/idempotent Complete, immutable endedAt/completed readback, new replay identity and Continue replay without another start. Real current-version Terms idempotency and both 422 negative responses also PASS; genuine rollover still not claimed. |
+| New `onboarding_fixture_test.dart` | **1 PASS**, exit 0, **24s**. Full Android fixture registration/unchecked Terms/verification, notice refusal, first and independent additional child, fresh choices/empty DOB, predefined avatar, Feb-29 out-of-range profile, disabled entry, chosen-child Explorer and locked Parent controls/account return. Explicitly memory-only mock, no Backend persistence claim. |
+| Existing `terms_fixture_test.dart` | **1 PASS**, exit 0, **6s**. Server-required UI path via explicit synthetic double, unticked Terms acceptance, same-parent verification and separate unchecked child purposes. Mock-only rollover UI. |
+| Existing `child_fixture_test.dart` | **1 PASS**, exit 0, **24s**. Original Logic shape interaction/feedback, legacy categories, six empty canonical Explorer domains, safe navigation and account return. No new lesson data or Backend progress. |
+| Final standalone Android debug build | **PASS**, exit 0, **11.5s** Gradle phase; exact live build-time defines in commands below. APK/cache ignored. |
+| Restore normal Android application | **PASS**, exit 0: `flutter run -d emulator-5554 --debug --no-resident --no-pub` with the same live defines. Normal `lib/main.dart` built (7.2s Gradle), installed and launched after the integration harnesses. |
+| Scope/secrets/artifact review | All **14** batch files / **11** final-checkpoint files reviewed. No real credentials, tokens, OTPs, signing keys, DB connection strings, generated artifacts, new dependencies or unrelated edits; whitespace check clean. Own temporary test logs removed. No Backend/Database mutation, push, merge, deployment or history rewrite. |
+
+All live evidence uses dynamically generated synthetic credentials and SYN- aliases; logs/reports retain operation/status only. No real-child data, stored token/password/OTP, fixture fallback, local child-data persistence or legal approval. Exact OTP expiry/lockout and adverse live network/auth cases remain automated mock evidence; no destructive challenge exhaustion or Database manipulation performed.
+
+Pending external decisions remain: approved six-digit Parent Gate/step-up protocol; production legal notice/Terms content and guardian/lawful processing/consent/retention decisions; genuine stale-Terms-account rollout prepared by operator. No resend API, refresh/revocation, sensitive edits, billing, media playback or adult activity/history is invented. Learning completion/replay and process-only history boundaries remain unchanged.
+
+Current batch files: runtime `lib/main.dart`, `lib/parent_onboarding.dart`, `lib/child_onboarding.dart`, `lib/parent_home.dart`; tests `test/parent_onboarding_test.dart`, `test/child_onboarding_test.dart`, `test/multi_child_entry_test.dart`, aligned `test/sign_in_test.dart`/`test/widget_test.dart`; Android `integration_test/live_auth_test.dart`, new `integration_test/onboarding_fixture_test.dart`; management `AGENTS.md`, `reports/WORK_STATUS.md`, this report. No unrelated refactor or new task ID. Three scoped local checkpoints are authorized; final handoff supplies actual hashes and tree status.
+
+Exact Android commands:
+
+```powershell
+flutter test integration_test/live_auth_test.dart -d emulator-5554 --no-pub --reporter expanded --dart-define=MIMIGO_API_MODE=live --dart-define=MIMIGO_API_BASE_URL=http://10.0.2.2:5187/api/v1
+flutter test integration_test/s2_learning_live_test.dart -d emulator-5554 --no-pub --reporter expanded --dart-define=MIMIGO_API_MODE=live --dart-define=MIMIGO_API_BASE_URL=http://10.0.2.2:5187/api/v1
+flutter test integration_test/onboarding_fixture_test.dart -d emulator-5554 --no-pub --reporter expanded
+flutter run -d emulator-5554 --debug --dart-define=MIMIGO_API_MODE=live --dart-define=MIMIGO_API_BASE_URL=http://10.0.2.2:5187/api/v1
+```
 
 ## Evidence attribution at closeout (historical)
 

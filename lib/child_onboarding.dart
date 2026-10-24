@@ -20,6 +20,11 @@ class ChildCreationState extends ChangeNotifier {
     'ATTEMPT_NOT_FOUND',
     'NOTICE_CHANGED_REDISPLAY_REQUIRED',
     'CORE_PERMISSION_REQUIRED',
+    'INVALID_CHILD_ALIAS',
+    'SYNTHETIC_ALIAS_REQUIRED',
+    'DATE_OF_BIRTH_REQUIRED',
+    'INVALID_DATE_OF_BIRTH',
+    'INVALID_AVATAR',
   }.contains(error?.code);
   bool get conflict => {
     'ATTEMPT_ALREADY_CONSUMED',

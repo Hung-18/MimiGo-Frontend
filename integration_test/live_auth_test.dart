@@ -117,8 +117,12 @@ Future<void> waitFor(WidgetTester tester, Finder finder) async {
 }
 
 Future<void> tap(WidgetTester tester, String key) async {
+  // Finish text entry before scrolling a control into view on the real Android
+  // IME. A keyboard metric change after ensureVisible can otherwise hide it.
+  FocusManager.instance.primaryFocus?.unfocus();
+  await tester.pumpAndSettle();
   final finder = find.byKey(Key(key));
-  await tester.ensureVisible(finder);
+  await Scrollable.ensureVisible(tester.element(finder), alignment: 0.5);
   await tester.pumpAndSettle();
   await tester.tap(finder);
   await tester.pump();
@@ -178,16 +182,43 @@ void main() {
         isNotNull,
         reason: 'Development must expose its mock OTP for this test.',
       );
+      final correctOtp = api.registration!.mockOtp!;
       await tester.enterText(
         find.byKey(const Key('otpCode')),
-        api.registration!.mockOtp!,
+        correctOtp == '000000' ? '000001' : '000000',
       );
       await tap(tester, 'otpVerify');
+      await waitFor(tester, find.byKey(const Key('onboardingError')));
+      expect(find.byType(ParentArea), findsNothing);
+      expect(find.byKey(const Key('loadAttempt')), findsNothing);
+      // Recovery uses the same registered account and documented verify endpoint.
+      await tester.ensureVisible(find.byType(BackButton));
+      await tester.tap(find.byType(BackButton));
+      await waitFor(tester, find.byKey(const Key('signInSubmit')));
+      await tester.enterText(find.byKey(const Key('signInEmail')), email);
+      await tester.enterText(find.byKey(const Key('signInPassword')), password);
+      await tap(tester, 'signInSubmit');
+      await waitFor(tester, find.byKey(const Key('resumeEmailVerification')));
+      await tap(tester, 'resumeEmailVerification');
+      await waitFor(tester, find.byKey(const Key('otpCode')));
+      await tester.enterText(find.byKey(const Key('otpCode')), correctOtp);
+      await tap(tester, 'otpVerify');
+      await waitFor(tester, find.byType(ParentArea));
+      await tap(tester, 'addChild');
       await waitFor(tester, find.byKey(const Key('loadAttempt')));
       expect(
         api.calls,
         containsAllInOrder(['register', 'verify', 'login', 'me']),
       );
+      await tap(tester, 'loadAttempt');
+      await waitFor(tester, find.byKey(const Key('guardianAssertion')));
+      // Refusal leaves an authenticated account without a partial child.
+      await tap(tester, 'privacyDecline');
+      await waitFor(tester, find.byKey(const Key('refusalParentHome')));
+      expect(await api.listChildren(), isEmpty);
+      await tap(tester, 'refusalParentHome');
+      await waitFor(tester, find.byType(ParentArea));
+      await tap(tester, 'addChild');
       await tap(tester, 'loadAttempt');
       await waitFor(tester, find.byKey(const Key('guardianAssertion')));
       final consentTiles = find.byType(CheckboxListTile);
@@ -212,15 +243,51 @@ void main() {
       await tap(tester, 'createChild');
       await waitFor(tester, find.byKey(const Key('createdChildAlias')));
       expect(find.byType(ChildHome), findsNothing);
+      final request = api.createdRequest!;
+      final child = api.createdChild!;
+      expect(child.withinProgramAgeRange, isTrue);
+      // Additional child is an independent UI onboarding with a leap-day DOB.
+      await tap(tester, 'createdAddAnother');
+      await tap(tester, 'loadAttempt');
+      await waitFor(tester, find.byKey(const Key('guardianAssertion')));
+      for (final element in find.byType(CheckboxListTile).evaluate().toList()) {
+        final tile = element.widget as CheckboxListTile;
+        expect(tile.value, isFalse);
+        await tap(tester, (tile.key! as ValueKey<String>).value);
+      }
+      await tap(tester, 'privacyContinue');
+      await waitFor(tester, find.byKey(const Key('childName')));
+      final outsideAlias = 'SYN-Outside-$suffix';
+      await tester.enterText(find.byKey(const Key('childName')), outsideAlias);
+      await tester.enterText(find.byKey(const Key('childDob')), '2000-02-29');
+      await tap(tester, 'avatar-bee-yellow');
+      await tap(tester, 'childContinue');
+      await tap(tester, 'createChild');
+      await waitFor(tester, find.byKey(const Key('createdChildAlias')));
+      expect(api.createdRequest!.attemptId, isNot(request.attemptId));
+      expect(api.createdChild!.id, isNot(child.id));
+      expect(api.createdChild!.withinProgramAgeRange, isFalse);
+      expect(api.createdChild!.stockAvatarKey, 'bee-yellow');
       await tap(tester, 'createdParentHome');
+      await waitFor(tester, find.text(outsideAlias));
+      await tester.ensureVisible(find.text(outsideAlias));
+      await tester.tap(find.text(outsideAlias));
+      await waitFor(tester, find.byKey(const Key('parentEnterLearning')));
+      expect(
+        tester
+            .widget<FilledButton>(find.byKey(const Key('parentEnterLearning')))
+            .onPressed,
+        isNull,
+      );
+      expect(find.byType(ChildHome), findsNothing);
+      await tap(tester, 'parentChooseAnother');
       await waitFor(tester, find.text(alias));
+      await tester.ensureVisible(find.text(alias));
       await tester.tap(find.text(alias));
       await waitFor(tester, find.byKey(const Key('parentEnterLearning')));
       await tap(tester, 'parentEnterLearning');
       await waitFor(tester, find.text('Hi, $alias!'));
       // Replay is tested at the live Dart adapter on this Android device.
-      final request = api.createdRequest!;
-      final child = api.createdChild!;
       final replay = await api.createChild(request);
       expect(replay.id, child.id);
       expect(
@@ -360,7 +427,7 @@ void main() {
         'VS023 LIVE CHILD NAV PASS: Math catalog; five unavailable categories; back; local session cleared; parent required fresh login.',
       );
       debugPrint(
-        'VS023 ANDROID LIVE AUTH FLOW PASS; replay same child; changed payload rejected; no secrets logged.',
+        'VS023 ANDROID LIVE AUTH FLOW PASS; wrong OTP; unverified-account recovery; refusal without child; independent additional leap-day profile; server eligibility blocks entry; replay same child; changed payload rejected; no secrets logged.',
       );
     },
   );

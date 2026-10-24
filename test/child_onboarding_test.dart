@@ -166,6 +166,7 @@ void main() {
     'IDEMPOTENCY_CONFLICT',
     'UNAUTHENTICATED',
     'PARENT_NOT_ACTIVE',
+    'INVALID_DATE_OF_BIRTH',
   ]) {
     test('$code stops creation and exposes no successful child', () async {
       final status = switch (code) {
@@ -175,6 +176,7 @@ void main() {
         'ATTEMPT_ALREADY_CONSUMED' ||
         'IDEMPOTENCY_CONFLICT' ||
         'NOTICE_CHANGED_REDISPLAY_REQUIRED' => 409,
+        'INVALID_DATE_OF_BIRTH' => 400,
         _ => 422,
       };
       final api = ChildApi()
@@ -198,6 +200,32 @@ void main() {
     expect(model.result, isNull);
     model.dispose();
   });
+
+  testWidgets(
+    'empty notice snapshot is clearly locked and cannot collect DOB',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Privacy(
+              attempt: OnboardingAttempt('empty', DateTime(2030), const []),
+              begin: () async {},
+              declined: () {},
+              next: () => fail('Empty notices must not advance.'),
+            ),
+          ),
+        ),
+      );
+      expect(find.byKey(const Key('privacyNoticesEmpty')), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(find.byKey(const Key('privacyContinue')))
+            .onPressed,
+        isNull,
+      );
+      expect(find.byKey(const Key('childDob')), findsNothing);
+    },
+  );
 
   testWidgets(
     'notice metadata precedes DOB and independent required choices; refusal returns to Parent Home',

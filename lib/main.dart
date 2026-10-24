@@ -332,7 +332,14 @@ class FixtureMimiGoApi implements MimiGoApi {
   @override
   Future<ParentWorkspace> learningWorkspace() async => ParentWorkspace(
     (await listChildren())
-        .map((child) => WorkspaceChildMetadata(child, 'NO_ELIGIBLE_CONTENT'))
+        .map(
+          (child) => WorkspaceChildMetadata(
+            child,
+            child.withinProgramAgeRange
+                ? 'NO_ELIGIBLE_CONTENT'
+                : 'CHILD_OUTSIDE_PROGRAM_AGE',
+          ),
+        )
         .toList(growable: false),
     'DEMO / FIXTURE · catalog availability only; no protected history.',
   );
@@ -1124,6 +1131,13 @@ class _MimiGoAppState extends State<MimiGoApp> {
   bool startingRegistration = false;
   ApiFailure? registrationEntryError;
   bool verificationReturningParent = false;
+  bool get inChildMode => {
+    Page.child,
+    Page.category,
+    Page.explorer,
+    Page.learningLesson,
+    Page.demo,
+  }.contains(page);
 
   Future<void> returnToAccountEntry() async {
     if (accountEntryPending) return;
@@ -1324,7 +1338,7 @@ class _MimiGoAppState extends State<MimiGoApp> {
   }
 
   void goParentHome() {
-    if (authenticatedParent == null) return;
+    if (authenticatedParent == null || inChildMode) return;
     setState(() {
       attempt = null;
       draft = null;
@@ -1337,7 +1351,7 @@ class _MimiGoAppState extends State<MimiGoApp> {
   }
 
   void beginChildOnboarding() {
-    if (authenticatedParent == null) return;
+    if (authenticatedParent == null || inChildMode) return;
     setState(() {
       attempt = null;
       draft = null;
@@ -1699,14 +1713,20 @@ class _MimiGoAppState extends State<MimiGoApp> {
                 workspace: parentWorkspace,
                 accountEntry: returnToAccountEntry,
                 add: beginChildOnboarding,
-                enterChild: (child) => setState(() {
-                  curriculum?.dispose();
-                  curriculum = null;
-                  active = child;
-                  selectedCategory = null;
-                  selectedLessonId = null;
-                  page = Page.child;
-                }),
+                enterChild: (child) {
+                  if (inChildMode ||
+                      child.state != 'ACTIVE' ||
+                      !child.withinProgramAgeRange)
+                    return;
+                  setState(() {
+                    curriculum?.dispose();
+                    curriculum = null;
+                    active = child;
+                    selectedCategory = null;
+                    selectedLessonId = null;
+                    page = Page.child;
+                  });
+                },
               ),
               children: children,
               active: active,
@@ -1756,6 +1776,7 @@ class Frame extends StatelessWidget {
     child: ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 560),
       child: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1834,8 +1855,8 @@ class Welcome extends StatelessWidget {
             : 'Fixture mode. No network requests are made.',
       ),
       const SizedBox(height: 20),
-      SizedBox(
-        height: 64,
+      ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 64),
         child: FilledButton(
           key: const Key('welcomeStart'),
           onPressed: busy ? null : start,
@@ -2156,6 +2177,8 @@ class _RegisterState extends State<Register> {
               controller: password,
               enabled: !busy,
               obscureText: true,
+              textInputAction: TextInputAction.done,
+              onFieldSubmitted: (_) => FocusScope.of(c).unfocus(),
               enableSuggestions: false,
               autocorrect: false,
               validator: (value) =>
@@ -2366,8 +2389,8 @@ class _PrivacyState extends State<Privacy> {
             semanticsLabel: 'Loading independent privacy notices',
           ),
         if (widget.attempt == null)
-          SizedBox(
-            height: 64,
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 64),
             child: FilledButton(
               key: const Key('loadAttempt'),
               onPressed: busy ? null : load,
@@ -2380,6 +2403,11 @@ class _PrivacyState extends State<Privacy> {
           )
         else ...[
           Text('Attempt expires: ${widget.attempt!.expiresAt.toLocal()}'),
+          if (notices.isEmpty)
+            const Text(
+              'No required mock purpose notices were returned. Child profile input is locked. Reload notices or return to Parent Home.',
+              key: Key('privacyNoticesEmpty'),
+            ),
           CheckboxListTile(
             key: const Key('guardianAssertion'),
             contentPadding: EdgeInsets.zero,
@@ -2560,6 +2588,8 @@ class _ChildInputState extends State<ChildInput> {
         key: const Key('childDob'),
         controller: dob,
         keyboardType: TextInputType.datetime,
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) => FocusScope.of(c).unfocus(),
         decoration: const InputDecoration(
           labelText: 'Date of birth * (YYYY-MM-DD)',
         ),
@@ -2785,6 +2815,25 @@ class ChildHome extends StatelessWidget {
       const SizedBox(height: 16),
       const Text(
         'Parent verification is not available inside Child Mode yet. Return to account entry for a parent to sign in again.',
+      ),
+      Semantics(
+        header: true,
+        child: Text(
+          'Parent controls are locked',
+          style: Theme.of(c).textTheme.titleMedium,
+        ),
+      ),
+      const Text(
+        'Switching children and opening Parent Area require an approved Parent Gate. Its verification contract is unavailable; no PIN is accepted or simulated.',
+      ),
+      ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 64),
+        child: OutlinedButton.icon(
+          key: const Key('childSwitchGate'),
+          onPressed: null,
+          icon: const Icon(Icons.lock_outline),
+          label: const Text('Switch child · Parent Gate required'),
+        ),
       ),
       SizedBox(
         height: 64,

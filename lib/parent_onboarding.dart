@@ -73,6 +73,11 @@ class OnboardingError extends StatelessWidget {
       'NOTICE_CHANGED_REDISPLAY_REQUIRED' => 'The child onboarding notices must be loaded again. Restart privacy review and make fresh choices.',
       'ATTEMPT_ALREADY_CONSUMED' || 'IDEMPOTENCY_CONFLICT' => 'This creation request cannot be changed or reused. Check Parent Home for the profile before starting another onboarding.',
       'CORE_PERMISSION_REQUIRED' => 'Every required mock purpose needs its own affirmative choice. No partially authorized child is created.',
+      'INVALID_CHILD_ALIAS' ||
+      'SYNTHETIC_ALIAS_REQUIRED' ||
+      'DATE_OF_BIRTH_REQUIRED' ||
+      'INVALID_DATE_OF_BIRTH' ||
+      'INVALID_AVATAR' => 'The service rejected the synthetic profile fields. Restart privacy review to enter a corrected profile.',
       'CONNECTIVITY' || 'TIMEOUT' =>
         'We could not reach the service. Check your connection and retry.',
       _ when error.status == 401 => 'Your parent sign-in expired. Return to account entry and sign in again.',
