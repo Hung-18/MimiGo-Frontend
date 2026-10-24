@@ -1,10 +1,71 @@
 # Parent Gate Flutter module — R0 synthetic candidate
 
 Date: 2026-10-24. Start: clean `3dcf74134b75234ecd1f7160ed762d0689a91b0e`.
-Status: **IMPLEMENTED / LOCAL_VERIFIED**, real Parent Gate Android E2E **NOT RUN**.
-The current feature instruction authorizes one local checkpoint; no push, deployment or history rewrite.
+Status: **REAL_ANDROID_VERIFIED — R0 SYNTHETIC ONLY**. Both real Backend Android scenarios PASS from `00b4f3d`; no new Security, Legal, production or manual PO approval implied. Earlier NOT RUN statements below describe the implementation checkpoint, superseded by the acceptance evidence here.
+The acceptance instruction explicitly authorized creating and disposing a fresh isolated environment. Only validated Flutter test corrections/evidence are checkpointed; no runtime feature reimplementation, push, deployment or history rewrite.
 
-## Authority and activation boundary
+## Real Android acceptance — 2026-10-24
+
+### Isolated setup and interoperability
+
+- Frontend started clean at `00b4f3d42401873719672a03ee971207c2d292bb`. Read the current Backend module/OpenAPI/disposable test script, Database foundation handoff/promotion package and this report. Backend checkout `c8b2337f0e03023514903a21da4afa6752cb5fea`; used its existing `_pg/bin/MimiGo.Api/release/MimiGo.Api.dll` (SHA-256 `1abcc369e9dd39a0ba9125eceb011b04a3e1126de5232041ba3722cd6f5b64a6`). No Backend build or repository write.
+- Created a **fresh private PostgreSQL 18.6 cluster**, loopback only, port **55449**, database **`mimigo_conc_flutter_gate_20261024_214437`**. Applied the exact read-only 0001–0018 files using the documented runner, then exact candidate 0019–0022 in order with per-file transactions/checksum ledger entries. **22 ledger entries**, SYN-MATH-001 seed and candidate grant verifier PASS. No promotion/copy into the Database repository or persistent database.
+- Application login `mimigo_conc_app` uses SCRAM, membership of `mimigo_r0_app`, and verified no superuser/createdb/createrole/replication/bypass-RLS privileges. Private bootstrap administrator trusts only its named loopback login; all other host users rejected. Application password and four distinct CSPRNG secrets remained in process environment/memory, not command lines, source or configuration files. Cluster credential verifiers disappeared with disposal.
+- Separate **Development** API, loopback **5197**, PID **21324**, both Parent Gate flags true; Production disabled; auth IP permit 300/min only for this disposable run. Readiness **200**. Android emulator used **`http://10.0.2.2:5197/api/v1`**. Original Dev API **PID 12704 / 5187** retained throughout; no use/activation of mimigo_dev or mimigo_test.
+- Real Android 17/API 37 x86_64, existing `Medium_Phone_API_37.0`, no wipe or saved snapshot. Native encrypted vault and FLAG_SECURE stayed enabled; PIN entry explicitly checks the native protected-window flag. Accounts, independent purpose choices, children and lessons were synthetic. No mocked transport response, proof, token or authorization.
+
+### Exact executed outcomes
+
+| Scenario/check | Final result and actual evidence |
+|---|---|
+| Registration, verification, Terms and independent onboarding | **PASS**, actual register/current Terms/mock verification, two fresh notice attempts and two ChildProfile creates through AP-3 before Android UI login. No preexisting account or forged fixture authorization. |
+| Parent login / secure session | **PASS**, Android UI login, parents/me/workspace and native vault write; login alone grants no proof. |
+| PIN enrollment / invalid / valid PIN | **PASS**, actual password STEP_UP + enrollment; wrong PIN **403 PARENT_GATE_FAILED**, no proof/private data/remaining-attempt count; fresh valid PIN opens Parent Area. |
+| Ungated roster/workspace privacy | **PASS**, raw real JSON has only childId/childAlias/stockAvatarKey/withinProgramAgeRange/state; no DOB/age/creation/decisions. Ungated openSessions PARENT_GATE_REQUIRED + empty items; ungated child-detail **403 PARENT_GATE_REQUIRED**. |
+| Gated detail and history | **PASS**, PIN proof authorizes real DOB/detail; initial history empty; after learning, protected list contains completed identity and exact endedAt. |
+| Child entry and eligible learning | **PASS**, SWITCH_CHILD verification/context token, actual curriculum and SYN-MATH-001, cue answers and server feedback, explicit Complete, completed persisted readback, replay with different active session and preserved completed endedAt. |
+| Child isolation / Parent endpoints | **PASS**, Child bearer gets **403 CHILD_CONTEXT_FORBIDDEN** on parents/me, roster, workspace, protected detail and history. Sibling curriculum **404 CHILD_NOT_FOUND**. No protected Parent controls/DOB in Child UI. |
+| Child switch and PIN exit | **PASS**, PIN exit to Parent selection, child-bound PIN entry to sibling B, old child A bearer **401 SESSION_REVOKED**; PIN exit B returns real Parent token and permits gated details. |
+| Serialized rotating refresh | **PASS**, **20 concurrent coordinator callers produce exactly one real HTTP refresh**, credential changes (boolean assertion, never printed), Parent mode retained and subsequent parents/me succeeds. |
+| Revoked session / independent device session | **PASS**, second real session has distinct SID; revoke-others invalidates first session; first protected operation/refresh fails, private UI disappears and native vault clears. Second session represents another device; this was not two physical Android devices. |
+| Server-clock session expiry | **PASS**, separate real Android scenario with Backend's documented BE_TEST_SHORT fixture (2s idle / 1d absolute) only in the disposable DB. After 4s wall time, AP-3 and raw refresh both **401 SESSION_REVOKED**; account UI/session/native vault clear. No clock/token mocks or guard-owned timestamp edits. Restored R0_CANDIDATE_7D_30D after the scenario. This verifies DB idle expiry, not natural five-minute JWT expiry. |
+| Final static/regression/build | **PASS**, analysis clean (2.5s), **316/316** automated tests (39s, serial runner), exit 0. Main real-test APK and expiry APK compile PASS (6.5s/10.9s Gradle); final default-fixture debug APK PASS (6.0s). |
+| Real Android scenario execution | **PASS**, main **35s**, expiry **8s**, each one authored scenario, each driver exit **0**. Framework tearDownAll bookkeeping is not counted as a second scenario. Both executed through the SDK integration driver against precompiled APKs. |
+| iOS/physical device/manual TalkBack; exhaustive live PIN lock/recovery/change/reset; natural JWT expiry | **NOT RUN** in this acceptance cycle. Previous local candidate tests remain separate evidence. No formal Security/Legal approval. |
+
+No Backend request/response or Database interoperability mismatch was found in the executed cases. Candidate AP-0 stateless read window, W-2 learning transaction boundary and other Backend residual risks remain OPEN. No insecure Flutter workaround, policy change, consent withdrawal, payment or real-data operation.
+
+### Failures investigated and corrected
+
+Initial real attempts **FAIL** at the valid-PIN retry after an expected wrong PIN: the test helper tried to type into a field left off screen by its previous submit scroll. Safe diagnostics confirmed the field stayed empty, no second server attempt and no app lifecycle/submit clearing. Corrected **only the test helper** to scroll the PIN field into view and tap/focus before typing. Retained explicit six-character, enabled-submit and native FLAG_SECURE assertions. Final complete scenario then passed; no app authorization/storage/PIN behavior changed. Temporary non-secret app diagnostics were removed; runtime diff is empty.
+
+One diagnostic build **FAIL** from host Dart out-of-memory, and an early restart attempted installation before Android's package service was ready (**FAIL**, no scenario execution). Recovery: close only the owned headless emulator during compilation, wait for actual boot, then execute the prebuilt binary with the standard SDK integration driver. No device wipe, screenshot workaround, weakened assertion or unrelated process termination. PowerShell initially treated a harmless fixture NOTICE as terminating; the idempotent seed was reapplied with client_min_messages=warning. No migration edits or partial schema workaround.
+
+### Commands actually used
+
+Build-time defines in both APKs: `MIMIGO_API_MODE=live`, `MIMIGO_PARENT_GATE_ENABLED=true`, `MIMIGO_API_BASE_URL=http://10.0.2.2:5197/api/v1`, `MIMIGO_PARENT_GATE_E2E_AUTHORIZED=true`, `MIMIGO_PARENT_GATE_E2E_DATABASE=mimigo_conc_flutter_gate_20261024_214437`. Expiry additionally uses `MIMIGO_PARENT_GATE_E2E_SHORT_SESSION=true`, only after activating the Backend-documented short policy in the owned DB.
+
+```powershell
+flutter build apk --debug --no-pub -t integration_test/parent_gate_live_test.dart --dart-define=MIMIGO_API_MODE=live --dart-define=MIMIGO_PARENT_GATE_ENABLED=true --dart-define=MIMIGO_API_BASE_URL=http://10.0.2.2:5197/api/v1 --dart-define=MIMIGO_PARENT_GATE_E2E_AUTHORIZED=true --dart-define=MIMIGO_PARENT_GATE_E2E_DATABASE=mimigo_conc_flutter_gate_20261024_214437
+# Saved to build/parent_gate_acceptance/gate-live.apk before compiling expiry.
+flutter drive --driver=build/parent_gate_acceptance/driver.dart --target=integration_test/parent_gate_live_test.dart --use-application-binary=build/parent_gate_acceptance/gate-live.apk -d emulator-5554 --no-pub
+flutter drive --driver=build/parent_gate_acceptance/driver.dart --target=integration_test/parent_gate_expiry_live_test.dart --use-application-binary=build/parent_gate_acceptance/gate-expiry.apk -d emulator-5554 --no-pub
+flutter analyze --no-pub
+flutter test --no-pub --concurrency=1 --reporter expanded
+flutter build apk --debug --no-pub
+```
+
+The ignored temporary driver is the SDK adaptor only: `import 'package:integration_test/integration_test_driver.dart'; Future<void> main() => integrationDriver(responseDataCallback: (_) async {});`. It supplies no mock responses. A subsequent run must create/authorize a new disposable environment and rebuild with its actual port/database; **5197 is no longer serving this disposed environment**. The existing direct `flutter test ... -d emulator-5554` entrypoints remain available on a host with enough memory.
+
+### Cleanup / repository evidence
+
+- Restored the default candidate session policy before disposal. Verified ownership marker, exact normalized absolute data path, postmaster PID and listener, plus separate dotnet command/PID/listener before stopping anything. An initial cleanup guard refused PostgreSQL's forward-slash path spelling; normalized and reverified the exact path/PID/port before proceeding.
+- **CLEANUP PASS**, exit 0: stopped only API **21324** and private PostgreSQL **13488**; ports **5197/55449** closed; recursively removed only the exact created `build/parent_gate_acceptance/run_20261024_214437` directory (private cluster, database, verifiers and service logs). Confirmed directory absent and original Dev API still **12704/5187**. No shared database DROP or persistent schema operation.
+- Backend and Database repositories not edited. Database 0018 raw SHA-256 before application (ledger) and after testing both `45983394835972ee462ca56eb9f5cdc53df20092e2bac6ae2e86fd8f38686d17`, matching its baseline handoff. An observed Git metadata modification had no content diff and was left untouched. No reset/discard/history rewrite.
+- Normal default-fixture APK restoration **PASS**, adb install exit 0 / Status: ok / cold launch 7.33s; topResumedActivity verified. Native refresh vault was verified empty at both real scenario endings. Temporary setup helpers/APKs/logs are ignored and removed after evidence capture, not checkpoint contents. No runtime credential/PIN/proof/token values in committed files or reports.
+- Changed acceptance files: `integration_test/parent_gate_live_test.dart` (real assertions, refresh counter delegating all HTTP, visible PIN-focus correction and non-secret failure assertions), new `integration_test/parent_gate_expiry_live_test.dart`; existing AGENTS/work-status/S2/this report. Runtime implementation remains `00b4f3d`. Only validated test fixes/evidence are eligible for the local checkpoint; no push.
+
+## Implementation checkpoint 00b4f3d — historical authority and activation boundary
 
 Read the Backend `reports/PARENT_GATE_BACKEND_MODULE.md`, exact `docs/api/PARENT_GATE_OPENAPI_CANDIDATE.yaml`, relevant DTO null-omission rules and canonical SRS FR-ID-01/03/06/07, WF-01/02. Backend reports **435/435 PASS**; this is Backend-reported evidence, not a Frontend rerun. Backend/Database and `.mimigo/**` were not edited. The existing Development API was not restarted, terminated or reconfigured; no SQL/schema activation was performed.
 
@@ -41,7 +102,7 @@ Backend requires **both** `ParentGate:Enabled=true` and `ParentGate:R0Unapproved
 
 No contract mismatch found in static candidate/DTO review and exact request tests. **Actual Parent Gate server/runtime interoperability is still unverified**, so absence of observed mismatches is not a live compatibility claim. Lock/recovery/unavailable, missing proof, stale epoch, wrong context/child, revoked/expired session, malformed rotation and connectivity failures fail closed. No unsupported reset-from-Child, six-digit bypass, refreshed proof invention or API fallback.
 
-## Actual validation evidence
+## Implementation checkpoint local validation (historical)
 
 | Executed check | Result / scope |
 |---|---|
@@ -58,7 +119,7 @@ No contract mismatch found in static candidate/DTO review and exact request test
 
 Validation corrections are recorded honestly: an initial full run had 312 PASS/1 FAIL because a one-millisecond test fixture expired before adoption; corrected with an injected clock, preserving the expiry assertion. One later default-concurrency run exhausted host Dart/AVD memory (exit 4); serial full run above passed every test without weakening assertions or internal concurrency tests. First Android attempt found no connected device; started the existing AVD without wiping data. An offline/memory-heavy launch was stopped only after verifying its owned process identities, then the same AVD booted with temporary low-memory/headless arguments. A final APK attempt also exhausted Dart host memory (exit 1); closing only this task's emulator allowed the final Gate and fixture builds to pass. No unrelated process or Dev API was touched. Gradle emitted host Java native-access warnings; successful build/test exit codes are separate from those warnings. Final review identified and fixed protected-data retention after authorization denial; three additional regressions are included in the final suite.
 
-## Commands and real E2E prerequisites
+## Implementation checkpoint commands and then-pending E2E prerequisites (historical)
 
 Executed automated/native checks:
 
