@@ -2,7 +2,7 @@
 
 **Updated:** 2026-10-24 (overnight session begun 2026-10-23)<br>
 **Current slice:** R0 Parent onboarding, additional children and safe Child Mode entry (existing S2 tracking)<br>
-**State:** IN_PROGRESS from clean `f808941`. Parent registration/verification recovery implemented; analysis clean, **199 automated tests PASS** (189 retained + 10 new), 27 focused Parent/sign-in/privacy tests PASS. Android build result recorded in S2 report. Next: notice review, child creation recovery/success and multi-child navigation. No discarded work or production-readiness claim.
+**State:** IN_PROGRESS from clean `f808941`. Parent registration checkpoint `1950318`; child onboarding notice/recovery/success implemented. Analysis clean; **216 automated tests PASS** (189 retained + 10 Parent + 17 child tests); focused child suite 17 PASS. Next: additional children, eligibility and safe-entry device scenarios. No discarded work or production-readiness claim.
 
 ## Current Parent onboarding batch
 
@@ -10,6 +10,8 @@
 - Parent registration now has blank live credentials, documented field validation, reference loading/retry, inline errors and explicit current-version acceptance. Version-change response clears checkbox and blocks stale resubmission until reload. No child data in registration.
 - Existing unverified Parent can reach verification from actual EMAIL_NOT_VERIFIED; same documented mock verify/login/parents-me/workspace operations. Shows returned expiry/notice, six-digit validation and honest no-resend/operator help. Failed login after confirmed verification retries only authentication. No OTP resend, new challenge, refresh or credential persistence invented.
 - Parent-only history and Child Mode switching remain locked pending approved Parent Gate. Full legal content and production guardian/consent policy remain outside synthetic scope. Runtime checks for this new batch have not yet run; prior Learning live evidence remains separate.
+- Child onboarding now displays required per-attempt notice code/version/hash/effective metadata and synthetic/non-legal warning before DOB. Independent unchecked purposes/guardian declaration, reload with fresh choices, refusal → Parent Home and cancellation are supported. No full legal text invented.
+- New child creation state locks the immutable request/key after submission; unknown-outcome retry cannot silently edit/recreate. Explicit expired/missing/changed notice/required-purpose errors restart privacy; conflicts direct to profile checks; 401/403 never show success. New success screen displays server age/eligibility/avatar and requires Parent Home selection before Child Mode. Approved two predefined avatar choices are visible; strict date/alias validation uses documented Vietnam date boundary. Fixture mirrors mock purpose, verification, idempotency and eligibility behavior without real persistence.
 
 ## Current Backend MVP integration
 

@@ -210,6 +210,13 @@ void main() {
       await tap(tester, 'childContinue');
       await waitFor(tester, find.byKey(const Key('createChild')));
       await tap(tester, 'createChild');
+      await waitFor(tester, find.byKey(const Key('createdChildAlias')));
+      expect(find.byType(ChildHome), findsNothing);
+      await tap(tester, 'createdParentHome');
+      await waitFor(tester, find.text(alias));
+      await tester.tap(find.text(alias));
+      await waitFor(tester, find.byKey(const Key('parentEnterLearning')));
+      await tap(tester, 'parentEnterLearning');
       await waitFor(tester, find.text('Hi, $alias!'));
       // Replay is tested at the live Dart adapter on this Android device.
       final request = api.createdRequest!;

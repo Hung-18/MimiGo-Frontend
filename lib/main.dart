@@ -13,6 +13,7 @@ import 'parent_home.dart';
 import 'curriculum_explorer.dart';
 import 'terms_reacceptance.dart';
 import 'parent_onboarding.dart';
+import 'child_onboarding.dart';
 
 export 'api_failure.dart';
 
@@ -184,8 +185,18 @@ class Purpose {
 }
 
 class Notice {
-  const Notice(this.purposeCode, this.versionId, this.label);
+  const Notice(
+    this.purposeCode,
+    this.versionId,
+    this.label, {
+    this.contentHash,
+    this.effectiveFrom,
+    this.isApprovedForRealUsers,
+  });
   final String purposeCode, versionId, label;
+  final String? contentHash;
+  final DateTime? effectiveFrom;
+  final bool? isApprovedForRealUsers;
 }
 
 class OnboardingReference {
@@ -379,8 +390,26 @@ class FixtureMimiGoApi implements MimiGoApi {
       ageNoticeId = '22222222-2222-4222-8222-222222222222',
       learningNoticeId = '33333333-3333-4333-8333-333333333333';
   String? _email, _password, _token;
+  bool _verified = false;
   int _next = 1;
   final _children = <ChildSummary>[];
+  final _attempts = <String, OnboardingAttempt>{};
+  final _usedAttempts = <String>{};
+  final _createdRequests = <String, (String, ChildSummary)>{};
+  List<Notice> get _fixtureNotices => [
+    for (final item in const [
+      ('CHILD_PROFILE_AGE', ageNoticeId),
+      ('LEARNING_PROGRESS', learningNoticeId),
+    ])
+      Notice(
+        item.$1,
+        item.$2,
+        'test-v1',
+        contentHash: List.filled(64, '0').join(),
+        effectiveFrom: DateTime.utc(2026, 10, 1),
+        isApprovedForRealUsers: false,
+      ),
+  ];
   @override
   void clearSession() => _token = null;
   Future<void> _wait() =>
@@ -397,10 +426,7 @@ class FixtureMimiGoApi implements MimiGoApi {
         effectiveFrom: DateTime.utc(2026, 10, 1),
       ),
       [Purpose('CHILD_PROFILE_AGE', true), Purpose('LEARNING_PROGRESS', true)],
-      [
-        Notice('CHILD_PROFILE_AGE', ageNoticeId, 'test-v1'),
-        Notice('LEARNING_PROGRESS', learningNoticeId, 'test-v1'),
-      ],
+      _fixtureNotices,
       'Fixture-only reference. No real family data is sent.',
     );
   }
@@ -428,6 +454,7 @@ class FixtureMimiGoApi implements MimiGoApi {
       );
     _email = value.email;
     _password = value.password;
+    _verified = false;
     return RegistrationResult(
       'fixture-parent',
       DateTime.now().add(const Duration(minutes: 10)),
@@ -448,6 +475,7 @@ class FixtureMimiGoApi implements MimiGoApi {
         code: 'INVALID_OTP',
         status: 400,
       );
+    _verified = true;
   }
 
   @override
@@ -461,6 +489,12 @@ class FixtureMimiGoApi implements MimiGoApi {
         'Invalid fixture credentials.',
         code: 'INVALID_CREDENTIALS',
         status: 401,
+      );
+    if (!_verified)
+      throw const ApiFailure(
+        'Verify synthetic email.',
+        code: 'EMAIL_NOT_VERIFIED',
+        status: 403,
       );
     _token = 'fixture-token';
     return LoginSession(
@@ -490,14 +524,13 @@ class FixtureMimiGoApi implements MimiGoApi {
   Future<OnboardingAttempt> beginOnboardingAttempt() async {
     _auth();
     await _wait();
-    return OnboardingAttempt(
+    final attempt = OnboardingAttempt(
       'fixture-attempt-${_next++}',
       DateTime.now().add(const Duration(minutes: 30)),
-      const [
-        Notice('CHILD_PROFILE_AGE', ageNoticeId, 'test-v1'),
-        Notice('LEARNING_PROGRESS', learningNoticeId, 'test-v1'),
-      ],
+      _fixtureNotices,
     );
+    _attempts[attempt.id] = attempt;
+    return attempt;
   }
 
   @override
@@ -510,23 +543,77 @@ class FixtureMimiGoApi implements MimiGoApi {
         code: 'SYNTHETIC_ALIAS_REQUIRED',
         status: 400,
       );
-    if (!value.guardianAffirmed || value.purposeChoices.any((x) => !x.affirmed))
+    final attempt = _attempts[value.attemptId];
+    if (attempt == null)
+      throw const ApiFailure(
+        'Missing fixture attempt.',
+        code: 'ATTEMPT_NOT_FOUND',
+        status: 404,
+      );
+    if (!value.guardianAffirmed ||
+        value.purposeChoices.length != attempt.notices.length ||
+        value.purposeChoices
+                .map((choice) => choice.purposeCode)
+                .toSet()
+                .length !=
+            value.purposeChoices.length ||
+        attempt.notices.any(
+          (notice) => !value.purposeChoices.any(
+            (choice) =>
+                choice.affirmed &&
+                choice.purposeCode == notice.purposeCode &&
+                choice.noticeVersionId == notice.versionId,
+          ),
+        ))
       throw const ApiFailure(
         'Every required purpose must be affirmed.',
         code: 'CORE_PERMISSION_REQUIRED',
         status: 422,
       );
+    final fingerprint = jsonEncode(value.toJson());
+    final known = _createdRequests[value.idempotencyKey];
+    if (known != null) {
+      if (known.$1 != fingerprint)
+        throw const ApiFailure(
+          'Changed fixture request.',
+          code: 'IDEMPOTENCY_CONFLICT',
+          status: 409,
+        );
+      return known.$2;
+    }
+    if (_usedAttempts.contains(value.attemptId))
+      throw const ApiFailure(
+        'Fixture attempt consumed.',
+        code: 'ATTEMPT_ALREADY_CONSUMED',
+        status: 409,
+      );
+    if (!attempt.expiresAt.isAfter(DateTime.now()))
+      throw const ApiFailure(
+        'Fixture attempt expired.',
+        code: 'ATTEMPT_EXPIRED',
+        status: 422,
+      );
+    if (value.childAlias.length > 40 ||
+        !acceptableChildDob(value.dateOfBirth, vietnamToday()))
+      throw const ApiFailure(
+        'Invalid fixture profile.',
+        code: 'INVALID_CHILD_PROFILE',
+        status: 400,
+      );
+    final age = productAge(value.dateOfBirth, vietnamToday());
     final child = ChildSummary(
       id: 'fixture-child-${_next++}',
       alias: value.childAlias,
       dateOfBirth: value.dateOfBirth,
-      ageYears: productAge(value.dateOfBirth, DateTime.now()),
-      withinProgramAgeRange: true,
+      ageYears: age,
+      withinProgramAgeRange: age >= 2 && age <= 6,
       state: 'ACTIVE',
       createdAt: DateTime.now(),
       stockAvatarKey: value.stockAvatarKey,
     );
     _children.add(child);
+    _usedAttempts.add(value.attemptId);
+    _createdRequests[value.idempotencyKey] = (fingerprint, child);
     return child;
   }
 
@@ -907,16 +994,28 @@ DateTime _date(Map<String, dynamic> x, String key) {
 List<Notice> _notices(Object? x) {
   if (x is! List)
     throw const ApiInvalidResponse('The response is missing notices.');
-  return x
+  final notices = x
       .map((v) {
         final n = _map(v);
         return Notice(
           _string(n, 'purposeCode'),
           _string(n, 'noticeVersionId'),
           _string(n, 'versionLabel'),
+          contentHash: _string(n, 'contentHash'),
+          effectiveFrom: _date(n, 'effectiveFrom'),
+          isApprovedForRealUsers: _bool(n, 'isApprovedForRealUsers'),
         );
       })
       .toList(growable: false);
+  if (notices.any(
+        (n) =>
+            n.purposeCode.isEmpty ||
+            n.versionId.isEmpty ||
+            n.isApprovedForRealUsers != false,
+      ) ||
+      notices.map((n) => n.purposeCode).toSet().length != notices.length)
+    throw const ApiInvalidResponse('Invalid R0 purpose notice snapshot.');
+  return notices;
 }
 
 OnboardingReference _reference(Map<String, dynamic> x) {
@@ -984,6 +1083,7 @@ enum Page {
   parent,
   parentOnly,
   terms,
+  childCreated,
 }
 
 class MimiGoApp extends StatefulWidget {
@@ -1006,6 +1106,8 @@ class _MimiGoAppState extends State<MimiGoApp> {
   RegistrationResult? registration;
   String? email, password, mockOtp;
   ChildDraft? draft;
+  ChildCreationState? creation;
+  ChildSummary? createdProfile;
   ChildSummary? active;
   ParentSummary? authenticatedParent;
   ParentWorkspace? parentWorkspace;
@@ -1070,6 +1172,9 @@ class _MimiGoAppState extends State<MimiGoApp> {
       registration = null;
       attempt = null;
       draft = null;
+      creation?.dispose();
+      creation = null;
+      createdProfile = null;
       selectedCategory = null;
       selectedLessonId = null;
       pendingLearningAnswers.clear();
@@ -1083,7 +1188,15 @@ class _MimiGoAppState extends State<MimiGoApp> {
   }
 
   void childBack() {
-    if (page == Page.terms) {
+    if (page == Page.childCreated) {
+      goParentHome();
+    } else if (page == Page.review) {
+      if (creation?.canEdit == true) setState(() => page = Page.input);
+    } else if (page == Page.input) {
+      setState(() => page = Page.privacy);
+    } else if (page == Page.privacy || page == Page.parentOnly) {
+      goParentHome();
+    } else if (page == Page.terms) {
       setState(() => page = Page.parent);
     } else if (page == Page.learningLesson) {
       setState(
@@ -1112,6 +1225,7 @@ class _MimiGoAppState extends State<MimiGoApp> {
 
   @override
   void dispose() {
+    creation?.dispose();
     learningSessions.dispose();
     curriculum?.dispose();
     super.dispose();
@@ -1175,15 +1289,21 @@ class _MimiGoAppState extends State<MimiGoApp> {
   );
 
   Future<void> attemptStart() async {
+    final generation = sessionGeneration;
+    setState(() {
+      attempt = null;
+      draft = null;
+    });
     try {
       final value = await api.beginOnboardingAttempt();
-      if (mounted) setState(() => attempt = value);
+      if (mounted && generation == sessionGeneration && page == Page.privacy)
+        setState(() => attempt = value);
     } on ApiFailure catch (e) {
-      if (mounted) {
+      if (mounted && generation == sessionGeneration && page == Page.privacy) {
         if (e.code == 'TERMS_ACCEPTANCE_REQUIRED')
           requireCurrentTerms();
         else
-          error(e);
+          rethrow;
       }
     }
   }
@@ -1195,9 +1315,60 @@ class _MimiGoAppState extends State<MimiGoApp> {
     setState(() {
       attempt = null;
       draft = null;
+      creation?.dispose();
+      creation = null;
       parentWorkspace = null;
       children = [];
       page = Page.terms;
+    });
+  }
+
+  void goParentHome() {
+    if (authenticatedParent == null) return;
+    setState(() {
+      attempt = null;
+      draft = null;
+      creation?.dispose();
+      creation = null;
+      parentWorkspace = null;
+      active = null;
+      page = Page.parent;
+    });
+  }
+
+  void beginChildOnboarding() {
+    if (authenticatedParent == null) return;
+    setState(() {
+      attempt = null;
+      draft = null;
+      creation?.dispose();
+      creation = null;
+      createdProfile = null;
+      active = null;
+      page = Page.privacy;
+    });
+  }
+
+  void reviewChild(ChildDraft value) {
+    if (attempt == null || creation?.sent == true) return;
+    creation?.dispose();
+    setState(() {
+      draft = value;
+      creation = ChildCreationState(
+        api,
+        CreateChildRequest(
+          attemptId: attempt!.id,
+          idempotencyKey: 'r0-${DateTime.now().microsecondsSinceEpoch}',
+          childAlias: value.alias,
+          dateOfBirth: value.dob,
+          stockAvatarKey: value.avatar,
+          guardianAffirmed: true,
+          purposeChoices: attempt!.notices
+              .map((n) => PurposeChoice(n.purposeCode, n.versionId, true))
+              .toList(growable: false),
+        ),
+      );
+      page = Page.review;
     });
   }
 
@@ -1234,6 +1405,11 @@ class _MimiGoAppState extends State<MimiGoApp> {
           page != Page.demo &&
           page != Page.learningLesson &&
           page != Page.explorer &&
+          page != Page.privacy &&
+          page != Page.input &&
+          page != Page.review &&
+          page != Page.parentOnly &&
+          page != Page.childCreated &&
           page != Page.terms,
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) childBack();
@@ -1297,28 +1473,39 @@ class _MimiGoAppState extends State<MimiGoApp> {
             Page.privacy => Privacy(
               attempt: attempt,
               begin: attemptStart,
-              declined: () => setState(() => page = Page.parentOnly),
+              parentHome: goParentHome,
+              declined: () => setState(() {
+                attempt = null;
+                draft = null;
+                page = Page.parentOnly;
+              }),
               next: () => setState(() => page = Page.input),
             ),
             Page.input => ChildInput(
+              initialDraft: draft,
               back: () => setState(() => page = Page.privacy),
-              next: (v) => setState(() {
-                draft = v;
-                page = Page.review;
-              }),
+              next: reviewChild,
             ),
             Page.review => Review(
               api: api,
               attempt: attempt!,
               draft: draft!,
+              model: creation!,
+              restart: beginChildOnboarding,
+              parentHome: goParentHome,
+              accountEntry: returnToAccountEntry,
               termsRequired: requireCurrentTerms,
-              back: () => setState(() => page = Page.input),
+              back: childBack,
               created: (v) async {
                 setState(() {
-                  active = v;
-                  page = Page.child;
+                  createdProfile = v;
+                  children = [
+                    ...children.where((child) => child.id != v.id),
+                    v,
+                  ];
+                  parentWorkspace = null;
+                  page = Page.childCreated;
                 });
-                await refresh();
               },
             ),
             Page.child => ChildHome(
@@ -1333,6 +1520,16 @@ class _MimiGoAppState extends State<MimiGoApp> {
               explore: openCurriculum,
               english: () => openCurriculum(CurriculumDomain.english),
               accountEntry: returnToAccountEntry,
+            ),
+            Page.childCreated => Frame(
+              title: 'Synthetic child profile ready',
+              children: [
+                ChildCreated(
+                  child: createdProfile!,
+                  parentHome: goParentHome,
+                  addAnother: beginChildOnboarding,
+                ),
+              ],
             ),
             Page.category => Frame(
               title: selectedCategory!.label,
@@ -1501,11 +1698,7 @@ class _MimiGoAppState extends State<MimiGoApp> {
                 fixture: config.mode == ApiMode.fixture,
                 workspace: parentWorkspace,
                 accountEntry: returnToAccountEntry,
-                add: () => setState(() {
-                  attempt = null;
-                  draft = null;
-                  page = Page.privacy;
-                }),
+                add: beginChildOnboarding,
                 enterChild: (child) => setState(() {
                   curriculum?.dispose();
                   curriculum = null;
@@ -1538,7 +1731,8 @@ class _MimiGoAppState extends State<MimiGoApp> {
               },
             ),
             Page.parentOnly => ParentOnly(
-              back: () => setState(() => page = Page.privacy),
+              back: beginChildOnboarding,
+              parentHome: goParentHome,
             ),
           },
         ),
@@ -2110,10 +2304,12 @@ class Privacy extends StatefulWidget {
     required this.begin,
     required this.declined,
     required this.next,
+    this.parentHome,
   });
   final OnboardingAttempt? attempt;
   final Future<void> Function() begin;
   final VoidCallback declined, next;
+  final VoidCallback? parentHome;
   @override
   State<Privacy> createState() => _PrivacyState();
 }
@@ -2122,10 +2318,22 @@ class _PrivacyState extends State<Privacy> {
   bool guardian = false, busy = false;
   final choices = <String, bool>{};
   ApiFailure? error;
+  @override
+  void didUpdateWidget(covariant Privacy oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.attempt?.id != widget.attempt?.id) {
+      guardian = false;
+      choices.clear();
+    }
+  }
+
   Future<void> load() async {
+    if (busy) return;
     setState(() {
       busy = true;
       error = null;
+      guardian = false;
+      choices.clear();
     });
     try {
       await widget.begin();
@@ -2142,6 +2350,7 @@ class _PrivacyState extends State<Privacy> {
     final allowed =
         guardian &&
         notices.isNotEmpty &&
+        !busy &&
         notices.every((n) => choices[n.purposeCode] == true);
     return Frame(
       title: 'Protect your child’s information',
@@ -2149,6 +2358,13 @@ class _PrivacyState extends State<Privacy> {
         const Text(
           'No child alias or date of birth is sent before an authenticated Parent starts a PII-free attempt and actively affirms each displayed core purpose.',
         ),
+        const Text(
+          'R0 SYNTHETIC NOTICE · These are mock purpose/version records, not a production legal consent flow. Self-declaration and email verification do not establish guardian authority. No full legal notice text is supplied by this API.',
+        ),
+        if (busy)
+          const LinearProgressIndicator(
+            semanticsLabel: 'Loading independent privacy notices',
+          ),
         if (widget.attempt == null)
           SizedBox(
             height: 64,
@@ -2168,39 +2384,101 @@ class _PrivacyState extends State<Privacy> {
             key: const Key('guardianAssertion'),
             contentPadding: EdgeInsets.zero,
             value: guardian,
-            onChanged: (v) => setState(() => guardian = v ?? false),
+            onChanged: busy
+                ? null
+                : (v) => setState(() => guardian = v ?? false),
             title: const Text(
               'I state I am a parent or authorised representative.',
             ),
           ),
           ...notices.map(
-            (n) => CheckboxListTile(
-              key: Key('consent-${n.purposeCode}'),
-              contentPadding: EdgeInsets.zero,
-              value: choices[n.purposeCode] ?? false,
-              onChanged: (v) =>
-                  setState(() => choices[n.purposeCode] = v ?? false),
-              title: Text('I affirm ${n.purposeCode} (${n.label}).'),
+            (n) => Card(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Required mock purpose: ${n.purposeCode}',
+                          style: Theme.of(c).textTheme.titleMedium,
+                        ),
+                        Text('Notice version: ${n.label} · ${n.versionId}'),
+                        if (n.effectiveFrom != null)
+                          Text(
+                            'Effective: ${n.effectiveFrom!.toUtc().toIso8601String()}',
+                          ),
+                        if (n.contentHash != null)
+                          Text('Content hash: ${n.contentHash}'),
+                        const Text(
+                          'Synthetic development only · not approved for real children.',
+                        ),
+                      ],
+                    ),
+                  ),
+                  CheckboxListTile(
+                    key: Key('consent-${n.purposeCode}'),
+                    contentPadding: EdgeInsets.zero,
+                    value: choices[n.purposeCode] ?? false,
+                    onChanged: busy
+                        ? null
+                        : (v) => setState(
+                            () => choices[n.purposeCode] = v ?? false,
+                          ),
+                    title: Text('I affirm ${n.purposeCode} (${n.label}).'),
+                  ),
+                ],
+              ),
             ),
           ),
           const Text(
             'Choices are unchecked by default and apply only to this new child.',
           ),
-          SizedBox(
-            height: 64,
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 64),
             child: FilledButton(
               key: const Key('privacyContinue'),
-              onPressed: allowed ? widget.next : null,
+              onPressed: allowed
+                  ? () {
+                      if (!widget.attempt!.expiresAt.isAfter(DateTime.now())) {
+                        setState(() {
+                          guardian = false;
+                          choices.clear();
+                          error = const ApiFailure(
+                            'Expired',
+                            code: 'ATTEMPT_EXPIRED',
+                            status: 422,
+                          );
+                        });
+                      } else {
+                        widget.next();
+                      }
+                    }
+                  : null,
               child: const Text('Continue to child profile'),
             ),
           ),
         ],
-        ErrorText(error),
+        if (widget.attempt != null)
+          OutlinedButton(
+            key: const Key('reloadPrivacyNotices'),
+            onPressed: busy ? null : load,
+            child: const Text('Restart with fresh privacy notices'),
+          ),
+        OnboardingError(error),
         TextButton(
           key: const Key('privacyDecline'),
-          onPressed: widget.declined,
+          onPressed: busy ? null : widget.declined,
           child: const Text('I do not agree'),
         ),
+        if (widget.parentHome != null)
+          TextButton(
+            key: const Key('privacyParentHome'),
+            onPressed: busy ? null : widget.parentHome,
+            child: const Text('Cancel onboarding and return to Parent Home'),
+          ),
       ],
     );
   }
@@ -2213,17 +2491,29 @@ class ChildDraft {
 }
 
 class ChildInput extends StatefulWidget {
-  const ChildInput({super.key, required this.back, required this.next});
+  const ChildInput({
+    super.key,
+    required this.back,
+    required this.next,
+    this.initialDraft,
+  });
   final VoidCallback back;
   final void Function(ChildDraft) next;
+  final ChildDraft? initialDraft;
   @override
   State<ChildInput> createState() => _ChildInputState();
 }
 
 class _ChildInputState extends State<ChildInput> {
-  final alias = TextEditingController(text: 'SYN-Bee'),
-      dob = TextEditingController();
-  String avatar = 'bear-blue';
+  late final alias = TextEditingController(
+        text: widget.initialDraft?.alias ?? 'SYN-Bee',
+      ),
+      dob = TextEditingController(
+        text: widget.initialDraft == null
+            ? ''
+            : dateText(widget.initialDraft!.dob),
+      );
+  late String avatar = widget.initialDraft?.avatar ?? 'bear-blue';
   ApiFailure? error;
   @override
   void dispose() {
@@ -2235,12 +2525,12 @@ class _ChildInputState extends State<ChildInput> {
   void submit() {
     final date = parseDate(dob.text);
     if (!alias.text.trim().startsWith('SYN-') ||
+        alias.text.trim().length > 40 ||
         date == null ||
-        date.isAfter(DateTime.now()) ||
-        date.year < 1900) {
+        !acceptableChildDob(date, vietnamToday())) {
       setState(
         () => error = const ApiFailure(
-          'Enter a SYN- alias and a valid required past date (YYYY-MM-DD).',
+          'Use a SYN- alias up to 40 characters and a past date from 1900-01-01 (YYYY-MM-DD).',
           code: 'INVALID_CHILD_PROFILE',
         ),
       );
@@ -2255,6 +2545,9 @@ class _ChildInputState extends State<ChildInput> {
     back: widget.back,
     children: [
       const Text('Available only after per-attempt consent.'),
+      const Text(
+        'Use synthetic information only. A profile may be outside program age; the service determines eligibility after creation. This does not grant lesson access.',
+      ),
       TextField(
         key: const Key('childName'),
         controller: alias,
@@ -2266,21 +2559,40 @@ class _ChildInputState extends State<ChildInput> {
       TextField(
         key: const Key('childDob'),
         controller: dob,
+        keyboardType: TextInputType.datetime,
         decoration: const InputDecoration(
           labelText: 'Date of birth * (YYYY-MM-DD)',
         ),
       ),
       const SizedBox(height: 12),
-      DropdownButtonFormField<String>(
-        initialValue: avatar,
-        decoration: const InputDecoration(labelText: 'Stock avatar'),
-        items: const [
-          DropdownMenuItem(value: 'bear-blue', child: Text('Blue bear')),
-          DropdownMenuItem(value: 'bee-yellow', child: Text('Sunny bee')),
+      Text(
+        'Choose a predefined avatar',
+        style: Theme.of(c).textTheme.titleMedium,
+      ),
+      Wrap(
+        spacing: 12,
+        runSpacing: 12,
+        children: [
+          for (final option in const [
+            ('bear-blue', 'Blue bear', Icons.pets_outlined),
+            ('bee-yellow', 'Sunny bee', Icons.emoji_nature_outlined),
+          ])
+            ChoiceChip(
+              key: Key('avatar-${option.$1}'),
+              selected: avatar == option.$1,
+              onSelected: (_) => setState(() => avatar = option.$1),
+              avatar: Icon(option.$3),
+              label: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                child: Text(option.$2),
+              ),
+            ),
         ],
-        onChanged: (v) => setState(() => avatar = v!),
       ),
       ErrorText(error),
+      const Text(
+        'Only the selected predefined avatar key is sent. No photo upload or external media is used.',
+      ),
       SizedBox(
         height: 64,
         child: FilledButton(
@@ -2302,86 +2614,103 @@ class Review extends StatefulWidget {
     required this.back,
     required this.created,
     this.termsRequired,
+    required this.model,
+    required this.restart,
+    required this.parentHome,
+    required this.accountEntry,
   });
   final MimiGoApi api;
   final OnboardingAttempt attempt;
   final ChildDraft draft;
   final VoidCallback back;
   final VoidCallback? termsRequired;
+  final ChildCreationState model;
+  final VoidCallback restart, parentHome, accountEntry;
   final Future<void> Function(ChildSummary) created;
   @override
   State<Review> createState() => _ReviewState();
 }
 
 class _ReviewState extends State<Review> {
-  late final request = CreateChildRequest(
-    attemptId: widget.attempt.id,
-    idempotencyKey: 'r0-${DateTime.now().microsecondsSinceEpoch}',
-    childAlias: widget.draft.alias,
-    dateOfBirth: widget.draft.dob,
-    guardianAffirmed: true,
-    stockAvatarKey: widget.draft.avatar,
-    purposeChoices: widget.attempt.notices
-        .map((n) => PurposeChoice(n.purposeCode, n.versionId, true))
-        .toList(),
-  );
-  bool busy = false;
-  ApiFailure? error;
+  bool leaving = false;
   Future<void> submit() async {
-    setState(() {
-      busy = true;
-      error = null;
-    });
-    try {
-      final value = await widget.api.createChild(request);
+    if (leaving) return;
+    final value = await widget.model.submit();
+    if (!mounted) return;
+    if (widget.model.error?.code == 'TERMS_ACCEPTANCE_REQUIRED') {
+      widget.termsRequired?.call();
+    } else if (value != null && !leaving) {
+      setState(() => leaving = true);
       await widget.created(value);
-    } on ApiFailure catch (e) {
-      if (mounted) {
-        if (e.code == 'TERMS_ACCEPTANCE_REQUIRED' &&
-            widget.termsRequired != null)
-          widget.termsRequired!();
-        else
-          setState(() => error = e);
-      }
-    } finally {
-      if (mounted) setState(() => busy = false);
     }
   }
 
   @override
-  Widget build(BuildContext c) => Frame(
-    title: 'Review profile',
-    back: widget.back,
-    children: [
-      ListTile(
-        title: const Text('Synthetic alias'),
-        subtitle: Text(widget.draft.alias),
-      ),
-      ListTile(
-        title: const Text('Date of birth'),
-        subtitle: Text(
-          '${dateText(widget.draft.dob)} · ${productAge(widget.draft.dob, DateTime.now())} years old today',
+  Widget build(BuildContext c) => AnimatedBuilder(
+    animation: widget.model,
+    builder: (c, _) => Frame(
+      title: 'Review profile',
+      back: widget.model.canEdit && !leaving ? widget.back : null,
+      children: [
+        ListTile(
+          title: const Text('Synthetic alias'),
+          subtitle: Text(widget.draft.alias),
         ),
-      ),
-      const Text(
-        'The same idempotency key and exact payload are retained for a safe retry after a connectivity failure.',
-      ),
-      ErrorText(error),
-      SizedBox(
-        height: 64,
-        child: FilledButton(
-          key: const Key('createChild'),
-          onPressed: busy ? null : submit,
-          child: Text(
-            busy
-                ? 'Creating…'
-                : error?.retryable == true
-                ? 'Retry identical request'
-                : 'Create synthetic profile',
+        ListTile(
+          title: const Text('Date of birth'),
+          subtitle: Text(
+            '${dateText(widget.draft.dob)} · the service will return age and eligibility',
           ),
         ),
-      ),
-    ],
+        Text('Predefined avatar: ${widget.draft.avatar}'),
+        const Text('Reviewed independently for this new child:'),
+        for (final notice in widget.attempt.notices)
+          Text('${notice.purposeCode} · ${notice.label} · ${notice.versionId}'),
+        if (widget.model.busy)
+          const LinearProgressIndicator(
+            semanticsLabel: 'Creating synthetic child profile',
+          ),
+        const Text(
+          'The same idempotency key and exact payload are retained for a safe retry after a connectivity failure.',
+        ),
+        OnboardingError(widget.model.error),
+        if (widget.model.sent && widget.model.result == null)
+          const Text(
+            'The request is locked after submission. Retry the identical request if its outcome is unknown; do not change the profile or create it again. Returning to account entry discards this in-memory request; check Parent Home after signing in before adding another child.',
+          ),
+        ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 64),
+          child: FilledButton(
+            key: const Key('createChild'),
+            onPressed: widget.model.canSubmit && !leaving ? submit : null,
+            child: Text(
+              widget.model.busy
+                  ? 'Creating…'
+                  : widget.model.sent
+                  ? 'Retry identical request'
+                  : 'Create synthetic profile',
+            ),
+          ),
+        ),
+        if (widget.model.needsNotices)
+          OutlinedButton(
+            key: const Key('restartChildPrivacy'),
+            onPressed: widget.model.busy || leaving ? null : widget.restart,
+            child: const Text('Restart privacy review'),
+          ),
+        if (widget.model.conflict)
+          OutlinedButton(
+            key: const Key('creationParentHome'),
+            onPressed: widget.model.busy || leaving ? null : widget.parentHome,
+            child: const Text('Check profiles in Parent Home'),
+          ),
+        TextButton(
+          key: const Key('creationAccountEntry'),
+          onPressed: leaving ? null : widget.accountEntry,
+          child: const Text('Return to account entry'),
+        ),
+      ],
+    ),
   );
 }
 
@@ -2562,8 +2891,9 @@ class _ParentAreaState extends State<ParentArea> {
 }
 
 class ParentOnly extends StatelessWidget {
-  const ParentOnly({super.key, required this.back});
+  const ParentOnly({super.key, required this.back, this.parentHome});
   final VoidCallback back;
+  final VoidCallback? parentHome;
   @override
   Widget build(BuildContext c) => Frame(
     title: 'Parent account ready',
@@ -2575,10 +2905,17 @@ class ParentOnly extends StatelessWidget {
       SizedBox(
         height: 64,
         child: FilledButton(
+          key: const Key('reviewPrivacyAgain'),
           onPressed: back,
           child: const Text('Review privacy choices'),
         ),
       ),
+      if (parentHome != null)
+        OutlinedButton(
+          key: const Key('refusalParentHome'),
+          onPressed: parentHome,
+          child: const Text('Continue with Parent Home without adding a child'),
+        ),
     ],
   );
 }
@@ -2588,6 +2925,7 @@ String errorText(ApiFailure x) =>
 String dateText(DateTime x) =>
     '${x.year.toString().padLeft(4, '0')}-${x.month.toString().padLeft(2, '0')}-${x.day.toString().padLeft(2, '0')}';
 DateTime? parseDate(String x) {
+  if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(x)) return null;
   final p = x.split('-');
   if (p.length != 3) return null;
   final y = int.tryParse(p[0]), m = int.tryParse(p[1]), d = int.tryParse(p[2]);
