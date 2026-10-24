@@ -1,8 +1,15 @@
 # MimiGo Frontend work status
 
 **Updated:** 2026-10-24 (overnight session begun 2026-10-23)<br>
-**Current slice:** S2 Backend MVP contract integration — Parent Workspace, Curriculum Discovery and account Terms<br>
-**State:** IMPLEMENTED / AUTOMATED_VERIFIED: analysis clean, **189 tests PASS**, Android debug build/install/normal launch PASS. Android real Parent-to-Learning scenario PASS with new workspace/curriculum routes and current-version Terms API checks; full Terms UI Android mock PASS; original Android fixture regression PASS. Started clean at `cb9a44f1f4d889fbf524cffddaeb75520429862a`; no discarded work or production-readiness claim.
+**Current slice:** R0 Parent onboarding, additional children and safe Child Mode entry (existing S2 tracking)<br>
+**State:** IN_PROGRESS from clean `f808941`. Parent registration/verification recovery implemented; analysis clean, **199 automated tests PASS** (189 retained + 10 new), 27 focused Parent/sign-in/privacy tests PASS. Android build result recorded in S2 report. Next: notice review, child creation recovery/success and multi-child navigation. No discarded work or production-readiness claim.
+
+## Current Parent onboarding batch
+
+- Existing screens inventoried before coding; retained registration/verify/login APIs, Terms, Parent Home, Explorer, Learning completion/replay and fixture demo. Canonical FR-ID-01/02/03/06/07 and privacy boundaries read alongside exact VS-01 and accepted Learning contracts. No new endpoints/task IDs.
+- Parent registration now has blank live credentials, documented field validation, reference loading/retry, inline errors and explicit current-version acceptance. Version-change response clears checkbox and blocks stale resubmission until reload. No child data in registration.
+- Existing unverified Parent can reach verification from actual EMAIL_NOT_VERIFIED; same documented mock verify/login/parents-me/workspace operations. Shows returned expiry/notice, six-digit validation and honest no-resend/operator help. Failed login after confirmed verification retries only authentication. No OTP resend, new challenge, refresh or credential persistence invented.
+- Parent-only history and Child Mode switching remain locked pending approved Parent Gate. Full legal content and production guardian/consent policy remain outside synthetic scope. Runtime checks for this new batch have not yet run; prior Learning live evidence remains separate.
 
 ## Current Backend MVP integration
 

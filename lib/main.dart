@@ -12,6 +12,7 @@ import 'learning_session_memory.dart';
 import 'parent_home.dart';
 import 'curriculum_explorer.dart';
 import 'terms_reacceptance.dart';
+import 'parent_onboarding.dart';
 
 export 'api_failure.dart';
 
@@ -660,6 +661,10 @@ class LiveMimiGoApi implements MimiGoApi {
   @override
   Future<RegistrationResult> register(Registration value) async {
     final x = await _request('POST', 'auth/register', body: value.toJson());
+    if (_string(x, 'status') != 'PENDING_VERIFICATION')
+      throw const ApiInvalidResponse(
+        'Registration was not confirmed as pending verification.',
+      );
     return RegistrationResult(
       _string(x, 'parentId'),
       _date(x, 'otpExpiresAt'),
@@ -669,12 +674,20 @@ class LiveMimiGoApi implements MimiGoApi {
   }
 
   @override
-  Future<void> verifyMockEmail({required String email, required String otp}) =>
-      _request(
-        'POST',
-        'auth/mock-email/verify',
-        body: {'email': email, 'otp': otp},
-      );
+  Future<void> verifyMockEmail({
+    required String email,
+    required String otp,
+  }) async {
+    final response = await _request(
+      'POST',
+      'auth/mock-email/verify',
+      body: {'email': email, 'otp': otp},
+    );
+    if (_string(response, 'status') != 'ACTIVE' ||
+        _string(response, 'parentId').isEmpty)
+      throw const ApiInvalidResponse('Email verification was not confirmed.');
+  }
+
   @override
   Future<LoginSession> login({
     required String email,
@@ -990,6 +1003,7 @@ class _MimiGoAppState extends State<MimiGoApp> {
   Page page = Page.welcome;
   OnboardingReference? reference;
   OnboardingAttempt? attempt;
+  RegistrationResult? registration;
   String? email, password, mockOtp;
   ChildDraft? draft;
   ChildSummary? active;
@@ -1005,6 +1019,9 @@ class _MimiGoAppState extends State<MimiGoApp> {
   String learningDomain = 'MATH';
   int sessionGeneration = 0;
   bool accountEntryPending = false;
+  bool startingRegistration = false;
+  ApiFailure? registrationEntryError;
+  bool verificationReturningParent = false;
 
   Future<void> returnToAccountEntry() async {
     if (accountEntryPending) return;
@@ -1050,6 +1067,7 @@ class _MimiGoAppState extends State<MimiGoApp> {
       active = null;
       children = [];
       reference = null;
+      registration = null;
       attempt = null;
       draft = null;
       selectedCategory = null;
@@ -1100,15 +1118,25 @@ class _MimiGoAppState extends State<MimiGoApp> {
   }
 
   Future<void> start() async {
+    if (startingRegistration) return;
+    final generation = sessionGeneration;
+    setState(() {
+      startingRegistration = true;
+      registrationEntryError = null;
+    });
     try {
       final value = await api.onboardingReference();
-      if (mounted)
+      if (mounted && generation == sessionGeneration && page == Page.welcome)
         setState(() {
           reference = value;
           page = Page.register;
         });
     } on ApiFailure catch (e) {
-      if (mounted) error(e);
+      if (mounted && generation == sessionGeneration)
+        setState(() => registrationEntryError = e);
+    } finally {
+      if (mounted && generation == sessionGeneration)
+        setState(() => startingRegistration = false);
     }
   }
 
@@ -1140,8 +1168,11 @@ class _MimiGoAppState extends State<MimiGoApp> {
     });
   }
 
-  Future<void> signedIn() =>
-      authenticate(email: email!, password: password!, returningParent: false);
+  Future<void> signedIn() => authenticate(
+    email: email!,
+    password: password!,
+    returningParent: verificationReturningParent,
+  );
 
   Future<void> attemptStart() async {
     try {
@@ -1213,6 +1244,8 @@ class _MimiGoAppState extends State<MimiGoApp> {
             Page.welcome => Welcome(
               live: config.mode == ApiMode.live,
               start: start,
+              busy: startingRegistration,
+              error: registrationEntryError,
               signIn: () => setState(() => page = Page.signIn),
             ),
             Page.signIn => SignIn(
@@ -1222,30 +1255,43 @@ class _MimiGoAppState extends State<MimiGoApp> {
                 password: password,
                 returningParent: true,
               ),
+              verify: (enteredEmail, enteredPassword) => setState(() {
+                email = enteredEmail;
+                password = enteredPassword;
+                mockOtp = null;
+                registration = null;
+                verificationReturningParent = true;
+                page = Page.otp;
+              }),
             ),
             Page.register => Register(
               reference: reference!,
+              fixture: config.mode == ApiMode.fixture,
+              reloadReference: api.onboardingReference,
+              signIn: () => setState(() => page = Page.signIn),
               back: () => setState(() => page = Page.welcome),
               submitted: (v) async {
-                try {
-                  final result = await api.register(v);
-                  if (mounted)
-                    setState(() {
-                      email = v.email;
-                      password = v.password;
-                      mockOtp = result.mockOtp;
-                      page = Page.otp;
-                    });
-                } on ApiFailure catch (e) {
-                  if (mounted) error(e);
-                }
+                final result = await api.register(v);
+                if (mounted)
+                  setState(() {
+                    email = v.email;
+                    password = v.password;
+                    mockOtp = result.mockOtp;
+                    registration = result;
+                    verificationReturningParent = false;
+                    page = Page.otp;
+                  });
               },
             ),
             Page.otp => Otp(
               api: api,
               email: email!,
               mockOtp: mockOtp,
-              back: () => setState(() => page = Page.register),
+              registration: registration,
+              back: () => setState(() {
+                password = null;
+                page = Page.signIn;
+              }),
               done: signedIn,
             ),
             Page.privacy => Privacy(
@@ -1576,8 +1622,12 @@ class Welcome extends StatelessWidget {
     required this.live,
     required this.start,
     required this.signIn,
+    this.busy = false,
+    this.error,
   });
   final bool live;
+  final bool busy;
+  final ApiFailure? error;
   final Future<void> Function() start;
   final VoidCallback signIn;
   @override
@@ -1594,14 +1644,21 @@ class Welcome extends StatelessWidget {
         height: 64,
         child: FilledButton(
           key: const Key('welcomeStart'),
-          onPressed: start,
-          child: const Text('Create a parent account'),
+          onPressed: busy ? null : start,
+          child: Text(
+            busy ? 'Loading current account Terms…' : 'Create a parent account',
+          ),
         ),
       ),
       const SizedBox(height: 12),
+      if (busy)
+        const LinearProgressIndicator(
+          semanticsLabel: 'Loading account reference',
+        ),
+      OnboardingError(error),
       TextButton(
         key: const Key('welcomeSignIn'),
-        onPressed: signIn,
+        onPressed: busy ? null : signIn,
         child: const Text('Already have an account? Sign in'),
       ),
     ],
@@ -1609,9 +1666,15 @@ class Welcome extends StatelessWidget {
 }
 
 class SignIn extends StatefulWidget {
-  const SignIn({super.key, required this.back, required this.submitted});
+  const SignIn({
+    super.key,
+    required this.back,
+    required this.submitted,
+    this.verify,
+  });
   final VoidCallback back;
   final Future<void> Function(String email, String password) submitted;
+  final void Function(String email, String password)? verify;
 
   @override
   State<SignIn> createState() => _SignInState();
@@ -1701,6 +1764,14 @@ class _SignInState extends State<SignIn> {
               onFieldSubmitted: (_) => submit(),
             ),
             ErrorText(error),
+            if (error?.code == 'EMAIL_NOT_VERIFIED' && widget.verify != null)
+              OutlinedButton(
+                key: const Key('resumeEmailVerification'),
+                onPressed: busy
+                    ? null
+                    : () => widget.verify!(email.text.trim(), password.text),
+                child: const Text('Verify existing synthetic email'),
+              ),
             const SizedBox(height: 16),
             SizedBox(
               height: 64,
@@ -1736,19 +1807,32 @@ class Register extends StatefulWidget {
     required this.reference,
     required this.back,
     required this.submitted,
+    this.fixture = false,
+    this.reloadReference,
+    this.signIn,
   });
   final OnboardingReference reference;
   final VoidCallback back;
   final Future<void> Function(Registration) submitted;
+  final bool fixture;
+  final Future<OnboardingReference> Function()? reloadReference;
+  final VoidCallback? signIn;
   @override
   State<Register> createState() => _RegisterState();
 }
 
 class _RegisterState extends State<Register> {
-  final email = TextEditingController(text: 'parent@example.test'),
-      password = TextEditingController(text: 'synthetic-pass'),
+  final formKey = GlobalKey<FormState>();
+  late final email = TextEditingController(
+        text: widget.fixture ? 'parent@example.test' : '',
+      ),
+      password = TextEditingController(
+        text: widget.fixture ? 'synthetic-pass' : '',
+      ),
       displayName = TextEditingController(text: 'SYN Parent');
+  late OnboardingReference current = widget.reference;
   bool terms = false, busy = false;
+  bool versionChanged = false;
   ApiFailure? error;
   @override
   void dispose() {
@@ -1759,7 +1843,8 @@ class _RegisterState extends State<Register> {
   }
 
   Future<void> submit() async {
-    final id = widget.reference.terms?.id;
+    if (busy || !formKey.currentState!.validate() || versionChanged) return;
+    final id = current.terms?.id;
     if (id == null || !terms) {
       setState(
         () => error = const ApiFailure(
@@ -1784,7 +1869,35 @@ class _RegisterState extends State<Register> {
         ),
       );
     } on ApiFailure catch (e) {
-      if (mounted) setState(() => error = e);
+      if (mounted)
+        setState(() {
+          error = e;
+          if (e.code == 'TERMS_VERSION_NOT_CURRENT') {
+            terms = false;
+            versionChanged = true;
+          }
+        });
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
+  Future<void> reload() async {
+    if (busy || widget.reloadReference == null) return;
+    setState(() {
+      busy = true;
+      terms = false;
+      error = null;
+    });
+    try {
+      final next = await widget.reloadReference!();
+      if (mounted)
+        setState(() {
+          current = next;
+          versionChanged = false;
+        });
+    } on ApiFailure catch (failure) {
+      if (mounted) setState(() => error = failure);
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -1793,48 +1906,105 @@ class _RegisterState extends State<Register> {
   @override
   Widget build(BuildContext c) => Frame(
     title: 'Create parent account',
-    back: widget.back,
+    back: busy ? null : widget.back,
     children: [
       Text(
-        'Terms: ${widget.reference.terms?.code ?? 'unavailable'}. Terms are separate from child consent.',
+        'Terms: ${current.terms?.code ?? 'unavailable'}. Terms are separate from child consent.',
       ),
-      const SizedBox(height: 12),
-      TextField(
-        key: const Key('registerEmail'),
-        controller: email,
-        decoration: const InputDecoration(
-          labelText: 'Parent email (@example.test in R0)',
+      Text(current.disclaimer),
+      const Text(
+        'R0 synthetic accounts only. The API supplies mock Terms version metadata, not a full legal document. No email is sent and this does not prove guardian authority.',
+      ),
+      if (current.terms?.effectiveFrom != null)
+        Text(
+          'Effective: ${current.terms!.effectiveFrom!.toUtc().toIso8601String()}',
         ),
-      ),
+      if (busy)
+        const LinearProgressIndicator(
+          semanticsLabel: 'Creating parent account',
+        ),
       const SizedBox(height: 12),
-      TextField(
-        controller: displayName,
-        decoration: const InputDecoration(labelText: 'Parent display name'),
-      ),
-      const SizedBox(height: 12),
-      TextField(
-        controller: password,
-        obscureText: true,
-        decoration: const InputDecoration(
-          labelText: 'Password (10–128 characters)',
+      Form(
+        key: formKey,
+        child: Column(
+          children: [
+            TextFormField(
+              key: const Key('registerEmail'),
+              controller: email,
+              enabled: !busy,
+              keyboardType: TextInputType.emailAddress,
+              autocorrect: false,
+              validator: (value) =>
+                  RegExp(r'^[^\s@]+@example\.test$')
+                      .hasMatch(value?.trim() ?? '')
+                  ? null
+                  : 'Use a synthetic email ending in @example.test.',
+              decoration: const InputDecoration(
+                labelText: 'Parent email (@example.test in R0)',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              key: const Key('registerDisplayName'),
+              controller: displayName,
+              enabled: !busy,
+              validator: (value) =>
+                  (value?.trim().isEmpty ?? true) || value!.trim().length > 80
+                  ? 'Enter a display name of 1–80 characters.'
+                  : null,
+              decoration: const InputDecoration(
+                labelText: 'Parent display name',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              key: const Key('registerPassword'),
+              controller: password,
+              enabled: !busy,
+              obscureText: true,
+              enableSuggestions: false,
+              autocorrect: false,
+              validator: (value) =>
+                  (value?.length ?? 0) < 10 || (value?.length ?? 0) > 128
+                  ? 'Use 10–128 characters.'
+                  : null,
+              decoration: const InputDecoration(
+                labelText: 'Password (10–128 characters)',
+              ),
+            ),
+          ],
         ),
       ),
       CheckboxListTile(
         key: const Key('termsCheckbox'),
         contentPadding: EdgeInsets.zero,
         value: terms,
-        onChanged: (v) => setState(() => terms = v ?? false),
+        onChanged: busy || versionChanged || current.terms == null
+            ? null
+            : (v) => setState(() => terms = v ?? false),
         title: const Text('I accept the current R0 Terms'),
       ),
-      ErrorText(error),
-      SizedBox(
-        height: 64,
+      OnboardingError(error),
+      if (widget.reloadReference != null)
+        OutlinedButton(
+          key: const Key('reloadRegistrationTerms'),
+          onPressed: busy ? null : reload,
+          child: const Text('Reload current account Terms'),
+        ),
+      ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 64),
         child: FilledButton(
           key: const Key('registerSubmit'),
-          onPressed: busy ? null : submit,
+          onPressed: busy || versionChanged ? null : submit,
           child: Text(busy ? 'Creating…' : 'Continue to email verification'),
         ),
       ),
+      if (widget.signIn != null)
+        TextButton(
+          key: const Key('registrationSignIn'),
+          onPressed: busy ? null : widget.signIn,
+          child: const Text('Already registered? Return to sign-in'),
+        ),
     ],
   );
 }
@@ -1847,72 +2017,89 @@ class Otp extends StatefulWidget {
     required this.mockOtp,
     required this.back,
     required this.done,
+    this.registration,
   });
   final MimiGoApi api;
   final String email;
   final String? mockOtp;
   final VoidCallback back;
   final Future<void> Function() done;
+  final RegistrationResult? registration;
   @override
   State<Otp> createState() => _OtpState();
 }
 
 class _OtpState extends State<Otp> {
   final code = TextEditingController();
-  bool busy = false;
-  bool verified = false;
-  ApiFailure? error;
+  late final model = EmailVerificationState(widget.api, widget.email);
   @override
   void dispose() {
     code.dispose();
+    model.dispose();
     super.dispose();
   }
 
   Future<void> submit() async {
-    setState(() {
-      busy = true;
-      error = null;
-    });
-    try {
-      if (!verified) {
-        await widget.api.verifyMockEmail(email: widget.email, otp: code.text);
-        verified = true;
-      }
-      await widget.done();
-    } on ApiFailure catch (e) {
-      if (mounted) setState(() => error = e);
-    } finally {
-      if (mounted) setState(() => busy = false);
-    }
+    await model.submit(code.text, widget.done);
   }
 
   @override
-  Widget build(BuildContext c) => Frame(
-    title: 'Check your email',
-    back: widget.back,
-    children: [
-      Text(
-        widget.mockOtp == null
-            ? 'No mock code was returned. Enter the development mock code from the Backend operator.'
-            : 'Development mock OTP returned by Backend: ${widget.mockOtp}. No email was sent.',
-      ),
-      TextField(
-        key: const Key('otpCode'),
-        controller: code,
-        maxLength: 6,
-        keyboardType: TextInputType.number,
-        decoration: const InputDecoration(labelText: 'Six-digit mock code'),
-      ),
-      ErrorText(error),
-      SizedBox(
-        height: 64,
-        child: FilledButton(
-          key: const Key('otpVerify'),
-          onPressed: busy ? null : submit,
-          child: Text(busy ? 'Checking…' : 'Verify and sign in'),
+  Widget build(BuildContext c) => AnimatedBuilder(
+    animation: model,
+    builder: (c, _) => Frame(
+      title: model.verified
+          ? 'Synthetic email verified'
+          : 'Verify synthetic email',
+      back: model.busy ? null : widget.back,
+      children: [
+        Text(
+          widget.mockOtp == null
+              ? 'No mock code was returned. Enter the development mock code from the Backend operator.'
+              : 'Development mock OTP returned by Backend: ${widget.mockOtp}. No email was sent.',
         ),
-      ),
-    ],
+        Text('Synthetic account: ${widget.email}'),
+        if (widget.registration != null) ...[
+          Text(widget.registration!.notice),
+          Text(
+            'Code expiry returned by service: ${widget.registration!.otpExpiresAt.toUtc().toIso8601String()}',
+          ),
+        ],
+        const Text(
+          'Wrong, expired and unavailable codes receive the same response. No resend endpoint exists; a development operator must resolve an expired or locked verification. You can return to sign-in without creating another account.',
+        ),
+        if (model.busy)
+          const LinearProgressIndicator(
+            semanticsLabel: 'Verifying and signing in',
+          ),
+        if (model.verified)
+          const Text(
+            'Email is verified. Retry sign-in without submitting the code again.',
+          ),
+        TextField(
+          key: const Key('otpCode'),
+          controller: code,
+          enabled: !model.busy && !model.verified,
+          maxLength: 6,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(labelText: 'Six-digit mock code'),
+        ),
+        OnboardingError(model.error),
+        ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 64),
+          child: FilledButton(
+            key: const Key('otpVerify'),
+            onPressed: model.busy ? null : submit,
+            child: Text(
+              model.busy
+                  ? 'Checking…'
+                  : model.verified
+                  ? 'Retry parent sign-in'
+                  : 'Verify and sign in',
+            ),
+          ),
+        ),
+      ],
+    ),
   );
 }
 

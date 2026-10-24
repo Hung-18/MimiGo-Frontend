@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mimigo_frontend/main.dart';
 
+import 'learning_widget_test.dart' show tapVisible;
+
 void main() {
   test('fixture supports registration-to-child retrieval flow', () async {
     final api = FixtureMimiGoApi();
@@ -49,11 +51,11 @@ void main() {
     await tester.tap(find.byKey(const Key('welcomeStart')));
     await tester.pumpAndSettle();
     expect(tester.widget<Checkbox>(find.byType(Checkbox).first).value, isFalse);
-    await tester.tap(find.byKey(const Key('termsCheckbox')));
-    await tester.tap(find.byKey(const Key('registerSubmit')));
+    await tapVisible(tester, 'termsCheckbox');
+    await tapVisible(tester, 'registerSubmit');
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('otpCode')), '123456');
-    await tester.tap(find.byKey(const Key('otpVerify')));
+    await tapVisible(tester, 'otpVerify');
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('loadAttempt')));
     await tester.pumpAndSettle();

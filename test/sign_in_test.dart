@@ -158,9 +158,12 @@ void main() {
       await tester.tap(find.byKey(const Key('otpVerify')));
       await tester.pumpAndSettle();
       expect(
-        find.textContaining('Could not reach the service.'),
+        find.textContaining(
+          'We could not reach the service. Check your connection and retry.',
+        ),
         findsOneWidget,
       );
+      await tester.ensureVisible(find.byKey(const Key('otpVerify')));
       await tester.tap(find.byKey(const Key('otpVerify')));
       await tester.pumpAndSettle();
       expect(api.calls, ['verify']);

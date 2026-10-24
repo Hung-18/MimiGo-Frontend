@@ -2,11 +2,24 @@
 
 Date: 2026-10-23. Baseline: accepted VS-02 checkpoint `23bbada2f3ac5d975b7f47428b67936977f08209`.
 
-**Current status: Backend MVP integration IMPLEMENTED / AUTOMATED_VERIFIED.** Analysis clean, **189 automated tests PASS**, Android debug build/install/normal launch PASS. Android real workspace/curriculum/complete/replay journey PASS; current-version Terms API checks PASS; full Terms UI Android mock PASS; original Android fixture regression PASS. Started clean at `cb9a44f`; older sections retain historical evidence. No push, deploy, publish or merge; synthetic development only, not production approval.
+**Current status: R0 Parent onboarding / multi-child batch IN_PROGRESS from clean `f808941`.** Registration/verification recovery implemented, analysis clean, **199 automated tests PASS**. Notice review, child creation recovery/success and safe entry follow next. New batch Android results are recorded at the end; earlier 189-test Backend MVP and live Learning evidence remains historical below. No push, deploy, publish or merge; synthetic development only, not production approval.
 
 **Accepted baseline: CLOSED / PO_ACCEPTED — synthetic development scope only.** In the 2026-10-23 closeout instruction the PO confirmed clean analysis, 60 automated tests PASS, a successful Android build, real Learning Dev Smoke PASS, and manually accepted Parent → Child → Math → Lesson → Session → Answer → Feedback → Persisted Readback against the real Development Backend/PostgreSQL. This closes the previous baseline runtime acceptance blocker; it does not accept the new completion/replay continuation, establish production readiness or convert the earlier automated Android attempt into a pass.
 
-## Evidence attribution at closeout
+## R0 Parent onboarding and multi-child continuation — 2026-10-24
+
+Baseline clean `f808941f7bbd5b0f74f3327f04605b2a4ed6c2a4`. Scope inventory found existing register/verify/login, notice checkbox, DOB/avatar form and review; Parent Home, Explorer, Terms and Learning were already implemented and retained. Missing usable verification recovery, fuller notice metadata, creation recovery/success and safe multi-child handoff are implemented sequentially here. Read exact VS-01 OpenAPI, accepted Learning candidate, relevant Auth/Child DTO/service validation and canonical SRS FR-ID-01/02/03/06/07, WF-01/02 read-only. No new task ID or API invented; no Backend/Database write.
+
+### Registration and verification checkpoint
+
+- Launch has reference loading, duplicate protection and inline connectivity/retry before registration. Live credentials start blank; fixture convenience values remain synthetic only. Registration validates @example.test, 10–128 password, 1–80 display name and independent unticked Terms. API Terms version changes clear acceptance and require current-reference reload/new choice. Server failure stays on the form; no falsely successful navigation.
+- Existing unverified accounts get an explicit verification-recovery entry only after actual EMAIL_NOT_VERIFIED from sign-in. Reuses `POST auth/mock-email/verify`, `POST auth/login`, `GET parents/me` and existing workspace; no registration replay or invented resend route.
+- Verification screen shows returned challenge expiry/notice (when registered in this process), requires six digits, explains indistinguishable wrong/expired/locked codes and absent resend/operator dependency. `EmailVerificationState` prevents duplicates, ignores disposed verification replies and preserves verified state across failed login retry without resending the OTP. No persisted credentials or expiry-extension policy.
+- Live client validates documented PENDING_VERIFICATION and ACTIVE acknowledgments. New Parent-facing errors do not echo private server details. Account Terms still never grants child purposes; no PIN success simulated.
+- Actual checks: `flutter analyze --no-pub` **PASS**, no issues; focused Parent/sign-in/privacy command **27 PASS**; full `flutter test --no-pub --reporter expanded` **199 PASS**, exit 0; live-configured Android debug build **PASS**, 10.9s Gradle phase, exit 0. New-batch device behavior not yet claimed. Ten new repository/state/widget tests added; old assertions preserved with safe new wording and actual scrolling for the larger form.
+- Changed files: `lib/main.dart`, new `lib/parent_onboarding.dart`, new `test/parent_onboarding_test.dart`, existing `test/sign_in_test.dart` and `test/widget_test.dart`, `reports/WORK_STATUS.md`, this report. Scoped review: no real secrets, generated files or unrelated changes; build/test log ignored. Separate local checkpoint authorized; no push.
+
+## Evidence attribution at closeout (historical)
 
 | Evidence source | Result and limit |
 |---|---|
