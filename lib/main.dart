@@ -19,6 +19,8 @@ void main() => runApp(const MimiGoApp());
 /// Accepted auth/ChildProfile boundary plus the exact S2 Learning operations.
 /// Fixture remains the default; live mode is opt-in.
 abstract class MimiGoApi implements LearningApi {
+  Future<ParentWorkspace> learningWorkspace();
+
   /// Discards the local bearer session only. No server logout/revocation exists.
   void clearSession();
   Future<OnboardingReference> onboardingReference();
@@ -102,6 +104,47 @@ class ParentSummary {
   );
   final String parentId, email, displayName;
   final bool currentTermsAccepted;
+}
+
+/// Safe Parent Home projection. Deliberately does not model, cache or expose
+/// openSessions, lesson-history items or progress received in the workspace.
+class WorkspaceChildMetadata {
+  const WorkspaceChildMetadata(this.child, this.catalogStatus);
+  factory WorkspaceChildMetadata.fromJson(Map<String, dynamic> json) {
+    final child = _child(_map(json['child']));
+    final status = _string(_map(json['catalog']), 'status');
+    if (!{
+      'AVAILABLE',
+      'NO_ELIGIBLE_CONTENT',
+      'CHILD_OUTSIDE_PROGRAM_AGE',
+      'PERMISSION_NOT_GRANTED',
+      'CHILD_NOT_ACTIVE',
+    }.contains(status))
+      throw const ApiInvalidResponse('Invalid catalog availability.');
+    return WorkspaceChildMetadata(child, status);
+  }
+  final ChildSummary child;
+  final String catalogStatus;
+}
+
+class ParentWorkspace {
+  const ParentWorkspace(this.children, this.disclaimer);
+  factory ParentWorkspace.fromJson(Map<String, dynamic> json) {
+    final items = json['children'];
+    if (items is! List)
+      throw const ApiInvalidResponse('Invalid parent workspace children.');
+    final children = items
+        .map((item) => WorkspaceChildMetadata.fromJson(_map(item)))
+        .toList(growable: false);
+    if (children.map((item) => item.child.id).toSet().length != children.length)
+      throw const ApiInvalidResponse('Duplicate workspace children.');
+    return ParentWorkspace(
+      List.unmodifiable(children),
+      _string(json, 'disclaimer'),
+    );
+  }
+  final List<WorkspaceChildMetadata> children;
+  final String disclaimer;
 }
 
 class TermsReference {
@@ -222,6 +265,20 @@ class ChildDetail extends ChildSummary {
 }
 
 class FixtureMimiGoApi implements MimiGoApi {
+  @override
+  Future<CurriculumCatalog> curriculum(String childId) async =>
+      const CurriculumCatalog(
+        [],
+        'NO_ELIGIBLE_CONTENT',
+        'DEMO / FIXTURE · no published curriculum catalog.',
+      );
+  @override
+  Future<ParentWorkspace> learningWorkspace() async => ParentWorkspace(
+    (await listChildren())
+        .map((child) => WorkspaceChildMetadata(child, 'NO_ELIGIBLE_CONTENT'))
+        .toList(growable: false),
+    'DEMO / FIXTURE · catalog availability only; no protected history.',
+  );
   @override
   Future<LearningSession> completeLearning(
     String childId,
@@ -458,6 +515,15 @@ class FixtureMimiGoApi implements MimiGoApi {
 }
 
 class LiveMimiGoApi implements MimiGoApi {
+  @override
+  Future<CurriculumCatalog> curriculum(String childId) async =>
+      CurriculumCatalog.fromJson(
+        await _request('GET', 'children/$childId/curriculum', auth: true),
+      );
+  @override
+  Future<ParentWorkspace> learningWorkspace() async => ParentWorkspace.fromJson(
+    await _request('GET', 'parents/me/learning-workspace', auth: true),
+  );
   LiveMimiGoApi(this.baseUri, {HttpClient? client})
     : _client = client ?? HttpClient();
   final Uri baseUri;
@@ -862,6 +928,7 @@ class _MimiGoAppState extends State<MimiGoApp> {
   ChildDraft? draft;
   ChildSummary? active;
   ParentSummary? authenticatedParent;
+  ParentWorkspace? parentWorkspace;
   List<ChildSummary> children = [];
   LearningCategory? selectedCategory;
   String? selectedLessonId;
@@ -913,6 +980,7 @@ class _MimiGoAppState extends State<MimiGoApp> {
       sessionGeneration++;
       email = password = mockOtp = null;
       authenticatedParent = null;
+      parentWorkspace = null;
       active = null;
       children = [];
       reference = null;
@@ -983,12 +1051,16 @@ class _MimiGoAppState extends State<MimiGoApp> {
   }) async {
     await api.login(email: email, password: password);
     final parent = await api.parentMe();
-    final profiles = returningParent
-        ? await api.listChildren()
-        : <ChildSummary>[];
+    final workspace = returningParent || !parent.currentTermsAccepted
+        ? await api.learningWorkspace()
+        : null;
+    final profiles =
+        workspace?.children.map((item) => item.child).toList(growable: false) ??
+        <ChildSummary>[];
     if (!mounted) return;
     setState(() {
       authenticatedParent = parent;
+      parentWorkspace = workspace;
       children = profiles;
       active = null;
       attempt = null;
@@ -1271,6 +1343,7 @@ class _MimiGoAppState extends State<MimiGoApp> {
                 parent: authenticatedParent!,
                 children: children,
                 fixture: config.mode == ApiMode.fixture,
+                workspace: parentWorkspace,
                 accountEntry: returnToAccountEntry,
                 add: () => setState(() {
                   attempt = null;

@@ -1,10 +1,19 @@
 # MimiGo Frontend work status
 
 **Updated:** 2026-10-24 (overnight session begun 2026-10-23)<br>
-**Current slice:** S2 MVP modules — Parent Home and Curriculum Explorer<br>
-**State:** Both IMPLEMENTED / AUTOMATED_ANDROID_LIVE_VERIFIED, synthetic development only. Analysis clean, 163 tests PASS, debug build PASS, Android live and fixture scenarios PASS. Start was clean at `7bcac0108a65f7c2feb10731dc625e79f41e5cf4`; no work was discarded. No new PO acceptance or production-readiness claim.
+**Current slice:** S2 Backend MVP contract integration — workspace/discovery, then Terms<br>
+**State:** Workspace/discovery IMPLEMENTED / AUTOMATED_VERIFIED: analysis clean, 173 tests PASS, debug build PASS. Terms re-acceptance next; new-route Android E2E pending. Started clean at `cb9a44f1f4d889fbf524cffddaeb75520429862a`; no discarded work or production-readiness claim.
 
-## Current MVP module evidence
+## Current Backend MVP integration
+
+- Read both exact OpenAPI candidates and Backend Learning report §19/DTOs. User reports PostgreSQL 21/21 and Learning Dev Smoke PASS; these are Backend/PO evidence, not tests rerun by Frontend.
+- New `GET children/{id}/curriculum` replaces local flat grouping. Uses returned domain/topic names, sortOrder and eligible Free lessons; rejects malformed/mismatched nested content. Canonical six remain clear framework entries when unavailable; no lesson invention or live fallback.
+- Parent Home now uses `GET parents/me/learning-workspace` child/catalog availability. The projection does not model/cache/render openSessions or history. No history-list call or Parent Gate bypass. Revoked/inactive catalog metadata disables entry; missing/stale authorization hides stale selections.
+- Checkpoint validation: analysis clean, full **173 tests PASS** (163 baseline + 10 contract/projection regressions), Android live-configured debug build PASS. Existing test doubles/scenarios updated to the real new contracts. This is mock/compilation evidence; new-route device evidence will be recorded after compatible runtime checks.
+- Terms endpoint and schemas read; next implementation only after actual TERMS_ACCEPTANCE_REQUIRED, with unticked acceptance, exact current version and no child purpose writes. Full Terms text is absent from the API; only R0 version/hash/effective metadata is available. No legal text will be invented.
+- Safe local checkpoints authorized; no Backend/Database edits, push, merge or release. Details: current integration section of `reports/S2_FRONTEND_INTEGRATION.md`.
+
+## Previous MVP module evidence
 
 - Canonical SRS reviewed read-only: FR-ID-02/03/07 (parent/child ownership and server-derived age), FR-CUR-01/02 (Domain → Topic → Lesson; canonical six include English, not Arts), FR-LRN-02 and FR-ID-06 (activity evidence/Parent Gate boundaries). No new task IDs.
 - Parent Home now offers an authenticated roster, selected-child overview from `GET children/{id}`, explicit Enter Child Mode and pre-entry selection of another child. Loading, missing/inactive profiles, failed/forged detail responses, refresh and empty roster are handled. Terms-gated Add child reuses the existing consent flow. Parent authentication remains login → parents/me; no direct Parent access or sibling switch from Child Mode.

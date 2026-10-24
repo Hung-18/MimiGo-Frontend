@@ -7,6 +7,50 @@ const optionId = '66666666-6666-4666-8666-666666666666';
 const otherOptionId = '77777777-7777-4777-8777-777777777777';
 const eventId = '88888888-8888-4888-8888-888888888888';
 
+// Test-only response builder; never a live client fallback.
+Map<String, dynamic> curriculumJson(
+  Iterable<Map<String, dynamic>> items, {
+  String? emptyReason,
+  String disclaimer = 'Synthetic curriculum',
+}) {
+  final domains = <String, Map<String, dynamic>>{};
+  for (final item in items) {
+    final code = item['domainCode'] as String;
+    final domain = domains.putIfAbsent(
+      code,
+      () => {
+        'domainCode': code,
+        'name': code == 'MATH'
+            ? 'Math'
+            : code == 'ENGLISH'
+            ? 'English'
+            : code,
+        'sortOrder': domains.length,
+        'topics': <Map<String, dynamic>>[],
+      },
+    );
+    final topics = domain['topics'] as List<Map<String, dynamic>>;
+    final found = topics.where(
+      (topic) => topic['topicCode'] == item['topicCode'],
+    );
+    final topic = found.isNotEmpty
+        ? found.first
+        : {
+            'topicCode': item['topicCode'],
+            'name': 'Topic: ${item['topicCode']}',
+            'sortOrder': topics.length,
+            'lessons': <Map<String, dynamic>>[],
+          };
+    if (found.isEmpty) topics.add(topic);
+    (topic['lessons'] as List).add(item);
+  }
+  return {
+    'domains': domains.values.toList(),
+    'emptyReason': emptyReason,
+    'disclaimer': disclaimer,
+  };
+}
+
 Map<String, dynamic> summaryJson() => {
   'lessonId': lessonId,
   'lessonCode': 'SYN-MATH-001',

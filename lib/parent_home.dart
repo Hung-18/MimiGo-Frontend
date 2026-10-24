@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'main.dart' show ChildDetail, ChildSummary, MimiGoApi, ParentSummary;
+import 'main.dart'
+    show ChildDetail, ChildSummary, MimiGoApi, ParentSummary, ParentWorkspace;
 import 'api_failure.dart';
 import 'learning_screens.dart' show LearningError;
 
@@ -13,10 +14,20 @@ class ParentHomeState extends ChangeNotifier {
   ChildDetail? selected;
   ApiFailure? error;
   bool busy = false;
+  Map<String, String> catalogStatuses = const {};
+  String? disclaimer;
   int _generation = 0;
 
   void seed(List<ChildSummary> profiles) {
     children = List.unmodifiable(profiles);
+  }
+
+  void seedWorkspace(ParentWorkspace workspace) {
+    seed(workspace.children.map((item) => item.child).toList());
+    catalogStatuses = Map.unmodifiable({
+      for (final item in workspace.children) item.child.id: item.catalogStatus,
+    });
+    disclaimer = workspace.disclaimer;
   }
 
   Future<void> refresh() async {
@@ -25,10 +36,13 @@ class ParentHomeState extends ChangeNotifier {
     busy = true;
     error = null;
     selected = null;
+    children = const [];
+    catalogStatuses = const {};
+    disclaimer = null;
     notifyListeners();
     try {
-      final value = await api.listChildren();
-      if (generation == _generation) children = List.unmodifiable(value);
+      final value = await api.learningWorkspace();
+      if (generation == _generation) seedWorkspace(value);
     } on ApiFailure catch (failure) {
       if (generation == _generation) {
         error = failure;
@@ -90,6 +104,7 @@ class ParentHome extends StatefulWidget {
     required this.enterChild,
     required this.accountEntry,
     required this.fixture,
+    this.workspace,
   });
   final MimiGoApi api;
   final ParentSummary parent;
@@ -97,6 +112,7 @@ class ParentHome extends StatefulWidget {
   final VoidCallback add, accountEntry;
   final ValueChanged<ChildDetail> enterChild;
   final bool fixture;
+  final ParentWorkspace? workspace;
   @override
   State<ParentHome> createState() => _ParentHomeState();
 }
@@ -104,6 +120,23 @@ class ParentHome extends StatefulWidget {
 class _ParentHomeState extends State<ParentHome> {
   late final model = ParentHomeState(widget.api)..seed(widget.children);
   bool leaving = false;
+  @override
+  void initState() {
+    super.initState();
+    if (widget.workspace != null)
+      model.seedWorkspace(widget.workspace!);
+    else
+      model.refresh();
+  }
+
+  String availability(String? status) => switch (status) {
+    'AVAILABLE' => 'Eligible Free lessons available',
+    'NO_ELIGIBLE_CONTENT' => 'No eligible lessons returned',
+    'CHILD_OUTSIDE_PROGRAM_AGE' => 'Outside program age range',
+    'PERMISSION_NOT_GRANTED' => 'Catalog permission is not granted',
+    'CHILD_NOT_ACTIVE' => 'Child profile is not active',
+    _ => 'Refresh to check catalog availability',
+  };
   @override
   void dispose() {
     model.dispose();
@@ -136,6 +169,10 @@ class _ParentHomeState extends State<ParentHome> {
               semanticsLabel: 'Loading child profile',
             ),
           if (model.error != null) LearningError(model.error!),
+          if (model.disclaimer != null) Text(model.disclaimer!),
+          const Text(
+            'Learning activity is unavailable until Parent Gate is approved. No session history or progress is shown here.',
+          ),
           if (child == null) ...[
             Semantics(
               header: true,
@@ -155,7 +192,10 @@ class _ParentHomeState extends State<ParentHome> {
                   key: Key('parent-child-${profile.id}'),
                   minVerticalPadding: 16,
                   title: Text(profile.alias),
-                  subtitle: Text('Profile: ${profile.state}'),
+                  subtitle: Text(
+                    'Profile: ${profile.state}\n${availability(model.catalogStatuses[profile.id])}',
+                  ),
+                  isThreeLine: true,
                   trailing: const Icon(Icons.chevron_right),
                   onTap: model.busy || leaving
                       ? null
@@ -181,11 +221,22 @@ class _ParentHomeState extends State<ParentHome> {
                   : 'The service reports this child outside the program age range. No learning access is granted here.',
             ),
             Text(child.disclaimer),
+            Text(
+              availability(model.catalogStatuses[child.id]),
+              key: const Key('parentCatalogAvailability'),
+            ),
             ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 64),
               child: FilledButton(
                 key: const Key('parentEnterLearning'),
-                onPressed: model.busy || leaving || child.state != 'ACTIVE'
+                onPressed:
+                    model.busy ||
+                        leaving ||
+                        child.state != 'ACTIVE' ||
+                        {
+                          'PERMISSION_NOT_GRANTED',
+                          'CHILD_NOT_ACTIVE',
+                        }.contains(model.catalogStatuses[child.id])
                     ? null
                     : () {
                         if (leaving) return;

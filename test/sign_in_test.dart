@@ -7,6 +7,28 @@ import 'package:mimigo_frontend/learning_models.dart';
 
 class AuthApi extends FixtureMimiGoApi {
   @override
+  Future<CurriculumCatalog> curriculum(String childId) async {
+    calls.add('curriculum:$childId');
+    return const CurriculumCatalog(
+      [],
+      'NO_ELIGIBLE_CONTENT',
+      'Synthetic widget test',
+    );
+  }
+
+  @override
+  Future<ParentWorkspace> learningWorkspace() async {
+    calls.add('workspace');
+    if (listFailure != null) throw listFailure!;
+    return ParentWorkspace(
+      profiles
+          .map((child) => WorkspaceChildMetadata(child, 'AVAILABLE'))
+          .toList(),
+      'Synthetic workspace',
+    );
+  }
+
+  @override
   Future<LessonList> lessons(String childId) async {
     calls.add('lessons:$childId');
     return const LessonList([], 'NO_ELIGIBLE_CONTENT', 'Synthetic widget test');
@@ -170,7 +192,7 @@ void main() {
       await openSignIn(tester, api);
       await fillSignIn(tester);
       await submitSignIn(tester);
-      expect(api.calls, ['login', 'me', 'children']);
+      expect(api.calls, ['login', 'me', 'workspace']);
       expect(find.text('Parent Home'), findsOneWidget);
       expect(find.text('No child profiles returned.'), findsOneWidget);
       await tester.ensureVisible(find.byKey(const Key('addChild')));
@@ -205,7 +227,7 @@ void main() {
       await tester.ensureVisible(find.byKey(const Key('parentEnterLearning')));
       await tester.tap(find.byKey(const Key('parentEnterLearning')));
       await tester.pumpAndSettle();
-      expect(api.calls, ['login', 'me', 'children', 'detail:child-1']);
+      expect(api.calls, ['login', 'me', 'workspace', 'detail:child-1']);
       expect(find.text('Hi, SYN-Bee!'), findsOneWidget);
       expect(
         tester
@@ -328,7 +350,7 @@ void main() {
     await openSignIn(tester, api);
     await fillSignIn(tester);
     await submitSignIn(tester);
-    expect(api.calls, ['login', 'me', 'children']);
+    expect(api.calls, ['login', 'me', 'workspace']);
     expect(find.byType(SignIn), findsOneWidget);
     expect(find.textContaining('Profiles unavailable.'), findsOneWidget);
     expect(find.text('No child profiles returned.'), findsNothing);

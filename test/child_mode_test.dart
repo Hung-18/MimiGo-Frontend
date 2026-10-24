@@ -122,7 +122,9 @@ void main() {
         expect(find.byType(CircleDemo), findsNothing);
         expect(
           api.calls,
-          category == LearningCategory.math || english
+          english
+              ? [...calls, 'curriculum:child-1']
+              : category == LearningCategory.math
               ? [...calls, 'lessons:child-1']
               : calls,
           reason: 'Math and the canonical English Explorer use the existing child-scoped catalog.',

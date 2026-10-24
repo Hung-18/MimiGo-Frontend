@@ -3,6 +3,7 @@ import 'dart:math';
 import 'api_failure.dart';
 
 abstract class LearningApi {
+  Future<CurriculumCatalog> curriculum(String childId);
   Future<LessonList> lessons(String childId);
   Future<LessonDetail> lesson(String childId, String lessonId);
   Future<LearningSession> startLearning(String childId, String lessonId);
@@ -13,6 +14,60 @@ abstract class LearningApi {
     String sessionId,
     AnswerRequest request,
   );
+}
+
+class CurriculumTopicData {
+  CurriculumTopicData.fromJson(Map<String, dynamic> json)
+    : code = _text(json, 'topicCode'),
+      name = _text(json, 'name'),
+      sortOrder = _integer(json, 'sortOrder'),
+      lessons = _items(json, 'lessons', LessonSummary.fromJson) {
+    if (lessons.isEmpty ||
+        lessons.any(
+          (lesson) => lesson.topicCode != code || lesson.access != 'FREE',
+        ) ||
+        lessons.map((lesson) => lesson.lessonId).toSet().length !=
+            lessons.length)
+      throw const ApiInvalidResponse('Invalid eligible topic lessons.');
+  }
+  final String code, name;
+  final int sortOrder;
+  final List<LessonSummary> lessons;
+}
+
+class CurriculumDomainData {
+  CurriculumDomainData.fromJson(Map<String, dynamic> json)
+    : code = _text(json, 'domainCode'),
+      name = _text(json, 'name'),
+      sortOrder = _integer(json, 'sortOrder'),
+      topics = _items(json, 'topics', CurriculumTopicData.fromJson) {
+    if (topics.isEmpty ||
+        topics.any(
+          (topic) => topic.lessons.any((lesson) => lesson.domainCode != code),
+        ) ||
+        topics.map((topic) => topic.code).toSet().length != topics.length)
+      throw const ApiInvalidResponse('Invalid eligible curriculum domain.');
+  }
+  final String code, name;
+  final int sortOrder;
+  final List<CurriculumTopicData> topics;
+}
+
+class CurriculumCatalog {
+  const CurriculumCatalog(this.domains, this.emptyReason, this.disclaimer);
+  factory CurriculumCatalog.fromJson(Map<String, dynamic> json) {
+    final domains = _items(json, 'domains', CurriculumDomainData.fromJson);
+    if (domains.map((domain) => domain.code).toSet().length != domains.length)
+      throw const ApiInvalidResponse('Duplicate curriculum domains.');
+    return CurriculumCatalog(
+      domains,
+      _optionalText(json, 'emptyReason'),
+      _text(json, 'disclaimer'),
+    );
+  }
+  final List<CurriculumDomainData> domains;
+  final String? emptyReason;
+  final String disclaimer;
 }
 
 Map<String, dynamic> _object(Object? value) {

@@ -14,6 +14,17 @@ import 'sign_in_test.dart' show openSignIn, fillSignIn, submitSignIn;
 import 'learning_api_test.dart' show Transport, Reply, authenticated;
 
 class ExplorerApi extends CompletionApi {
+  @override
+  Future<CurriculumCatalog> curriculum(String child) async {
+    final list = await lessons(child);
+    return CurriculumCatalog.fromJson(
+      curriculumJson(
+        catalog.where((item) => item['access'] == 'FREE'),
+        emptyReason: list.emptyReason,
+      ),
+    );
+  }
+
   List<Map<String, dynamic>> catalog = [summaryJson()];
   final catalogChildren = <String>[];
   @override
@@ -221,13 +232,7 @@ void main() {
 
   test('repository uses only authenticated child lessons GET; topic navigation invents no endpoint', () async {
     final http = Transport()
-      ..replies.add(
-        Reply({
-          'items': [summaryJson()],
-          'emptyReason': null,
-          'disclaimer': 'Synthetic',
-        }),
-      );
+      ..replies.add(Reply(curriculumJson([summaryJson()])));
     final api = await authenticated(http);
     final model = CurriculumExplorerState(api, childId);
     await model.load();
@@ -235,7 +240,7 @@ void main() {
     model.chooseTopic(model.topics.single);
     expect(http.requests, hasLength(2));
     expect(http.requests.last.method, 'GET');
-    expect(http.requests.last.uri.path, '/api/v1/children/$childId/lessons');
+    expect(http.requests.last.uri.path, '/api/v1/children/$childId/curriculum');
     expect(
       http.requests.last.headers.value('authorization'),
       'Bearer unit-token',

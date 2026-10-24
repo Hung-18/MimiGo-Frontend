@@ -18,9 +18,9 @@ class LearningLiveTrace extends TracedLiveApi {
   int starts = 0;
   String? catalogChild;
   @override
-  Future<LessonList> lessons(String childId) {
+  Future<CurriculumCatalog> curriculum(String childId) {
     catalogChild = childId;
-    return super.lessons(childId);
+    return super.curriculum(childId);
   }
 
   bool dropNextAck = true;
@@ -173,9 +173,10 @@ void main() {
         child.id,
         reason: 'Pre-entry sibling selection must not leak into the learning context.',
       );
-      final listing = api.catalog!.items.singleWhere(
-        (lesson) => lesson.lessonCode == 'SYN-MATH-001',
-      );
+      final listing = api.discovered!.domains
+          .expand((domain) => domain.topics)
+          .expand((topic) => topic.lessons)
+          .singleWhere((lesson) => lesson.lessonCode == 'SYN-MATH-001');
       await tap(tester, 'domain-MATH');
       await waitFor(tester, find.byKey(Key('topic-${listing.topicCode}')));
       await tap(tester, 'topic-${listing.topicCode}');

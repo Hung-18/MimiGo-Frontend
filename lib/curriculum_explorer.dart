@@ -24,6 +24,7 @@ class CurriculumExplorerState extends ChangeNotifier {
   final LearningApi api;
   final String childId;
   List<LessonSummary> lessons = const [];
+  List<CurriculumDomainData> domains = const [];
   CurriculumDomain? domain;
   String? topic, emptyReason, disclaimer;
   ApiFailure? error;
@@ -33,10 +34,41 @@ class CurriculumExplorerState extends ChangeNotifier {
   List<LessonSummary> inDomain(CurriculumDomain value) => List.unmodifiable(
     lessons.where((lesson) => lesson.domainCode == value.code),
   );
+  CurriculumDomainData? metadata(CurriculumDomain value) {
+    for (final item in domains) {
+      if (item.code == value.code) return item;
+    }
+    return null;
+  }
+
+  String domainName(CurriculumDomain value) =>
+      metadata(value)?.name ?? value.label;
+  String topicName(String code) {
+    for (final item in metadata(domain!)?.topics ?? <CurriculumTopicData>[]) {
+      if (item.code == code) return item.name;
+    }
+    return code;
+  }
+
+  List<CurriculumDomain> get presentation {
+    final available = domains
+        .map(
+          (item) =>
+              CurriculumDomain.values.singleWhere((d) => d.code == item.code),
+        )
+        .toList();
+    return [
+      ...available,
+      ...CurriculumDomain.values.where((d) => !available.contains(d)),
+    ];
+  }
+
   List<String> get topics => domain == null
       ? const []
-      : (inDomain(domain!).map((lesson) => lesson.topicCode).toSet().toList()
-          ..sort());
+      : ((metadata(domain!)?.topics.toList() ?? <CurriculumTopicData>[])
+              ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder)))
+            .map((topic) => topic.code)
+            .toList();
   List<LessonSummary> get inTopic => domain == null || topic == null
       ? const []
       : List.unmodifiable(
@@ -49,18 +81,25 @@ class CurriculumExplorerState extends ChangeNotifier {
     loading = true;
     error = null;
     lessons = const [];
+    domains = const [];
     emptyReason = disclaimer = null;
     notifyListeners();
     try {
-      final result = await api.lessons(childId);
+      final result = await api.curriculum(childId);
       if (generation != _generation) return;
       // No Premium unlock, local eligibility, production content or fallback.
+      domains = List.unmodifiable(
+        result.domains
+            .where(
+              (item) => CurriculumDomain.values.any((d) => d.code == item.code),
+            )
+            .toList()
+          ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder)),
+      );
       lessons = List.unmodifiable(
-        result.items.where(
-          (lesson) =>
-              lesson.access == 'FREE' &&
-              CurriculumDomain.values.any((d) => d.code == lesson.domainCode),
-        ),
+        domains
+            .expand((domain) => domain.topics)
+            .expand((topic) => topic.lessons),
       );
       emptyReason = result.emptyReason;
       disclaimer = result.disclaimer;
@@ -181,8 +220,8 @@ class _CurriculumExplorerState extends State<CurriculumExplorer> {
             domain == null
                 ? 'Choose a domain'
                 : topic == null
-                ? '${domain.label} / Topics'
-                : '${domain.label} / Topic: $topic',
+                ? '${model.domainName(domain)} / Topics'
+                : '${model.domainName(domain)} / ${model.topicName(topic)}',
             key: const Key('explorerBreadcrumb'),
           ),
           const Text(
@@ -206,29 +245,25 @@ class _CurriculumExplorerState extends State<CurriculumExplorer> {
             if (model.disclaimer != null) Text(model.disclaimer!),
             if (domain == null) ...[
               heading(context, 'Curriculum domains'),
-              ...CurriculumDomain.values.map(
+              ...model.presentation.map(
                 (value) => action(
                   'domain-${value.code}',
-                  '${value.label}\n${model.inDomain(value).isEmpty ? 'Content not available yet' : 'Eligible Free lessons available'}',
+                  '${model.domainName(value)}\n${model.inDomain(value).isEmpty ? 'Content not available yet' : 'Eligible Free lessons available'}',
                   opening ? null : () => model.chooseDomain(value),
                   icon: value.icon,
                 ),
               ),
             ] else if (topic == null) ...[
-              heading(context, 'Topics in ${domain.label}'),
-              if (model.topics.isNotEmpty)
-                const Text(
-                  'Topics are shown using their service-provided codes. Topic display names are not supplied by the current API.',
-                ),
+              heading(context, 'Topics in ${model.domainName(domain)}'),
               ...model.topics.map(
                 (code) => action(
                   'topic-$code',
-                  'Topic: $code',
+                  model.topicName(code),
                   opening ? null : () => model.chooseTopic(code),
                 ),
               ),
             ] else ...[
-              heading(context, 'Lessons in topic $topic'),
+              heading(context, 'Lessons in ${model.topicName(topic)}'),
               ...model.inTopic.map(
                 (lesson) => Card(
                   child: Padding(

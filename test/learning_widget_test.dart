@@ -10,6 +10,24 @@ import 'learning_test_data.dart';
 import 'sign_in_test.dart' show AuthApi, openSignIn, fillSignIn, submitSignIn;
 
 class LearningTestApi extends AuthApi {
+  @override
+  Future<CurriculumCatalog> curriculum(String child) async {
+    final list = await lessons(child);
+    return CurriculumCatalog.fromJson(
+      curriculumJson(
+        list.items.map(
+          (item) => {
+            ...summaryJson(),
+            'lessonId': item.lessonId,
+            'domainCode': item.domainCode,
+            'topicCode': item.topicCode,
+          },
+        ),
+        emptyReason: list.emptyReason,
+      ),
+    );
+  }
+
   ApiFailure? catalogFailure,
       detailFailure,
       startFailure,

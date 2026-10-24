@@ -14,6 +14,16 @@ class TracedLiveApi extends LiveMimiGoApi {
   TracedLiveApi(super.baseUri);
   final calls = <String>[];
   LessonList? catalog;
+  CurriculumCatalog? discovered;
+  @override
+  Future<CurriculumCatalog> curriculum(String childId) async {
+    discovered = await trace('curriculum', () => super.curriculum(childId));
+    return discovered!;
+  }
+
+  @override
+  Future<ParentWorkspace> learningWorkspace() =>
+      trace('workspace', super.learningWorkspace);
   @override
   Future<LessonList> lessons(String childId) async {
     catalog = await trace('lessons', () => super.lessons(childId));
@@ -267,7 +277,7 @@ void main() {
         reason: 'Returning login submits the corrected password.',
       );
       await waitFor(tester, find.byType(ParentArea));
-      expect(returning.calls, ['login', 'me', 'list']);
+      expect(returning.calls, ['login', 'me', 'workspace']);
       await tester.ensureVisible(find.text(alias));
       await tester.tap(find.text(alias));
       await waitFor(tester, find.byKey(const Key('parentEnterLearning')));
@@ -304,7 +314,7 @@ void main() {
       }
       expect(
         returning.calls,
-        [...authenticatedCalls, 'lessons', 'lessons'],
+        [...authenticatedCalls, 'lessons', 'curriculum'],
         reason: 'Math and English Explorer fetch the same verified catalog; no speculative endpoints or progress writes.',
       );
       await tap(tester, 'returnAccountEntry');
