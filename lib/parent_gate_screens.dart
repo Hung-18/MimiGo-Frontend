@@ -539,6 +539,9 @@ class _GatedParentAreaState extends State<GatedParentArea> {
           onPressed: busy
               ? null
               : () => run(() async {
+                  // Never leave a previous history result looking current
+                  // while a new protected read is pending or has failed.
+                  setState(() => activity = null);
                   final value = await widget.gate.parentActivity(detail!.id);
                   if (mounted) setState(() => activity = value);
                 }),

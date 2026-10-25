@@ -96,6 +96,12 @@ bool _boolean(Map<String, dynamic> json, String key) {
   return json[key] as bool;
 }
 
+bool? _recordedCorrectness(Map<String, dynamic> json) {
+  if (!json.containsKey('isCorrect'))
+    throw const ApiInvalidResponse('Missing recorded correctness.');
+  return json['isCorrect'] == null ? null : _boolean(json, 'isCorrect');
+}
+
 DateTime _date(Map<String, dynamic> json, String key) =>
     DateTime.tryParse(_text(json, key)) ??
     (throw ApiInvalidResponse('Invalid learning date: $key.'));
@@ -275,10 +281,11 @@ class RecordedAnswer {
       optionId = _text(json, 'optionId'),
       attemptNo = _integer(json, 'attemptNo'),
       usedHint = _boolean(json, 'usedHint'),
-      isCorrect = _boolean(json, 'isCorrect');
+      isCorrect = _recordedCorrectness(json);
   final String cueId, optionId;
   final int attemptNo;
-  final bool usedHint, isCorrect;
+  final bool usedHint;
+  final bool? isCorrect;
 }
 
 class SessionDetail extends LearningSession {
@@ -298,7 +305,12 @@ class AnswerFeedback extends RecordedAnswer {
       feedbackText = _text(json, 'feedbackText'),
       feedbackAssetId = _optionalText(json, 'feedbackAssetId'),
       recordedAt = _date(json, 'recordedAt'),
-      super.fromJson();
+      super.fromJson() {
+    if (isCorrect == null)
+      throw const ApiInvalidResponse(
+        'Answer acknowledgment needs correctness.',
+      );
+  }
   final int answerEventId;
   final String sessionId, feedbackText;
   final String? feedbackAssetId;

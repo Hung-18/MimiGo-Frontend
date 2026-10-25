@@ -254,6 +254,8 @@ class LearningSessionMemory extends ChangeNotifier {
       );
     }
     // A late pre-completion readback must not erase a confirmed terminal fact.
+    // Guarded readback may redact correctness; answer identities stay immutable
+    // and a non-null correctness value cannot contradict another non-null value.
     if (prior?.state == 'COMPLETED') {
       if (value.state != 'COMPLETED') return prior!;
       if (prior!.endedAt != value.endedAt)
@@ -265,7 +267,9 @@ class LearningSessionMemory extends ChangeNotifier {
               answer.attemptNo == saved.attemptNo &&
               answer.optionId == saved.optionId &&
               answer.usedHint == saved.usedHint &&
-              answer.isCorrect == saved.isCorrect,
+              (answer.isCorrect == saved.isCorrect ||
+                  answer.isCorrect == null ||
+                  saved.isCorrect == null),
         )) {
           throw const ApiInvalidResponse(
             'Completed session recorded answers changed.',

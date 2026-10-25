@@ -14,6 +14,27 @@ import 'learning_completion_widget_test.dart' show press;
 
 void main() {
   testWidgets(
+    'redacted recorded correctness is unavailable rather than incorrect',
+    (tester) async {
+      final api = CompletionApi()
+        ..readOverride = sessionJson(
+          answers: [
+            {...feedbackJson(), 'isCorrect': null},
+          ],
+        );
+      await lessonScreen(tester, api);
+      await tapVisible(tester, 'startLearning');
+      expect(
+        find.textContaining('Option A — Feedback unavailable'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Option A — Incorrect'), findsNothing);
+      expect(find.byKey(const Key('feedback-$cueId')), findsNothing);
+      expect(find.byKey(const Key('completeLearning')), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'Back/reopen during initial start performs one POST and one validated GET',
     (tester) async {
       final api = CompletionApi()..startGate = Completer<LearningSession>();

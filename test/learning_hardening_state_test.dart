@@ -16,6 +16,54 @@ const answer = AnswerRequest(
 );
 
 void main() {
+  test('retained correctness can be redacted without changing completion or answer identity', () {
+    final state = LearningSessionMemory(CompletionApi());
+    final original = SessionDetail.fromJson({
+      ...completedJson(),
+      'answers': [feedbackJson()],
+    });
+    state.remember(original);
+    final redacted = SessionDetail.fromJson({
+      ...completedJson(),
+      'answers': [
+        {...feedbackJson(), 'isCorrect': null},
+      ],
+    });
+    state.remember(redacted);
+    final saved = state.session(childId, sessionId)!;
+    expect(saved.answers.single.isCorrect, isNull);
+    expect(saved.answers.single.optionId, optionId);
+    expect(saved.endedAt, DateTime.parse(completedTime));
+    expect(
+      () => state.remember(
+        SessionDetail.fromJson({
+          ...completedJson(),
+          'answers': [
+            {...feedbackJson(), 'isCorrect': null, 'optionId': otherOptionId},
+          ],
+        }),
+      ),
+      throwsA(isA<ApiInvalidResponse>()),
+    );
+    state.dispose();
+  });
+
+  test('new answer acknowledgment cannot omit correctness and retained field must be present', () {
+    expect(
+      () => AnswerFeedback.fromJson({...feedbackJson(), 'isCorrect': null}),
+      throwsA(isA<ApiInvalidResponse>()),
+    );
+    final missing = feedbackJson()..remove('isCorrect');
+    expect(
+      () => RecordedAnswer.fromJson(missing),
+      throwsA(isA<ApiInvalidResponse>()),
+    );
+    expect(
+      () => RecordedAnswer.fromJson({...feedbackJson(), 'isCorrect': 'false'}),
+      throwsA(isA<ApiInvalidResponse>()),
+    );
+  });
+
   test('completed readback cannot erase or mutate a known answer; later discovered server attempts may enrich it', () {
     final api = CompletionApi()..seedWrongAnswers(sessionId);
     api.completeReply(sessionId);
@@ -24,6 +72,9 @@ void main() {
       <Map<String, dynamic>>[],
       [
         {...feedbackJson(), 'optionId': otherOptionId},
+      ],
+      [
+        {...feedbackJson(), 'isCorrect': true},
       ],
     ]) {
       expect(

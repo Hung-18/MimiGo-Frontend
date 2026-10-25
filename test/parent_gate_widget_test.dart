@@ -100,6 +100,29 @@ Future<void> fillGatePin(
 
 void main() {
   gateWidgets(
+    'failed history reload removes the previous result and permits retry',
+    (tester) async {
+      final app = await openGateApp(tester, enrolled: true);
+      await tapVisible(tester, 'openParentArea');
+      await fillGatePin(tester);
+      await tapVisible(tester, 'gated-child-child-A');
+      await tapVisible(tester, 'loadParentActivity');
+      expect(find.text('No sessions returned.'), findsOneWidget);
+      app.backend.forcedActivityError = {
+        'code': 'SERVICE_UNAVAILABLE',
+        'status': 503,
+      };
+      await tapVisible(tester, 'loadParentActivity');
+      expect(find.text('No sessions returned.'), findsNothing);
+      expect(find.textContaining('SERVICE_UNAVAILABLE'), findsOneWidget);
+      app.backend.forcedActivityError = null;
+      await tapVisible(tester, 'loadParentActivity');
+      expect(find.text('No sessions returned.'), findsOneWidget);
+      expect(app.api.gateSession!.hasParentProof, isTrue);
+    },
+  );
+
+  gateWidgets(
     'protected roster failure retries without an empty-account claim or PIN bypass',
     (tester) async {
       final app = await openGateApp(tester, enrolled: true);

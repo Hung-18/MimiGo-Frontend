@@ -905,7 +905,7 @@ class _LearningLessonViewState extends State<LearningLessonView> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        value.isCorrect
+                        value.isCorrect == true
                             ? 'That is right. Let’s look at the explanation.'
                             : 'Your answer is saved. Let’s look at the explanation.',
                       ),
@@ -922,7 +922,11 @@ class _LearningLessonViewState extends State<LearningLessonView> {
               (answer) => Text(
                 'Recorded attempt ${answer.attemptNo}: '
                 '${options.firstWhere((option) => option.optionId == answer.optionId).labelText} — '
-                '${answer.isCorrect ? 'Correct' : 'Incorrect'}',
+                '${switch (answer.isCorrect) {
+                  true => 'Correct',
+                  false => 'Incorrect',
+                  null => 'Feedback unavailable',
+                }}',
                 key: Key('recorded-${cue.cueId}-${answer.attemptNo}'),
               ),
             ),
