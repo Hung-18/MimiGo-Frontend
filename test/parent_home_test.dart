@@ -53,6 +53,30 @@ Future<void> signInHome(WidgetTester tester, ParentApi api) async {
 }
 
 void main() {
+  testWidgets(
+    'failed roster refresh is not an empty account and retries safely',
+    (tester) async {
+      final api = ParentApi()..profiles = [profile('A')];
+      await signInHome(tester, api);
+      api.listFailure = const ApiFailure(
+        'PRIVATE_SERVER_DETAIL',
+        code: 'CONNECTIVITY',
+      );
+      await tapVisible(tester, 'parentRefresh');
+      expect(find.byKey(const Key('parentChildrenEmpty')), findsNothing);
+      expect(
+        find.textContaining('Add your first synthetic child'),
+        findsNothing,
+      );
+      expect(find.textContaining('PRIVATE_SERVER_DETAIL'), findsNothing);
+      expect(find.textContaining('Return to Child Mode'), findsNothing);
+      expect(find.byKey(const Key('parent-child-A')), findsNothing);
+      api.listFailure = null;
+      await tapVisible(tester, 'parentRefresh');
+      expect(find.byKey(const Key('parent-child-A')), findsOneWidget);
+    },
+  );
+
   test('selection is authenticated, coalesced and never retains the previous child during switching', () async {
     final api = ParentApi()..profiles = [profile('A'), profile('B')];
     final model = ParentHomeState(api)..seed(api.profiles);

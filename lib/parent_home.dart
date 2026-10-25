@@ -5,7 +5,7 @@ import 'main.dart'
 import 'parent_gate_api.dart';
 import 'mimigo_design.dart';
 import 'api_failure.dart';
-import 'learning_screens.dart' show LearningError;
+import 'parent_onboarding.dart' show OnboardingError;
 
 /// Parent-only selection before entering Child Mode. This does not grant a
 /// Parent Gate or permit returning here from a child's learning screens.
@@ -213,7 +213,7 @@ class _ParentHomeState extends State<ParentHome> {
             const LinearProgressIndicator(
               semanticsLabel: 'Loading child profile',
             ),
-          if (model.error != null) LearningError(model.error!),
+          if (model.error != null) OnboardingError(model.error!),
           if (model.disclaimer != null) Text(model.disclaimer!),
           Text(
             widget.openParentArea == null
@@ -228,11 +228,11 @@ class _ParentHomeState extends State<ParentHome> {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
-            if (model.children.isEmpty && !model.busy)
+            if (model.children.isEmpty && !model.busy && model.error == null)
               const Text(
                 'Your parent account is ready. Add your first synthetic child after independent privacy review.',
               ),
-            if (model.children.isEmpty && !model.busy)
+            if (model.children.isEmpty && !model.busy && model.error == null)
               const Text(
                 'No child profiles returned.',
                 key: Key('parentChildrenEmpty'),
