@@ -1,0 +1,42 @@
+APPLY   0001_s1_schemas_and_guards (e0758a0605e7...)
+APPLY   0002_s1_parent_identity (5739f8dd55e1...)
+APPLY   0003_s1_privacy_reference (0a011800350d...)
+APPLY   0004_s1_child_and_permission_evidence (c3b30b5f7496...)
+APPLY   0005_s1_ops_audit_idempotency (3609a006974b...)
+APPLY   0006_s1_seed_privacy_reference_mock (9d188972eb51...)
+APPLY   0007_s1_onboarding_functions (a7e3be17fda6...)
+APPLY   0008_s1_onboarding_explicit_core_choices (c5b566f8f68a...)
+APPLY   0009_s2_catalog_and_content (691d21416a47...)
+APPLY   0010_s2_learning_sessions (bff5cb74df36...)
+APPLY   0011_s3_programs_and_commercial_scope (31e0ee471f45...)
+APPLY   0012_s3_simulated_core_commerce (388aa516df4f...)
+APPLY   0013_s3_access_projections_and_guards (1790a706a79a...)
+APPLY   0014_s3_simulated_multi_child_checkout (88c318464949...)
+APPLY   0015_s3_fix_scope_membership_guard (05c942c78db3...)
+APPLY   0016_s1_r0_application_grants (3fb229754bde...)
+APPLY   0017_s2_r0_learning_application_grants (ca59e9d3eda8...)
+APPLY   0018_s2_r0_learning_session_completion (459833948359...)
+APPLY   0019_pg_m_a_parent_gate_credential (afb22bd1b34a...)
+APPLY   0020_pg_m_b_login_throttle (4595f9e4c4f6...)
+APPLY   0021_pg_m_c_parent_session (c5fb78a13f97...)
+APPLY   0022_pg_m_d_proofs_and_child_contexts (e10f659917f6...)
+APPLY   0023_cms_a_staff_registry_roles_and_policy (8ae6a26d66c2...)
+APPLY   0024_cms_b_content_media_model_and_autocheck (85d1888cef69...)
+APPLY   0025_cms_c_revision_lifecycle_and_review (a1649b8803d6...)
+APPLY   0026_cms_d_publish_supersede_recall (b1dfa196845d...)
+APPLY   0027_cms_e_role_grants (5603919eceba...)
+APPLY   0028_dbh_a_cms_draft_grant_correction (2f97943c11fc...)
+APPLY   0029_dbh_b_staff_persistence_model (72ff3bdbe004...)
+APPLY   0030_dbh_c_staff_operations (dec177c02279...)
+APPLY   0031_dbh_d_cms_integrity (50c347a674bf...)
+APPLY   0032_dbh_e_curriculum_program_versioning (e46ebdae4e41...)
+APPLY   0033_dbh_f_role_grants_and_error_contract (d611e28710bd...)
+FIXTURE SYN-MATH-001
+LOGIN   syn_web_app -> mimigo_r0_app
+LOGIN   syn_web_author -> mimigo_r0_cms_author
+LOGIN   syn_web_media -> mimigo_r0_cms_media
+LOGIN   syn_web_reviewer -> mimigo_r0_cms_reviewer
+LOGIN   syn_web_publisher -> mimigo_r0_cms_publisher
+LOGIN   syn_web_admin -> mimigo_r0_cms_admin
+LOGIN   syn_web_auth -> mimigo_r0_cms_auth
+DONE    mimigo_conc_web_1792928303860 ledger=33

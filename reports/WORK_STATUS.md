@@ -1,7 +1,15 @@
 # MimiGo Frontend work status
 
 **Updated:** 2026-10-25<br>
-**Current slice:** UI/UX Design Fidelity milestone<br>
+**Current slice:** Complete cross-system learning journey, isolated R0 synthetic<br>
+**State:** REAL BROWSER + ANDROID JOURNEY PASS; release gates remain OPEN. The same CMS-created revision was published/activated through Chromium and completed by an eligible Child in gated Flutter Android against a private API/PostgreSQL instance. See [scenario matrix, identity, evidence and ownership handoff](CROSS_SYSTEM_LEARNING_JOURNEY.md).
+
+- Candidate 0001–0033 applied only to fresh private databases; Web CMS 7/7, real Android same-revision journey 1/1 and independent Backend process lifecycle 1/1 PASS. Completion/replay, gated Parent history, Child isolation, native FLAG_SECURE and revocation were exercised. No runtime Flutter fix was required; a protected-field interaction helper and task-owned bridge runner were added.
+- Final Flutter analysis clean, 327 automated tests PASS, native/mock Gate Android 2 PASS, fixture Android navigation 1 PASS, ordinary fixture debug APK installed/launched. Private API/cluster and all four ports cleaned; existing Dev API retained. Unpublished/recalled/supersede results belong to the independent native suite; real Android age/entitlement denial and adverse network loss remain NOT RUN.
+- G1 draft confidentiality, S-TB/DBQ-22, supersede catalog gap/D-05, initial program fixture, identity/media/legal/content/production approvals remain open. No push or persistent activation.
+
+## Previous UI/UX fidelity milestone
+
 **State:** IMPLEMENTED / VALIDATED within available reference scope; exact visual acceptance remains PARTIAL / BLOCKED. Started from clean `284ed7b`. No full-screen visual PO approval claimed. See [screen fidelity matrix and evidence](UI_UX_FIDELITY.md).
 
 - Shared BR1 palette, offline licensed Baloo 2/Nunito, readable contrast, rounded screen/form components, responsive domain controls and Learning choice/feedback/completion styling implemented. Registration confirmation is local-only; explicit Terms/child purpose choices and all Gate boundaries preserved. No source artwork extraction, new content or API/session behavior changes.

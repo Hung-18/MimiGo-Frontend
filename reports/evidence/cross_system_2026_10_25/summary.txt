@@ -1,0 +1,17 @@
+Private PostgreSQL cluster: loopback:54898; database=mimigo_conc_web_1792928303860; no existing database/process reused.
+Candidate ledger rows=33; fixture SYN-MATH-001; optional G1 NOT applied.
+Read-only candidate API DLL SHA256=98e6627c4de05577894f3349814d1344d7fdc1e99f0a8418947f22388c316ca0; Backend HEAD=11851ddd7322e982a47ea58126be96634c617e90.
+Isolated API auth limiter=300/min for the cross-system workflow; production default remains 10/min.
+CORS login preflight: status=204; Access-Control-Allow-Origin=http://127.0.0.1:54900; origin=http://127.0.0.1:54900; API=http://127.0.0.1:54899.
+Real Chromium exit=0; see browser.txt; no HTTP mocking or browser-security overrides.
+Browser-created lesson=c76f9c95-ab34-45e0-84fb-d141369a4de7; revision=cd7c9126-135a-43e6-997d-69233da1e6c4; active program version=cc028cdf-49da-5267-ae14-1f4df617c2b2; code=SYN-WEB-ACCEPTANCE.
+Android same-revision journey exit=0.
+After browser workflows: credentials=10; sessions=25.
+Existing separate-process real HTTP/PostgreSQL lifecycle exit=0 (not a Chromium test).
+Preflight /api/v1/staff-auth/login: 204; ACAO=http://127.0.0.1:54900.
+Preflight /api/v1/staff-auth/enroll: 204; ACAO=http://127.0.0.1:54900.
+Preflight /api/v1/cms/session: 204; ACAO=http://127.0.0.1:54900.
+Preflight /api/v1/cms/revisions/00000000-0000-0000-0000-000000000001/content: 204; ACAO=http://127.0.0.1:54900.
+Private API/PostgreSQL logs scanned for ephemeral secrets: PASS; raw service logs not exported.
+Cleanup: stopped only the task-owned PostgreSQL cluster; task-owned API/Vite/Chromium processes exited.
+Cleanup: removed private cluster, synthetic databases, copied binaries and ephemeral runtime files.

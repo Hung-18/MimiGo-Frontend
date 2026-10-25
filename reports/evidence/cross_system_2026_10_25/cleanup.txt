@@ -1,0 +1,9 @@
+﻿Independent cleanup check — 2026-10-25
+Successful run database=mimigo_conc_web_1792928303860; candidate ports 54898-54901.
+task_port_54898_listeners=0
+task_port_54899_listeners=0
+task_port_54900_listeners=0
+task_port_54901_listeners=0
+private_runtime_exists=False
+existing_dev_api_5187_listeners=1
+normal_fixture_activity=topResumedActivity=ActivityRecord{73106520 u0 com.mimigo.mimigo_frontend/.MainActivity t47}

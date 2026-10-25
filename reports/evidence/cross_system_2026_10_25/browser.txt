@@ -1,0 +1,19 @@
+
+Running 7 tests using 1 worker
+
+(node:35212) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [real-chromium] › tests\real-browser\boundary.spec.ts:33:1 › native CORS matrix: exact origin, methods/headers, denied origins, scope and no preflight auth side effects (208ms)
+  ok 2 [real-chromium] › tests\real-browser\boundary.spec.ts:248:1 › admin: real UI enrollment, sign-in, authenticated CMS read and logout over CORS (6.0s)
+  ok 3 [real-chromium] › tests\real-browser\boundary.spec.ts:313:1 › author: real UI sign-in; RBAC, staff-token scheme, JSON, If-Match, Idempotency-Key and readable errors (715ms)
+  ok 4 [real-chromium] › tests\real-browser\boundary.spec.ts:417:1 › admin revocation (DELETE) ends another staff session; lockout 423 exposes Retry-After (582ms)
+  ok 5 [real-chromium] › tests\real-browser\boundary.spec.ts:464:1 › a non-allowlisted origin is refused by Chromium: UI reports the transport failure and retains nothing (317ms)
+SCENARIO PASS: admin UI registers eight independent duties; each uses UI enrollment and login
+SCENARIO PASS: UI media registration, media-duty verification fixture and independent rights decision
+SCENARIO PASS: UI lesson/draft/cue editing; real concurrent update preserves stale edits; AUTO_CHECK, seal, submit
+SCENARIO PASS: publication remains disabled until four independent UI reviews; authorized UI publish
+SCENARIO PASS: initial program fixture; UI compose/replay, member remove/add, independent publish/activate
+  ok 6 [real-chromium] › tests\real-browser\workflows.spec.ts:22:1 › React → real API → PostgreSQL: governed content, curriculum, sessions and error handling (16.0s)
+  ok 7 [real-chromium] › tests\real-browser\workflows.spec.ts:540:1 › real Chromium offline failure remains actionable and secret-free (589ms)
+
+  7 passed (26.6s)

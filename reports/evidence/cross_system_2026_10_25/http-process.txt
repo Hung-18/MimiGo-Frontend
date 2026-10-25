@@ -1,0 +1,22 @@
+[00:00.099] 0      database=mimigo_conc_web_1792928303860_http server=PostgreSQL 18.6 on x86_64-windows, compiled by msvc-19.44.35228, 64-bit
+[00:00.100] 0      ledger: 0028_dbh_a_cms_draft_grant_correction,0029_dbh_b_staff_persistence_model,0030_dbh_c_staff_operations,0031_dbh_d_cms_integrity,0032_dbh_e_curriculum_program_versioning,0033_dbh_f_role_grants_and_error_contract
+[00:00.228] 0      Production process refused to start: exit=-532462766
+[00:00.867] 0      API process P1 healthy at http://127.0.0.1:51380/
+[00:01.524] 1      enrolled + signed in 9 principals via HTTP; credentials in DB: 10
+[00:01.533] 1      credential reset refused: 409 STAFF_RECOVERY_NOT_APPROVED
+[00:02.381] 2      P1 killed and restarted: all 10 staff sessions still valid (durable, DB clock)
+[00:02.660] 3      logout -> LOGOUT; idle (backdated by owner) -> IDLE_TIMEOUT; 12 parallel wrong passwords -> 5x401 + 7x423
+[00:02.696] 4      author cannot publish, publisher/admin cannot author, one role group per person (STAFF_ROLE_CONFLICT)
+[00:03.434] 5-8    2 lessons: draft created, edited twice (If-Match), stale edit 412, non-opener 403, media registered/verified/rights, AUTO_CHECK 0 errors, sealed PASS, submit, duplicate submit 409, 4 independent reviews, published by PUBB; rev l1=b8c160ac-3f5a-42d9-aac5-19bbd7b9e5b3
+[00:03.510] 9      v2 composed by PUBA, publish/activate by PUBA refused (SEPARATION_OF_DUTIES), published by PUBB, activated by PUBC; live versions=1
+[00:03.806] 10-11  child sees l0+l1; detail has no hint/explanation/isCorrect; session 2ef91176-e0b2-481c-a6f6-d771dd9f13bf completed, completion replay idempotent, replay session f3c600f9-2603-4417-b187-ebd63e0bbf3b
+[00:03.921] 12     rev2 cb696036-1bfc-41d9-bf15-4b10f053d399 superseded rev1: lesson ABSENT from the child catalog until a successor version is active; gap view: ACTIVE_MEMBER_NOT_LIVE:SUPERSEDED,LIVE_REVISION_NOT_IN_ACTIVE_PROGRAM
+[00:04.046] 13     v3 activated: child served rev2, new session 8114d950-792f-4f0d-a409-0c3b774427c4; the 2 earlier sessions stay COMPLETED on rev1 (history preserved); gap rows=0
+[00:04.070] 14     rev2 recalled: lesson removed from catalog + detail 404 at once; successor without explicit exclusion refused (COMPOSITION_LESSON_NOT_LIVE)
+[00:04.088] 15     draft not served to the child (404); child token on /cms 401; staff token on child API 401; X-Staff-* headers and a raw staff id are not credentials
+[00:04.145] 16     revision audit: REVISION_RECALLED:PUBB REVISION_PUBLISHED:PUBB REVIEW_APPROVED:other REVIEW_APPROVED:other REVIEW_APPROVED:other REVIEW_APPROVED:other REVISION_SUBMITTED:AUTHOR2 REVISION_SEALED:AUTHOR2 REVISION_OPENED:AUTHOR2; staff audit (victim): LOGIN_BAD_CREDENTIAL=5 SESSION_CREATED=1 LOGIN_SUCCESS=1 CREDENTIAL_SET=1 ENROLLMENT_CONSUMED=1 ENROLLMENT_ISSUED=1 STAFF_ROLE_GRANTED=1; v3 composed/published/activated by PUBA/PUBB/PUBC
+[00:04.214] 16     two successors activated in parallel by PUBB/PUBC -> 200/200; live versions=1; catalog consistent (l0 only)
+[00:05.143] 16     P2 started on the same DB: P1 token valid on P2, logout on P2 ends it on P1; 8 parallel sign-ins across P1/P2 -> 3 live sessions (cap) of 8 issued
+[00:05.168] log    P2: 9 log lines scanned: no password, session token or enrollment token (32 secrets checked)
+[00:05.216] log    P1: 9 log lines scanned: no password, session token or enrollment token (32 secrets checked)
+[00:05.274] end    API processes stopped
