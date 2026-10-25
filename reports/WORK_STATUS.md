@@ -1,7 +1,15 @@
 # MimiGo Frontend work status
 
 **Updated:** 2026-10-25<br>
-**Current slice:** Complete cross-system learning journey, isolated R0 synthetic<br>
+**Current slice:** Mobile Demo Experience R0<br>
+**State:** IMPLEMENTED / VALIDATED in local synthetic scope. Analysis clean, 118 focused tests PASS, final 9-test public render run PASS; new Android storyboard 1 PASS, original Android fixture regression 1 PASS, fixture debug build and normal-app install/launch PASS. See [demo walkthrough, assets, boundaries and evidence](MOBILE_DEMO_EXPERIENCE_R0.md).
+
+- No-credentials fixture entry, Vietnamese sample Parent/Child discovery, three-interaction fruit storyboard, explicit local completion/replay and confirmed exit. Shared Flutter tokens/components/cue models reused; original code-drawn fruit illustrations. No video/media delivery or server persistence is simulated.
+- Privacy purpose descriptions are readable; diagnostic metadata expands on demand. Required unchecked choices, purpose/version IDs and refusal behavior remain intact. Live auth/Gate/learning services and native protection unchanged; no network dependency or private Parent information in the sample.
+- Implementation checkpoint `15c7b68`; accompanying documentation checkpoint contains this status/report. Local commits authorized by the current instruction; no push, deployment or sibling-repository edits. Pre-existing `tasks/CURRENT_TASK.md` preserved and excluded. Security, Legal G2, Content G4, Finance and Production remain OPEN; missing exact-reference frames and approved media/art remain blocked.
+
+## Previous cross-system learning journey
+
 **State:** REAL BROWSER + ANDROID JOURNEY PASS; release gates remain OPEN. The same CMS-created revision was published/activated through Chromium and completed by an eligible Child in gated Flutter Android against a private API/PostgreSQL instance. See [scenario matrix, identity, evidence and ownership handoff](CROSS_SYSTEM_LEARNING_JOURNEY.md).
 
 - Candidate 0001–0033 applied only to fresh private databases; Web CMS 7/7, real Android same-revision journey 1/1 and independent Backend process lifecycle 1/1 PASS. Completion/replay, gated Parent history, Child isolation, native FLAG_SECURE and revocation were exercised. No runtime Flutter fix was required; a protected-field interaction helper and task-owned bridge runner were added.

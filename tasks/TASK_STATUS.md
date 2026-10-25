@@ -1,35 +1,38 @@
 # MimiGo — Task Status
 
 ## Status
-VALIDATED — isolated R0 journey complete; local checkpoint recorded (2026-10-25)
+VALIDATED — Mobile Demo Experience R0 complete in local synthetic scope (2026-10-25).
 
 ## Completed
-- Read the current task, frontend Gate/Learning and fidelity handoffs, Web CMS real browser acceptance, Backend CMS/CORS and Database CMS/hardening handoffs.
-- Confirmed pre-existing `tasks/CURRENT_TASK.md` modification is preserved; Backend/Database/WebCMS repositories remain read-only.
-- Located 0001–0033 disposable builder, real Web CMS Chromium harness, Android Gate harness and available emulator.
-- Built a Frontend-owned, read-only Web CMS bridge and exact-identity Android scenario. Real Chromium 7/7, same-revision gated Android 1/1, independent Backend process suite 1/1 PASS on disposable 33-migration PostgreSQL.
-- Verified published lesson detail/completion revision, replay and gated persisted Parent history; Parent/Child isolation, PIN/refresh/revocation and original fixture flow.
-- Cleaned the task API/cluster/databases and verified four ports closed; preserved original Dev API and the pre-existing changes in sibling repositories.
-- Added the cross-system report and sanitized evidence. No runtime Flutter defect was confirmed; a protected-field test interaction and isolated test configuration were corrected.
+- Read CURRENT_TASK, fidelity/cross-system reports, design components, fixture configuration and relevant canonical Parent/Gate/curriculum/learning requirements.
+- Added a no-credentials Vietnamese fixture entry, sample Parent child selection/overview, playful Child discovery with six domain cards, and an explicitly local three-cue fruit storyboard.
+- Added incorrect/correct explanations, continuation, complete local playthrough, clean replay, locked Parent/history controls and confirmed exit/cleanup.
+- Reused tokens/fonts/components and Learning cue/option models; original code-drawn fruit shapes. No new dependency or extracted reference artwork.
+- Improved privacy-purpose labels and expandable version/hash metadata; preserved independent unchecked choices and contract identifiers.
+- Preserved fixture/real-API/security architecture and pre-existing CURRENT_TASK modification. Added `reports/MOBILE_DEMO_EXPERIENCE_R0.md` with exact launch/walkthrough and limitations.
 
 ## Remaining
-- No implementation work remains in this assigned slice. Release approvals and optional live negative scenarios remain open as reported.
+- No implementation work remains in the assigned slice. Manual PO/content/design/release approvals remain open as documented.
 
 ## Validation
 - Analysis: PASS, no issues.
-- Unit/widget: 327/327 PASS.
-- Real browser: 7/7 PASS; separate real Backend process lifecycle: 1/1 PASS.
-- Real Android same-revision Gate/Learning: 1/1 PASS; native/mock Gate: 2/2 PASS; fixture Android: 1/1 PASS.
-- Default fixture debug APK: build/install/launch PASS.
-- Real Android age/entitlement denial and adverse network loss: NOT RUN; see cross-system report.
+- Focused unit/widget regression: **118/118 PASS** across demo, Child navigation, design, onboarding, Parent Home/Gate and Learning completion/retry widgets.
+- Final public demo render run: **9/9 PASS**; 320×740, 411×891, 960×540 at 100%/200% text. Twelve public synthetic widget renders, not live evidence or protected screenshots.
+- Fixture debug APK: PASS.
+- New Android no-credentials storyboard, feedback, completion, replay and exit: **1/1 PASS**, 27s test phase.
+- Original Android fixture regression: **1/1 PASS**, 44s test phase.
+- Normal fixture `lib/main.dart` debug build/install/launch: **PASS**, exit 0; MainActivity independently verified resumed. Task-started headless emulator remains running the ordinary fixture app.
+- No broad cross-system E2E or new real API acceptance. Prior results remain historical in the cross-system report.
 
 ## Git Checkpoint
-- Latest task commit: the local checkpoint containing this status and `reports/CROSS_SYSTEM_LEARNING_JOURNEY.md` (`git log -1 --oneline`).
+- Baseline `58c0ede`; validated implementation/tests/public renders: **`15c7b68`**, `feat(demo): add local Vietnamese fruit storyboard experience`.
+- Documentation checkpoint: the local commit containing this status and `reports/MOBILE_DEMO_EXPERIENCE_R0.md` (`git log -1 --oneline`); its hash is in the delivery response.
 - Expected uncommitted change after checkpoint: pre-existing `tasks/CURRENT_TASK.md` only.
 
 ## Blockers
-- Release gates G1, S-TB/DBQ-22, D-05/CUR-COMP, Security, Legal G2, Content G4 and Production remain OPEN; ownership-specific handoff is in `reports/CROSS_SYSTEM_LEARNING_JOURNEY.md`.
+- Security, Legal G2, Content G4, Finance and Production remain OPEN. Existing G1, S-TB/DBQ-22 and D-05/CUR-COMP ownership stays in the cross-system handoff.
+- Exact PIN/privacy/completion/error references and approved mascot/media remain BLOCKED. Demo is a storyboard, not video or PostgreSQL persistence.
 
 ## Resume Notes
-- The task-owned runner is `node scripts/cross_system_journey.mjs`. It stages Web CMS under ignored `build/cross_system_webcms_<timestamp>` and refuses stage reuse; reports/evidence are sanitized.
+- Launch: `flutter run -d emulator-5554 --debug --dart-define=MIMIGO_API_MODE=fixture`; tap **Khám phá bản demo**. No credentials or database required. Full walkthrough in the module report.
 - Preserve the existing user change to `tasks/CURRENT_TASK.md`; do not stage it. No push or deployment.
