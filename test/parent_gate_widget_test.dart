@@ -99,6 +99,31 @@ Future<void> fillGatePin(
 }
 
 void main() {
+  gateWidgets(
+    'protected roster failure retries without an empty-account claim or PIN bypass',
+    (tester) async {
+      final app = await openGateApp(tester, enrolled: true);
+      app.backend.forcedRosterError = {
+        'code': 'SERVICE_UNAVAILABLE',
+        'status': 503,
+      };
+      await tapVisible(tester, 'openParentArea');
+      await fillGatePin(tester);
+      expect(find.byType(GatedParentArea), findsOneWidget);
+      expect(find.text('No child profiles returned.'), findsNothing);
+      expect(find.byKey(const Key('gated-child-child-A')), findsNothing);
+      expect(find.textContaining('PRIVATE_SERVER_DETAIL'), findsNothing);
+      expect(app.api.gateSession!.hasParentProof, isTrue);
+      app.backend.forcedRosterError = null;
+      await tapVisible(tester, 'gatedRefresh');
+      expect(find.byKey(const Key('gated-child-child-A')), findsOneWidget);
+      await tapVisible(tester, 'gated-child-child-A');
+      expect(find.byKey(const Key('protectedChildDob')), findsOneWidget);
+      await tapVisible(tester, 'gatedRefresh');
+      expect(find.byKey(const Key('protectedChildDob')), findsNothing);
+    },
+  );
+
   setUp(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(

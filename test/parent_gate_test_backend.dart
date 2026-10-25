@@ -43,6 +43,7 @@ class GateTestBackend extends Fake implements HttpClient {
   Map<String, dynamic>? forcedPinError;
   Map<String, dynamic>? forcedLoginError;
   Map<String, dynamic>? forcedActivityError;
+  Map<String, dynamic>? forcedRosterError;
   int? forcedLoginRetry;
   int? forcedPinRetry;
   final sessions = <String, Map<String, dynamic>>{};
@@ -279,7 +280,15 @@ class GateTestBackend extends Fake implements HttpClient {
         'parentGate': {'status': enrolled ? 'ENROLLED' : 'NOT_ENROLLED'},
         'session': {'sessionId': 'session-A', 'sessionMode': 'PARENT'},
       });
-    if (path == 'children') return Reply({'items': roster()});
+    if (path == 'children') {
+      if (forcedRosterError != null) {
+        return failure(
+          forcedRosterError!['code'] as String,
+          forcedRosterError!['status'] as int,
+        );
+      }
+      return Reply({'items': roster()});
+    }
     if (path == 'parents/me/learning-workspace')
       return Reply({
         'children': [

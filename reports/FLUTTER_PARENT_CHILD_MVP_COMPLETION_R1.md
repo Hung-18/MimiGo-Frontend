@@ -12,3 +12,9 @@ Validation: `flutter test test/parent_home_test.dart test/sign_in_test.dart test
 
 Only this repository is writable. Parent Gate defaults OFF; protected reads still require memory-only proofs and native screen protection. No PIN bypass, live fixture fallback, persistence policy, billing or Backend/Database configuration changes. Pre-existing `tasks/CURRENT_TASK.md` is excluded from commits. No push/deployment. G1, S-TB/DBQ-22, D-05, Legal G2, Content G4, Finance and Production remain OPEN. Missing PIN/privacy/completion/error reference frames remain BLOCKED for exact visual fidelity.
 
+
+## WP2 — Parent Gate and protected navigation
+
+Added an explicit protected-roster refresh/retry. Refresh clears previously selected private detail/history; failed loads no longer claim an empty roster. Existing PIN proof binding, Child token transitions, expiry/background cleanup, account reauthentication and locked fixture controls are retained. Retry is exposed only after native screen protection succeeds and cannot create a proof.
+
+Validation: `flutter test test/parent_gate_widget_test.dart test/parent_gate_session_test.dart test/parent_gate_repository_test.dart test/child_mode_test.dart --no-pub --reporter expanded` — **70 PASS**, including new protected-roster failure/retry regression and existing expiry, revocation, denial, sibling-switch and vault checks. Sandboxed Dart formatter stalled and was interrupted; approved outside-sandbox formatter succeeded. No security runtime changed.

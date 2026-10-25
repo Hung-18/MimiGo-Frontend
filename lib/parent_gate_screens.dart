@@ -472,6 +472,11 @@ class _GatedParentAreaState extends State<GatedParentArea> {
   }
 
   Future<void> load() => run(() async {
+    setState(() {
+      children = [];
+      detail = null;
+      activity = null;
+    });
     final value = await widget.api.listChildren();
     if (mounted) setState(() => children = value);
   });
@@ -503,8 +508,14 @@ class _GatedParentAreaState extends State<GatedParentArea> {
         const LinearProgressIndicator(
           semanticsLabel: 'Protecting Parent information',
         ),
-      if (protected && children.isEmpty && !busy)
+      if (protected && children.isEmpty && !busy && error == null)
         const Text('No child profiles returned.'),
+      if (protected)
+        OutlinedButton(
+          key: const Key('gatedRefresh'),
+          onPressed: busy ? null : load,
+          child: const Text('Refresh authorized child profiles'),
+        ),
       for (final child in children)
         OutlinedButton(
           key: Key('gated-child-${child.id}'),
