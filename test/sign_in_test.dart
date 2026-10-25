@@ -224,6 +224,8 @@ void main() {
       await openSignIn(tester, api);
       await fillSignIn(tester);
       await submitSignIn(tester);
+      await tester.ensureVisible(find.text('SYN-Bee'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('SYN-Bee'));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('parentSelectedChild')), findsOneWidget);

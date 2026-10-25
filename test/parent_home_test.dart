@@ -7,6 +7,7 @@ import 'package:mimigo_frontend/parent_home.dart';
 
 import 'sign_in_test.dart' show AuthApi, openSignIn, fillSignIn, submitSignIn;
 import 'learning_widget_test.dart' show tapVisible;
+import 'design_test_support.dart' show loadDesignFonts, visualApp;
 
 ChildSummary profile(String id, {String state = 'ACTIVE'}) => ChildSummary(
   id: id,
@@ -53,6 +54,59 @@ Future<void> signInHome(WidgetTester tester, ParentApi api) async {
 }
 
 void main() {
+  for (final size in [const Size(320, 740), const Size(960, 540)]) {
+    testWidgets('Vietnamese Parent controls fit $size at 2x text', (
+      tester,
+    ) async {
+      await loadDesignFonts();
+      await tester.binding.setSurfaceSize(size);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final api = ParentApi()..profiles = [profile('A')];
+      final workspace = await api.learningWorkspace();
+      var entered = 0;
+      await tester.pumpWidget(
+        visualApp(
+          Frame(
+            title: 'Phụ huynh',
+            children: [
+              ParentHome(
+                api: api,
+                parent: const ParentSummary(
+                  'parent',
+                  'synthetic@example.test',
+                  'SYN',
+                  true,
+                ),
+                children: api.profiles,
+                workspace: workspace,
+                fixture: true,
+                add: () {},
+                enterChild: (_) => entered++,
+                accountEntry: () {},
+              ),
+            ],
+          ),
+          scale: 2,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('Không lưu kết quả lên máy chủ'),
+        findsOneWidget,
+      );
+      await tapVisible(tester, 'parent-child-A');
+      await tester.ensureVisible(find.byKey(const Key('parentEnterLearning')));
+      expect(
+        tester.getSize(find.byKey(const Key('parentEnterLearning'))).height,
+        greaterThanOrEqualTo(64),
+      );
+      expect(find.text('Vào không gian của bé'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tapVisible(tester, 'parentEnterLearning');
+      expect(entered, 1);
+    });
+  }
+
   testWidgets(
     'failed roster refresh is not an empty account and retries safely',
     (tester) async {

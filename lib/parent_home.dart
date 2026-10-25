@@ -198,10 +198,13 @@ class _ParentHomeState extends State<ParentHome> {
             'Welcome, ${widget.parent.displayName}',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
-          Text(
-            widget.fixture
-                ? 'DEMO / FIXTURE parent account'
-                : 'DEVELOPMENT / DEMO · authenticated parent account',
+          MimiNotice(
+            icon: Icons.science_outlined,
+            child: Text(
+              widget.fixture
+                  ? 'DEMO / FIXTURE · Tài khoản mẫu, dữ liệu chỉ ở ứng dụng. Không lưu kết quả lên máy chủ.'
+                  : 'R0 / API · Tài khoản đã đăng nhập. Chỉ dùng dữ liệu tổng hợp; quyền truy cập do máy chủ kiểm tra.',
+            ),
           ),
           Text(
             widget.openParentArea == null
@@ -301,13 +304,13 @@ class _ParentHomeState extends State<ParentHome> {
                         setState(() => leaving = true);
                         widget.enterChild(child);
                       },
-                child: const Text('Enter Child Mode'),
+                child: const Text('Vào không gian của bé'),
               ),
             ),
             OutlinedButton(
               key: const Key('parentChooseAnother'),
               onPressed: model.busy || leaving ? null : model.clearSelection,
-              child: const Text('Choose another child'),
+              child: const Text('Chọn bé khác'),
             ),
             const Text(
               'Profile editing and sensitive account changes are not available. No PIN or step-up authorization is simulated.',
@@ -336,7 +339,7 @@ class _ParentHomeState extends State<ParentHome> {
           OutlinedButton(
             key: const Key('parentRefresh'),
             onPressed: model.busy || leaving ? null : model.refresh,
-            child: const Text('Refresh child profiles'),
+            child: const Text('Tải lại danh sách bé'),
           ),
           if (!widget.parent.currentTermsAccepted)
             const Text(
@@ -347,8 +350,8 @@ class _ParentHomeState extends State<ParentHome> {
             onPressed: !model.busy && !leaving ? widget.add : null,
             child: Text(
               model.children.isEmpty
-                  ? 'Add your first child'
-                  : 'Add another child',
+                  ? 'Thêm hồ sơ bé đầu tiên'
+                  : 'Thêm hồ sơ bé',
             ),
           ),
           if (widget.resumeOnboarding != null)
@@ -362,7 +365,7 @@ class _ParentHomeState extends State<ParentHome> {
           TextButton(
             key: const Key('parentAccountEntry'),
             onPressed: model.busy || leaving ? null : widget.accountEntry,
-            child: const Text('Return to account entry'),
+            child: const Text('Về màn hình tài khoản'),
           ),
         ],
       );

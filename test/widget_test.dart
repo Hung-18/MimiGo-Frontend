@@ -48,8 +48,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(const MimiGoApp());
-    await tester.tap(find.byKey(const Key('welcomeStart')));
-    await tester.pumpAndSettle();
+    await tapVisible(tester, 'welcomeStart');
     expect(tester.widget<Checkbox>(find.byType(Checkbox).first).value, isFalse);
     await tapVisible(tester, 'termsCheckbox');
     await tapVisible(tester, 'registerSubmit');

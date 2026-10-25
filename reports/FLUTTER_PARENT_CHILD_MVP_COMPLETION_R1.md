@@ -36,3 +36,63 @@ Protected Parent history now clears the previous result before reload, so a fail
 Validation: `flutter test test/learning_hardening_state_test.dart test/learning_hardening_widget_test.dart test/learning_completion_state_test.dart test/learning_completion_widget_test.dart test/learning_completion_repository_test.dart test/parent_gate_widget_test.dart --no-pub --reporter expanded` — **96 PASS**. Four new cases cover redaction identity preservation, strict acknowledgment parsing, unavailable feedback presentation and protected history failure/retry. Additional non-null contradiction assertion added to retained-answer regression and rerun separately.
 
 Dependency: Backend's future G1 rollout also mentions unavailable titles. The current approved history schema still requires non-null `lessonTitle`; no speculative title DTO or rollout flag is added. A revised exact nullable-title schema plus authorized paired G1 deployment remains required. Real guarded Android redaction/network-loss reacceptance is NOT RUN; no isolated API prerequisites were authorized for this task. Existing cross-system journey remains historical PASS.
+
+## WP5 — Demo readiness and usability
+
+Vietnamese labels now identify Parent entry, child reselection, add/refresh/account return, protected roster/history reads and curriculum open/retry actions. Parent Home has a shared notice that explicitly distinguishes local fixture data from authenticated synthetic API access. Existing design tokens, offline fonts and growing controls are reused. New Parent Home layout checks load the real bundled fonts and exercise 320×740 and 960×540 at 200% text, including selection/entry and a minimum 64dp primary action. Existing Explorer/player and demo accessibility tests remain intact. Broader translation, approved art/media and exact visual acceptance remain outside this slice.
+
+Final automated checks: analysis **PASS**, no issues (23.8s); full suite **345/345 PASS** (16s test phase), including nine new R1 tests. WP4 state rerun **15 PASS**. Initial full-suite run failed 22 tests because older helpers tapped offscreen Parent/Welcome controls; three helpers now scroll before tapping, with assertions retained. The final full run has no unresolved FAIL. Additional final affected-screen suite **46 PASS**. Android checks are recorded below after completion.
+
+## Operator walkthrough
+
+### Fixture story — no account, API or database
+
+```powershell
+flutter devices
+flutter run -d emulator-5554 --debug --dart-define=MIMIGO_API_MODE=fixture
+```
+
+If needed, start the existing AVD using `flutter emulators --launch Medium_Phone_API_37.0`. Use the actual device ID from `flutter devices`.
+
+1. On Welcome tap **Khám phá bản demo**, select Bé Mây or Bé Nắng, then **Bắt đầu khám phá**.
+2. Open **Giỏ trái cây vui vẻ**. Choose once at all three stops, including a wrong option to show explanatory feedback. Finish, replay, then confirm exit.
+3. Point out the local-only completion label: there is no Backend write, private Parent information, real age eligibility, video or payment. Other sample domains honestly show unavailable content. Parent/history controls remain locked.
+4. The separate fixture account flow on Welcome still exercises synthetic registration, unchecked notices and profile creation. Parent Home says **DEMO / FIXTURE**. Select a child and use **Vào không gian của bé**; **Chọn bé khác** is available only before entry.
+
+### Integrated R0 — operator-provided authorized API only
+
+```powershell
+# authorizedPort is supplied by the operator for an already-authorized R0 API.
+flutter run -d emulator-5554 --debug --dart-define=MIMIGO_API_MODE=live "--dart-define=MIMIGO_API_BASE_URL=http://10.0.2.2:$authorizedPort/api/v1"
+```
+
+All API configuration is build-time only. Gate remains false by default. For an independently authorized, already-configured Gate candidate environment only, add `--dart-define=MIMIGO_PARENT_GATE_ENABLED=true`; this client flag does not enable Backend flags, apply migrations or authorize a new isolated acceptance run. Do not activate shared databases or restart Dev API for the walkthrough.
+
+Use only synthetic credentials/profiles. Sign in, inspect the **R0 / API** notice, choose a child and enter explicitly. A gated configuration requires the real child-bound PIN transition; protected history requires a fresh Parent Area proof. Explore actual returned domain/topic/lesson names. Answers, completion, endedAt and replay come only from real responses. If the service denies access or is offline, use explicit retry/account return; no fixture story is substituted. Roster refresh is **Tải lại danh sách bé**, protected refresh **Tải lại danh sách bé được phép xem**, history **Xem lịch sử học được phép truy cập**. History contains returned sessions only and no invented aggregate progress. This task ran no fresh live API journey.
+
+## Remaining SRS dependencies
+
+- Legal-approved notice text/guardian assurance, consent withdrawal, retention/export/erasure and sensitive edits: BLOCKED by Legal/Security and exact API policy.
+- Production media delivery, approved rights/art/mascot, finalized curriculum inventory and full Vietnamese copy: Content G4/design/media contracts OPEN. Six framework domains do not promise six published lessons.
+- Premium purchase/renewal, paid entitlement presentation, pricing/provider/refunds: Finance/provider/Legal and approved mobile contracts OPEN; canonical paid age-out preserved.
+- G1 promotion and unavailable-title schema, S-TB/DBQ-22 trust boundary, D-05/CUR-COMP lifecycle ownership: Backend/Database/Security/PO dependencies remain OPEN; no client workaround.
+- Exact missing PIN/privacy/completion/error frames: visual fidelity BLOCKED. iOS, physical device, manual TalkBack and PO visual approval: NOT RUN.
+
+## Local checkpoints and review
+
+| Package | Local checkpoint |
+|---|---|
+| WP1 | `7bf3017` — distinguish roster failure from empty account |
+| WP2 | `6b754b2` — protected roster refresh |
+| WP3 | `81df928` — reconcile removed topics |
+| WP4 | `449382e` — retained feedback redaction/history retry |
+| WP5 | Containing commit: `git log -1 --format='%h %s' -- test/parent_home_test.dart` after delivery |
+
+Reviewed changes are confined to affected Flutter screens/models/session memory, focused test support/regressions and tracking/report files. No native security, API defaults, vault storage, platform permissions, dependency, approved-reference, Backend/Database/Web CMS or billing file was changed. Whitespace check on owned changes PASS; the supplied CURRENT_TASK has pre-existing Markdown trailing spaces and is deliberately untouched/uncommitted. Build/test logs stay under ignored `build/`. Final working tree is expected to contain only the pre-existing `tasks/CURRENT_TASK.md` modification after checkpointing.
+
+## Final Android verification
+
+- **PASS — build:** native Gate/mock integration APK built twice (53.6s / 40.4s Gradle); normal fixture `flutter build apk --debug --no-pub --dart-define=MIMIGO_API_MODE=fixture` succeeded (42.7s). Final normal-entry `flutter run ... --no-resident` also rebuilt successfully (12.1s).
+- **BLOCKED — runtime/install:** `flutter test integration_test/parent_gate_native_mock_test.dart -d emulator-5554 --no-pub --reporter expanded` never reached assertions. Two streamed installs stalled (sandboxed, then outside sandbox), as did a manual non-streaming fallback. A scoped emulator reboot request did not resolve installation. The final ordinary fixture restoration attempt failed with ADB exit 1 and an uninstall timeout. This is not an Android Gate/test PASS or a confirmed application assertion failure. Native mock test and fresh fixture storyboard runtime are **NOT RUN to completion** in this cycle.
+- **NOT RUN:** new live API, live network-loss/recall/redaction, cross-system reacceptance, iOS and physical-device tests. No disposable environment, Backend flag, database migration or existing Dev API was touched. Historical Android/live passes remain in their original reports.
+- The task-started emulator closed successfully (`adb emu kill`: OK) after the failed restore; no protected capture or security setting change was used to troubleshoot. Relaunch the AVD/operator-repair its package service before the next device smoke test. Normal fixture APK remains in ignored `build/app/outputs/flutter-apk/app-debug.apk`; successful restoration/launch is not claimed.

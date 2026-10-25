@@ -163,8 +163,7 @@ Future<void> rootMath(WidgetTester tester, LearningTestApi api) async {
   await openSignIn(tester, api);
   await fillSignIn(tester);
   await submitSignIn(tester);
-  await tester.tap(find.text('SYN-Math'));
-  await tester.pumpAndSettle();
+  await tapVisible(tester, 'parent-child-$childId');
   await tapVisible(tester, 'parentEnterLearning');
   await tapVisible(tester, 'category-math');
 }

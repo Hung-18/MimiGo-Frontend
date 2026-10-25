@@ -296,7 +296,7 @@ class _CurriculumExplorerState extends State<CurriculumExplorer> {
                         Text('Revision: ${lesson.revisionNo}'),
                         action(
                           'explorer-lesson-${lesson.lessonId}',
-                          'Open lesson',
+                          'Mở bài học',
                           opening
                               ? null
                               : () {
@@ -329,8 +329,8 @@ class _CurriculumExplorerState extends State<CurriculumExplorer> {
           action(
             'explorerRefresh',
             model.error != null
-                ? 'Try curriculum again'
-                : 'Refresh eligible lessons',
+                ? 'Thử tải lại danh mục'
+                : 'Tải lại bài học phù hợp',
             model.loading || opening ? null : model.load,
             icon: Icons.refresh,
           ),

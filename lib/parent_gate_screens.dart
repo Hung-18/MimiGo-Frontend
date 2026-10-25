@@ -514,7 +514,7 @@ class _GatedParentAreaState extends State<GatedParentArea> {
         OutlinedButton(
           key: const Key('gatedRefresh'),
           onPressed: busy ? null : load,
-          child: const Text('Refresh authorized child profiles'),
+          child: const Text('Tải lại danh sách bé được phép xem'),
         ),
       for (final child in children)
         OutlinedButton(
@@ -545,7 +545,7 @@ class _GatedParentAreaState extends State<GatedParentArea> {
                   final value = await widget.gate.parentActivity(detail!.id);
                   if (mounted) setState(() => activity = value);
                 }),
-          child: const Text('Read authorized session history'),
+          child: const Text('Xem lịch sử học được phép truy cập'),
         ),
         if (activity != null && activity!.isEmpty)
           const Text('No sessions returned.'),
