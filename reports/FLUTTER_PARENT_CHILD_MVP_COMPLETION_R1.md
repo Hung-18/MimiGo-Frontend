@@ -18,3 +18,11 @@ Only this repository is writable. Parent Gate defaults OFF; protected reads stil
 Added an explicit protected-roster refresh/retry. Refresh clears previously selected private detail/history; failed loads no longer claim an empty roster. Existing PIN proof binding, Child token transitions, expiry/background cleanup, account reauthentication and locked fixture controls are retained. Retry is exposed only after native screen protection succeeds and cannot create a proof.
 
 Validation: `flutter test test/parent_gate_widget_test.dart test/parent_gate_session_test.dart test/parent_gate_repository_test.dart test/child_mode_test.dart --no-pub --reporter expanded` — **70 PASS**, including new protected-roster failure/retry regression and existing expiry, revocation, denial, sibling-switch and vault checks. Sandboxed Dart formatter stalled and was interrupted; approved outside-sandbox formatter succeeded. No security runtime changed.
+
+## WP3 — Learning discovery and eligibility
+
+Curriculum refresh now reconciles a disappeared topic with the returned domain metadata, returning to that domain's topic list. Valid topic selections remain in place. Removed lessons are never clickable, an empty response remains empty and restored publication requires explicit topic selection. Returned names/order and six canonical framework codes remain unchanged; no fabricated age bands, paid entitlement, offline content or fixture fallback.
+
+Validation: `flutter test test/curriculum_explorer_test.dart test/backend_modules_test.dart test/additive_onboarding_contract_test.dart test/learning_api_test.dart --no-pub --reporter expanded` — **70 PASS**. New withdrawn/restored-topic widget case plus existing HTTP denial/retry, age/permission, invalid domain and narrow 2x-text checks. This simulates catalog changes; it is not new live recall acceptance.
+
+Canonical paid age-out remains untouched: valid periods bought before seven retain access through paid expiry; new purchase/renewal from seven is unavailable. Current Flutter contract exposes Free discovery, not a purchasing or Premium decision API. Those features remain BLOCKED by billing/entitlement contracts and Finance approval. Backend R1 adds staff discovery only, with no changed Learning integration required; G1 nullable retained-answer/title handoff is recorded for the next package.

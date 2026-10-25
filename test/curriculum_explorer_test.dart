@@ -67,6 +67,34 @@ Future<void> topicScreen(WidgetTester tester, ExplorerApi api) async {
 }
 
 void main() {
+  testWidgets('refresh removes a withdrawn topic and stale lesson navigation', (
+    tester,
+  ) async {
+    final api = ExplorerApi();
+    await topicScreen(tester, api);
+    api.catalog = [];
+    api.emptyReason = 'NO_ELIGIBLE_CONTENT';
+    await tapVisible(tester, 'explorerRefresh');
+    expect(find.text('Topics in Math'), findsOneWidget);
+    expect(find.byKey(const Key('explorerEmpty')), findsOneWidget);
+    expect(find.byKey(const Key('explorer-lesson-$lessonId')), findsNothing);
+    expect(
+      find.byKey(Key('topic-${summaryJson()['topicCode']}')),
+      findsNothing,
+    );
+    expect(api.starts, 0);
+    api.catalog = [summaryJson()];
+    api.emptyReason = null;
+    await tapVisible(tester, 'explorerRefresh');
+    expect(
+      find.byKey(Key('topic-${summaryJson()['topicCode']}')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('explorer-lesson-$lessonId')), findsNothing);
+    await tapVisible(tester, 'topic-${summaryJson()['topicCode']}');
+    expect(find.byKey(const Key('explorer-lesson-$lessonId')), findsOneWidget);
+  });
+
   testWidgets(
     'Explorer headings and controls remain readable and tappable at narrow width and 2x text',
     (tester) async {

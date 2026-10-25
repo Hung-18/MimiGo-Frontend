@@ -1,6 +1,6 @@
 ﻿# Current R1 work — 2026-10-26
 
-WP1 validated: safe Parent roster failure/retry UX, 55 focused tests PASS. WP2 validated: protected roster retry, 70 Gate/navigation tests PASS. WP3–WP5 pending. See [R1 report](FLUTTER_PARENT_CHILD_MVP_COMPLETION_R1.md). Local checkpoints authorized; no push. Existing evidence below is historical; security gates preserved.
+WP1 validated: safe Parent roster failure/retry UX, 55 focused tests PASS. WP2 validated: protected roster retry, 70 Gate/navigation tests PASS. WP3 validated: curriculum topic reconciliation, 70 contract tests PASS. WP4–WP5 pending. See [R1 report](FLUTTER_PARENT_CHILD_MVP_COMPLETION_R1.md). Local checkpoints authorized; no push. Existing evidence below is historical; security gates preserved.
 
 # MimiGo Frontend work status
 
@@ -193,5 +193,6 @@ See `VS-02_FRONTEND_INTEGRATION.md` for implementation evidence, verification an
 - Final normal live Android debug build/install/launch (`flutter run ... --no-resident`): passed after the retry-navigation fix. The emulator has the normal application entry point again, not an integration-test runner.
 - Detailed automated evidence, PO acceptance, historical runtime discrepancy, build result and product limits: `reports/S2_FRONTEND_INTEGRATION.md`.
 - The accepted baseline did not include completion. The current authorized completion/replay continuation is documented above; no billing, Premium access, video playback, Parent Gate bypass or new business policy was added. Pending answer IDs remain memory-only; physical-device/iOS and production readiness remain outside acceptance. The earlier checkpoint authorization was exercised; no new commit or push is authorized.
+
 
 

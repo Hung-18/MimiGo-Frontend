@@ -105,6 +105,9 @@ class CurriculumExplorerState extends ChangeNotifier {
       );
       emptyReason = result.emptyReason;
       disclaimer = result.disclaimer;
+      // Publication/eligibility can remove a topic between visits. Preserve a
+      // valid selection, but do not strand the child in a vanished topic.
+      if (topic != null && !topics.contains(topic)) topic = null;
     } on ApiFailure catch (failure) {
       if (generation == _generation) error = failure;
     } finally {
