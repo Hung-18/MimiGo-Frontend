@@ -19,6 +19,7 @@ import 'parent_gate_api.dart';
 import 'parent_gate_session.dart';
 import 'parent_gate_screens.dart';
 import 'mimigo_design.dart';
+import 'mobile_demo.dart';
 
 export 'api_failure.dart';
 
@@ -2446,11 +2447,13 @@ class Frame extends StatelessWidget {
     this.back,
     this.childMode = false,
     this.wide = false,
+    this.demoPresentation = false,
   });
   final String title;
   final List<Widget> children;
   final VoidCallback? back;
   final bool childMode, wide;
+  final bool demoPresentation;
   @override
   Widget build(BuildContext c) => DecoratedBox(
     decoration: const BoxDecoration(
@@ -2504,7 +2507,7 @@ class Frame extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              const InternalBanner(),
+              if (!demoPresentation) const InternalBanner(),
               const SizedBox(height: 20),
               MimiPanel(
                 padding: EdgeInsets.all(
@@ -2576,17 +2579,34 @@ class Welcome extends StatelessWidget {
     title: 'MimiGo',
     children: [
       Text(
-        'Learn, play, discover.',
+        live ? 'Learn, play, discover.' : 'Cùng học, cùng chơi, cùng khám phá!',
         style: Theme.of(c).textTheme.headlineMedium,
       ),
-      const Text(
-        'One parent account. A separate learning space for each child.',
+      Text(
+        live
+            ? 'One parent account. A separate learning space for each child.'
+            : 'Khám phá bài học mẫu ngay, không cần tài khoản.',
       ),
       Text(
         live
             ? 'Development API mode. Use synthetic test accounts only.'
-            : 'Fixture mode. No network requests are made.',
+            : 'DEMO · Dữ liệu mẫu, không kết nối mạng.',
       ),
+      if (!live) ...[
+        FilledButton.icon(
+          key: const Key('welcomeMobileDemo'),
+          onPressed: busy
+              ? null
+              : () => Navigator.of(c).push(
+                  MaterialPageRoute<void>(builder: (_) => const MobileDemo()),
+                ),
+          icon: const Icon(Icons.play_circle_outline),
+          label: const Text('Khám phá bản demo'),
+        ),
+        const Text('Hồ sơ mẫu → Giỏ trái cây → Chọn hình → Chơi lại'),
+        const Divider(height: 24),
+        const Text('Dành cho phụ huynh · Luồng tài khoản thử nghiệm'),
+      ],
       const SizedBox(height: 20),
       ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 64),
@@ -3156,6 +3176,12 @@ class Privacy extends StatefulWidget {
   State<Privacy> createState() => _PrivacyState();
 }
 
+String _purposeDescription(String code) => switch (code) {
+  'CHILD_PROFILE_AGE' => 'Hồ sơ và độ tuổi của bé',
+  'LEARNING_PROGRESS' => 'Ghi nhận hoạt động học của bé',
+  _ => code,
+};
+
 class _PrivacyState extends State<Privacy> {
   bool guardian = false, busy = false;
   final choices = <String, bool>{};
@@ -3249,18 +3275,28 @@ class _PrivacyState extends State<Privacy> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Required mock purpose: ${n.purposeCode}',
+                          _purposeDescription(n.purposeCode),
                           style: Theme.of(c).textTheme.titleMedium,
                         ),
-                        Text('Notice version: ${n.label} · ${n.versionId}'),
-                        if (n.effectiveFrom != null)
-                          Text(
-                            'Effective: ${n.effectiveFrom!.toUtc().toIso8601String()}',
-                          ),
-                        if (n.contentHash != null)
-                          Text('Content hash: ${n.contentHash}'),
                         const Text(
                           'Synthetic development only · not approved for real children.',
+                        ),
+                        ExpansionTile(
+                          tilePadding: EdgeInsets.zero,
+                          title: const Text(
+                            'Thông tin phiên bản / Technical details',
+                          ),
+                          children: [
+                            SelectableText(
+                              'Purpose: ${n.purposeCode}\nNotice version: ${n.label} · ${n.versionId}',
+                            ),
+                            if (n.effectiveFrom != null)
+                              SelectableText(
+                                'Effective: ${n.effectiveFrom!.toUtc().toIso8601String()}',
+                              ),
+                            if (n.contentHash != null)
+                              SelectableText('Content hash: ${n.contentHash}'),
+                          ],
                         ),
                       ],
                     ),
@@ -3274,7 +3310,9 @@ class _PrivacyState extends State<Privacy> {
                         : (v) => setState(
                             () => choices[n.purposeCode] = v ?? false,
                           ),
-                    title: Text('I affirm ${n.purposeCode} (${n.label}).'),
+                    title: Text(
+                      'Tôi đồng ý mục đích: ${_purposeDescription(n.purposeCode)}.',
+                    ),
                   ),
                 ],
               ),
@@ -3635,11 +3673,18 @@ class ChildHome extends StatelessWidget {
             label: const Text('Explore curriculum'),
           ),
         ),
-      Text(
-        fixture
-            ? 'Development shortcuts · legacy fixture demos'
-            : 'Learning shortcuts',
-      ),
+      if (fixture)
+        FilledButton.icon(
+          key: const Key('childMobileDemo'),
+          onPressed: () => Navigator.of(c).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const MobileDemo(startInChildMode: true),
+            ),
+          ),
+          icon: const Icon(Icons.shopping_basket_outlined),
+          label: const Text('Giỏ trái cây · Demo tương tác'),
+        ),
+      Text(fixture ? 'Khám phá thêm · Trò chơi mẫu' : 'Learning shortcuts'),
       MimiDomainRail(
         children: [
           for (final value in const [

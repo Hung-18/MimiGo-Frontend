@@ -233,6 +233,13 @@ void main() {
       final api = ChildApi();
       await openChildOnboarding(tester, api);
       expect(find.byKey(const Key('childDob')), findsNothing);
+      // Technical metadata is now disclosed on demand, before any DOB input.
+      for (var i = 0; i < 2; i++) {
+        final details = find.byType(ExpansionTile).at(i);
+        await tester.ensureVisible(details);
+        await tester.tap(details);
+        await tester.pumpAndSettle();
+      }
       expect(find.textContaining('Content hash:'), findsNWidgets(2));
       expect(
         find.textContaining('not a production legal consent flow'),

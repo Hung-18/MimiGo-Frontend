@@ -83,6 +83,7 @@ void main() {
       final api = RegistrationApi()
         ..referenceWait = Completer<OnboardingReference>();
       await tester.pumpWidget(MimiGoApp(api: api));
+      await tester.ensureVisible(find.byKey(const Key('welcomeStart')));
       await tester.tap(find.byKey(const Key('welcomeStart')));
       await tester.tap(find.byKey(const Key('welcomeStart')));
       await tester.pump();
