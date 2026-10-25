@@ -8,6 +8,7 @@ import 'api_failure.dart';
 import 'parent_gate_api.dart';
 import 'parent_gate_session.dart';
 import 'gate_screen_security.dart';
+import 'mimigo_design.dart';
 
 String gateFailureText(ApiFailure failure) => switch (failure.code) {
   'INVALID_CREDENTIALS' => 'Email or password is incorrect.',
@@ -60,8 +61,9 @@ class GateError extends StatelessWidget {
       ? const SizedBox.shrink()
       : Semantics(
           liveRegion: true,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+          child: MimiNotice(
+            icon: Icons.lock_outline,
+            color: MimiColors.rose,
             child: Text(
               '${gateFailureText(error!)}\n${error!.code ?? 'REQUEST_FAILED'}',
               key: const Key('gateError'),
@@ -271,6 +273,14 @@ class _GatePinScreenState extends State<GatePinScreen>
     enableIMEPersonalizedLearning: false,
     enableInteractiveSelection: false,
     keyboardType: digits ? TextInputType.number : TextInputType.visiblePassword,
+    textAlign: digits ? TextAlign.center : TextAlign.start,
+    style: digits
+        ? const TextStyle(
+            fontSize: 26,
+            letterSpacing: 4,
+            fontWeight: FontWeight.w700,
+          )
+        : null,
     inputFormatters: digits
         ? [
             FilteringTextInputFormatter.allow(RegExp('[0-9]')),

@@ -67,6 +67,10 @@ Future<void> fillRegistration(WidgetTester tester) async {
     'synthetic-test-pass',
   );
   await tester.enterText(
+    find.byKey(const Key('registerPasswordConfirmation')),
+    'synthetic-test-pass',
+  );
+  await tester.enterText(
     find.byKey(const Key('registerDisplayName')),
     'SYN New Parent',
   );

@@ -57,7 +57,7 @@ void main() {
     await tester.enterText(find.byKey(const Key('otpCode')), '123456');
     await tapVisible(tester, 'otpVerify');
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('loadAttempt')));
+    await tapVisible(tester, 'loadAttempt');
     await tester.pumpAndSettle();
     expect(
       tester

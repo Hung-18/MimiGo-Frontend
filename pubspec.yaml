@@ -58,6 +58,16 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  assets:
+    - assets/fonts/baloo2/OFL.txt
+    - assets/fonts/nunito/OFL.txt
+  fonts:
+    - family: Baloo2
+      fonts:
+        - asset: assets/fonts/baloo2/Baloo2-Variable.ttf
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/nunito/Nunito-Variable.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:

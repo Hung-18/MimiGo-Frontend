@@ -18,10 +18,14 @@ import 'onboarding_resume.dart';
 import 'parent_gate_api.dart';
 import 'parent_gate_session.dart';
 import 'parent_gate_screens.dart';
+import 'mimigo_design.dart';
 
 export 'api_failure.dart';
 
-void main() => runApp(const MimiGoApp());
+void main() {
+  registerMimiFontLicenses();
+  runApp(const MimiGoApp());
+}
 
 /// Accepted auth/ChildProfile boundary plus the exact S2 Learning operations.
 /// Fixture remains the default; live mode is opt-in.
@@ -1977,13 +1981,7 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
     scaffoldMessengerKey: messengerKey,
     navigatorKey: navigatorKey,
     debugShowCheckedModeBanner: false,
-    theme: ThemeData(
-      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xff6a5acd)),
-      useMaterial3: true,
-      inputDecorationTheme: const InputDecorationTheme(
-        border: OutlineInputBorder(),
-      ),
-    ),
+    theme: mimiTheme(),
     home: PopScope(
       canPop:
           page != Page.child &&
@@ -2202,6 +2200,8 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
               ],
             ),
             Page.category => Frame(
+              childMode: true,
+              wide: true,
               title: selectedCategory!.label,
               children: [
                 if (config.mode == ApiMode.live &&
@@ -2261,6 +2261,8 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
               ],
             ),
             Page.explorer => Frame(
+              childMode: true,
+              wide: true,
               title: 'Curriculum Explorer',
               children: [
                 CurriculumExplorer(
@@ -2302,6 +2304,8 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
               ],
             ),
             Page.learningLesson => Frame(
+              childMode: true,
+              wide: true,
               title: learningFromExplorer
                   ? 'Learning · development/demo'
                   : 'Math learning · development/demo',
@@ -2440,35 +2444,87 @@ class Frame extends StatelessWidget {
     required this.title,
     required this.children,
     this.back,
+    this.childMode = false,
+    this.wide = false,
   });
   final String title;
   final List<Widget> children;
   final VoidCallback? back;
+  final bool childMode, wide;
   @override
-  Widget build(BuildContext c) => Center(
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 560),
-      child: SingleChildScrollView(
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (back != null)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: BackButton(onPressed: back),
+  Widget build(BuildContext c) => DecoratedBox(
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [MimiColors.sky, MimiColors.canvas, Colors.white],
+        stops: [0, .45, 1],
+      ),
+    ),
+    child: SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      padding: EdgeInsets.symmetric(
+        horizontal: MediaQuery.sizeOf(c).width < 400 ? 16 : 24,
+        vertical: 24,
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: wide ? MimiSpace.learningWidth : MimiSpace.parentWidth,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (back != null) ...[
+                    Container(
+                      width: childMode ? 64 : 48,
+                      height: childMode ? 64 : 48,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: BackButton(onPressed: back),
+                    ),
+                    const SizedBox(width: 12),
+                  ],
+                  Expanded(
+                    child: Semantics(
+                      header: true,
+                      child: Text(
+                        title,
+                        style: title == 'MimiGo'
+                            ? Theme.of(c).textTheme.displaySmall
+                            : Theme.of(c).textTheme.headlineLarge,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            Text(
-              title,
-              style: Theme.of(c).textTheme.headlineMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            const InternalBanner(),
-            const SizedBox(height: 20),
-            ...children,
-          ],
+              const SizedBox(height: 16),
+              const InternalBanner(),
+              const SizedBox(height: 20),
+              MimiPanel(
+                padding: EdgeInsets.all(
+                  MediaQuery.textScalerOf(c).scale(16) > 24 ? 12 : 20,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final child in children)
+                      Padding(
+                        padding: EdgeInsets.only(
+                          bottom: child is SizedBox ? 0 : 12,
+                        ),
+                        child: child,
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     ),
@@ -2478,13 +2534,10 @@ class Frame extends StatelessWidget {
 class InternalBanner extends StatelessWidget {
   const InternalBanner({super.key});
   @override
-  Widget build(BuildContext c) => Container(
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: const Color(0xfffff3cd),
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: const Text('R0 SYNTHETIC ONLY — not for real families.'),
+  Widget build(BuildContext c) => const MimiNotice(
+    icon: Icons.shield_outlined,
+    color: Color(0xFFFFF4CD),
+    child: Text('R0 SYNTHETIC ONLY — not for real families.'),
   );
 }
 
@@ -2523,6 +2576,13 @@ class Welcome extends StatelessWidget {
     title: 'MimiGo',
     children: [
       Text(
+        'Learn, play, discover.',
+        style: Theme.of(c).textTheme.headlineMedium,
+      ),
+      const Text(
+        'One parent account. A separate learning space for each child.',
+      ),
+      Text(
         live
             ? 'Development API mode. Use synthetic test accounts only.'
             : 'Fixture mode. No network requests are made.',
@@ -2532,6 +2592,10 @@ class Welcome extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: 64),
         child: FilledButton(
           key: const Key('welcomeStart'),
+          style: FilledButton.styleFrom(
+            backgroundColor: MimiColors.yellow,
+            foregroundColor: MimiColors.ink,
+          ),
           onPressed: busy ? null : start,
           child: Text(
             busy ? 'Loading current account Terms…' : 'Create a parent account',
@@ -2548,6 +2612,23 @@ class Welcome extends StatelessWidget {
         key: const Key('welcomeSignIn'),
         onPressed: busy ? null : signIn,
         child: const Text('Already have an account? Sign in'),
+      ),
+      const Divider(height: 32),
+      Text('A world to explore', style: Theme.of(c).textTheme.titleLarge),
+      const Text(
+        'Six curriculum domains · available lessons depend on the service.',
+      ),
+      const Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          Chip(label: Text('Math')),
+          Chip(label: Text('Language')),
+          Chip(label: Text('English')),
+          Chip(label: Text('Life skills')),
+          Chip(label: Text('Logic')),
+          Chip(label: Text('Discovery')),
+        ],
       ),
     ],
   );
@@ -2692,8 +2773,8 @@ class _SignInState extends State<SignIn> {
                 child: const Text('Verify existing synthetic email'),
               ),
             const SizedBox(height: 16),
-            SizedBox(
-              height: 64,
+            ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 64),
               child: FilledButton(
                 key: const Key('signInSubmit'),
                 onPressed: busy || retrySeconds > 0 ? null : submit,
@@ -2748,6 +2829,9 @@ class _RegisterState extends State<Register> {
       password = TextEditingController(
         text: widget.fixture ? 'synthetic-pass' : '',
       ),
+      confirmation = TextEditingController(
+        text: widget.fixture ? 'synthetic-pass' : '',
+      ),
       displayName = TextEditingController(text: 'SYN Parent');
   late OnboardingReference current = widget.reference;
   bool terms = false, busy = false;
@@ -2757,6 +2841,7 @@ class _RegisterState extends State<Register> {
   void dispose() {
     email.dispose();
     password.dispose();
+    confirmation.dispose();
     displayName.dispose();
     super.dispose();
   }
@@ -2860,6 +2945,7 @@ class _RegisterState extends State<Register> {
                   : 'Use a synthetic email ending in @example.test.',
               decoration: const InputDecoration(
                 labelText: 'Parent email (@example.test in R0)',
+                prefixIcon: Icon(Icons.mail_outline),
               ),
             ),
             const SizedBox(height: 12),
@@ -2873,6 +2959,7 @@ class _RegisterState extends State<Register> {
                   : null,
               decoration: const InputDecoration(
                 labelText: 'Parent display name',
+                prefixIcon: Icon(Icons.person_outline),
               ),
             ),
             const SizedBox(height: 12),
@@ -2891,6 +2978,24 @@ class _RegisterState extends State<Register> {
                   : null,
               decoration: const InputDecoration(
                 labelText: 'Password (10–128 characters)',
+                prefixIcon: Icon(Icons.lock_outline),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              key: const Key('registerPasswordConfirmation'),
+              controller: confirmation,
+              enabled: !busy,
+              obscureText: true,
+              enableSuggestions: false,
+              autocorrect: false,
+              validator: (value) =>
+                  value != password.text || (value?.isEmpty ?? true)
+                  ? 'Enter the same password again.'
+                  : null,
+              decoration: const InputDecoration(
+                labelText: 'Confirm password',
+                prefixIcon: Icon(Icons.lock_outline),
               ),
             ),
           ],
@@ -3002,6 +3107,12 @@ class _OtpState extends State<Otp> {
           enabled: !model.busy && !model.verified,
           maxLength: 6,
           keyboardType: TextInputType.number,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 26,
+            letterSpacing: 4,
+            fontWeight: FontWeight.w700,
+          ),
           decoration: const InputDecoration(labelText: 'Six-digit mock code'),
         ),
         OnboardingError(model.error),
@@ -3337,8 +3448,8 @@ class _ChildInputState extends State<ChildInput> {
       const Text(
         'Only the selected predefined avatar key is sent. No photo upload or external media is used.',
       ),
-      SizedBox(
-        height: 64,
+      ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 64),
         child: FilledButton(
           key: const Key('childContinue'),
           onPressed: submit,
@@ -3490,14 +3601,28 @@ class ChildHome extends StatelessWidget {
   final VoidCallback? parentArea;
   @override
   Widget build(BuildContext c) => Frame(
+    childMode: true,
     title: child == null
         ? 'Welcome back to Child Mode!'
         : 'Hi, ${child!.alias}!',
     children: [
-      Text(
-        fixture
-            ? 'Child Mode · fixture demonstrations'
-            : 'Child Mode · live account',
+      MimiNotice(
+        icon: Icons.explore_outlined,
+        color: const Color(0xFFFFF4CD),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'What will you discover today?',
+              style: Theme.of(c).textTheme.titleLarge,
+            ),
+            Text(
+              fixture
+                  ? 'Child Mode · fixture demonstrations'
+                  : 'Child Mode · live account',
+            ),
+          ],
+        ),
       ),
       const SizedBox(height: 16),
       if (explore != null)
@@ -3515,30 +3640,36 @@ class ChildHome extends StatelessWidget {
             ? 'Development shortcuts · legacy fixture demos'
             : 'Learning shortcuts',
       ),
-      Wrap(
-        spacing: 8,
-        runSpacing: 8,
+      MimiDomainRail(
         children: [
-          ...LearningCategory.values
-              .where((value) => fixture || value != LearningCategory.arts)
-              .map(
-                (value) => SizedBox(
-                  height: 64,
-                  child: OutlinedButton(
-                    key: Key('category-${value.name}'),
-                    onPressed: () => category(value),
-                    child: Text(value.label),
-                  ),
-                ),
-              ),
+          for (final value in const [
+            LearningCategory.math,
+            LearningCategory.language,
+          ])
+            MimiDomainTile(
+              key: Key('category-${value.name}'),
+              label: value.label,
+              code: value.name,
+              onPressed: () => category(value),
+            ),
           if (!fixture)
-            ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 64),
-              child: OutlinedButton(
-                key: const Key('category-english'),
-                onPressed: english,
-                child: const Text('English'),
-              ),
+            MimiDomainTile(
+              key: const Key('category-english'),
+              label: 'English',
+              code: 'ENGLISH',
+              onPressed: english,
+            ),
+          for (final value in [
+            LearningCategory.lifeSkills,
+            LearningCategory.logic,
+            if (fixture) LearningCategory.arts,
+            LearningCategory.discovery,
+          ])
+            MimiDomainTile(
+              key: Key('category-${value.name}'),
+              label: value.label,
+              code: value.name,
+              onPressed: () => category(value),
             ),
         ],
       ),
@@ -3571,8 +3702,8 @@ class ChildHome extends StatelessWidget {
           label: const Text('Switch child · Parent Gate required'),
         ),
       ),
-      SizedBox(
-        height: 64,
+      ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 64),
         child: OutlinedButton(
           key: const Key('childParentGate'),
           onPressed: gateAvailable ? parentArea : null,
@@ -3665,8 +3796,8 @@ class _ParentAreaState extends State<ParentArea> {
                   onTap: () => widget.select(x),
                 ),
               ),
-            SizedBox(
-              height: 64,
+            ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 64),
               child: FilledButton(
                 key: const Key('addChild'),
                 onPressed: widget.currentTermsAccepted ? widget.add : null,
@@ -3689,8 +3820,8 @@ class ParentOnly extends StatelessWidget {
       const Text(
         'You did not affirm all required child purposes. No child alias, date of birth or profile was sent or stored.',
       ),
-      SizedBox(
-        height: 64,
+      ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 64),
         child: FilledButton(
           key: const Key('reviewPrivacyAgain'),
           onPressed: back,

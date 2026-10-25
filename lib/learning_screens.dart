@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import 'api_failure.dart';
 import 'learning_models.dart';
 import 'learning_session_memory.dart';
+import 'mimigo_design.dart';
 
 class LearningLabel extends StatelessWidget {
   const LearningLabel({super.key});
   @override
-  Widget build(BuildContext context) => const Padding(
-    padding: EdgeInsets.symmetric(vertical: 12),
+  Widget build(BuildContext context) => const MimiNotice(
+    icon: Icons.science_outlined,
     child: Text(
       'DEVELOPMENT / DEMO · synthetic Free learning content. Not production approved.',
     ),
@@ -45,8 +46,9 @@ class LearningError extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
     liveRegion: true,
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+    child: MimiNotice(
+      icon: Icons.cloud_off_outlined,
+      color: MimiColors.rose,
       child: Text(
         '$message\n${failure.code ?? 'REQUEST_FAILED'}${failure.status == null ? '' : ' (HTTP ${failure.status})'}'
         '${failure.requestId == null ? '' : '\nRequest: ${failure.requestId}'}',
@@ -588,7 +590,7 @@ class _LearningLessonViewState extends State<LearningLessonView> {
             Text(
               session!.state == 'COMPLETED'
                   ? 'Your saved answers are read-only. Choose Replay lesson to try again.'
-                : 'This session has ended and cannot accept answers. Go back to the lesson list.',
+                  : 'This session has ended and cannot accept answers. Go back to the lesson list.',
             ),
           if (memory.answering(widget.childId, session!.sessionId))
             const LinearProgressIndicator(
@@ -657,16 +659,28 @@ class _LearningLessonViewState extends State<LearningLessonView> {
           active != current.sessionId &&
           memory.session(widget.childId, active)?.state == 'IN_PROGRESS';
       return Card(
+        color: const Color(0xFFF0F8F1),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Icon(
+                  Icons.check_circle_outline,
+                  size: 48,
+                  color: Color(0xFF246335),
+                  semanticLabel: 'Server-confirmed completion',
+                ),
+              ),
+              const SizedBox(height: 12),
               Semantics(
                 liveRegion: true,
                 child: Text(
                   'Session completed',
                   key: Key('completionConfirmed'),
+                  style: Theme.of(context).textTheme.headlineSmall,
                 ),
               ),
               Text(
@@ -791,6 +805,12 @@ class _LearningLessonViewState extends State<LearningLessonView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Text(
+              'Question ${cue.seq}',
+              style: Theme.of(context).textTheme.labelLarge
+                  ?.copyWith(color: MimiColors.action),
+            ),
+            const SizedBox(height: 8),
             Semantics(
               header: true,
               child: Text(
@@ -799,41 +819,49 @@ class _LearningLessonViewState extends State<LearningLessonView> {
               ),
             ),
             if (options.isEmpty) const Text('No answer options were returned.'),
-            ...options.map(
-              (option) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 64),
-                  child: Semantics(
-                    key: Key('choice-semantics-${option.optionId}'),
-                    selected: chosen == option.optionId,
-                    inMutuallyExclusiveGroup: true,
-                    child: OutlinedButton(
-                      key: Key('option-${option.optionId}'),
-                      style: chosen == option.optionId
-                          ? OutlinedButton.styleFrom(
-                              backgroundColor: Theme.of(context)
-                                  .colorScheme
-                                  .primaryContainer,
-                              side: BorderSide(
-                                color: Theme.of(context).colorScheme.primary,
-                                width: 2,
-                              ),
-                            )
-                          : null,
-                      onPressed: canAnswer && pending == null
-                          ? () => setState(
-                              () => selected[cue.cueId] = option.optionId,
-                            )
-                          : null,
-                      child: Text(
-                        '${chosen == option.optionId ? 'Selected: ' : ''}${option.labelText}',
-                        style: Theme.of(context).textTheme.titleMedium,
+            const SizedBox(height: 12),
+            MimiTileGrid(
+              minimumWidth: 210,
+              children: options
+                  .map(
+                    (option) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(minHeight: 64),
+                        child: Semantics(
+                          key: Key('choice-semantics-${option.optionId}'),
+                          selected: chosen == option.optionId,
+                          inMutuallyExclusiveGroup: true,
+                          child: OutlinedButton(
+                            key: Key('option-${option.optionId}'),
+                            style: chosen == option.optionId
+                                ? OutlinedButton.styleFrom(
+                                    backgroundColor: Theme.of(context)
+                                        .colorScheme
+                                        .primaryContainer,
+                                    side: BorderSide(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary,
+                                      width: 2,
+                                    ),
+                                  )
+                                : null,
+                            onPressed: canAnswer && pending == null
+                                ? () => setState(
+                                    () => selected[cue.cueId] = option.optionId,
+                                  )
+                                : null,
+                            child: Text(
+                              '${chosen == option.optionId ? 'Selected: ' : ''}${option.labelText}',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              ),
+                  )
+                  .toList(),
             ),
             if (pending != null && current.state == 'IN_PROGRESS')
               const Text(
@@ -871,8 +899,8 @@ class _LearningLessonViewState extends State<LearningLessonView> {
                 key: Key('feedback-announcement-${cue.cueId}'),
                 container: true,
                 liveRegion: true,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 12),
+                child: MimiNotice(
+                  icon: Icons.chat_bubble_outline,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [

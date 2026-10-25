@@ -136,8 +136,8 @@ class _CategoryContentState extends State<CategoryContent> {
           }
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
-            child: SizedBox(
-              height: 64,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 64),
               child: FilledButton(
                 key: const Key('openCircleDemo'),
                 onPressed: widget.openDemo,
@@ -182,8 +182,8 @@ class _CircleDemoState extends State<CircleDemo> {
       const SizedBox(height: 12),
       const Text('Choose a shape. This fixture has no licensed lesson media.'),
       const SizedBox(height: 16),
-      SizedBox(
-        height: 64,
+      ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 64),
         child: OutlinedButton(
           key: const Key('demoTriangle'),
           onPressed: () => setState(
@@ -193,8 +193,8 @@ class _CircleDemoState extends State<CircleDemo> {
         ),
       ),
       const SizedBox(height: 12),
-      SizedBox(
-        height: 64,
+      ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 64),
         child: FilledButton(
           key: const Key('demoCircle'),
           onPressed: () =>

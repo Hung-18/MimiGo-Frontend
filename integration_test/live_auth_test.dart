@@ -150,14 +150,16 @@ void main() {
       await tap(tester, 'welcomeStart');
       await waitFor(tester, find.byKey(const Key('registerEmail')));
       await tester.enterText(find.byKey(const Key('registerEmail')), email);
-      final registrationPassword = find
-          .descendant(
-            of: find.byType(Register),
-            matching: find.byType(TextField),
-          )
-          .last;
+      final registrationPassword = find.byKey(const Key('registerPassword'));
       await tester.ensureVisible(registrationPassword);
       await tester.enterText(registrationPassword, password);
+      await tester.ensureVisible(
+        find.byKey(const Key('registerPasswordConfirmation')),
+      );
+      await tester.enterText(
+        find.byKey(const Key('registerPasswordConfirmation')),
+        password,
+      );
       expect(
         tester
             .widget<CheckboxListTile>(find.byKey(const Key('termsCheckbox')))

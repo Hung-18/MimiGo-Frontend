@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'mimigo_design.dart';
+
 import 'api_failure.dart';
 import 'learning_models.dart';
 import 'learning_screens.dart' show LearningError, LearningLabel;
@@ -245,13 +247,23 @@ class _CurriculumExplorerState extends State<CurriculumExplorer> {
             if (model.disclaimer != null) Text(model.disclaimer!),
             if (domain == null) ...[
               heading(context, 'Curriculum domains'),
-              ...model.presentation.map(
-                (value) => action(
-                  'domain-${value.code}',
-                  '${model.domainName(value)}\n${model.inDomain(value).isEmpty ? 'Content not available yet' : 'Eligible Free lessons available'}',
-                  opening ? null : () => model.chooseDomain(value),
-                  icon: value.icon,
-                ),
+              const SizedBox(height: 12),
+              MimiTileGrid(
+                minimumWidth: 180,
+                children: [
+                  for (final value in model.presentation)
+                    MimiDomainTile(
+                      key: Key('domain-${value.code}'),
+                      label: model.domainName(value),
+                      code: value.code,
+                      description: model.inDomain(value).isEmpty
+                          ? 'Content not available yet'
+                          : 'Eligible Free lessons available',
+                      onPressed: opening
+                          ? null
+                          : () => model.chooseDomain(value),
+                    ),
+                ],
               ),
             ] else if (topic == null) ...[
               heading(context, 'Topics in ${model.domainName(domain)}'),

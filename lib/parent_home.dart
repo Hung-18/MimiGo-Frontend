@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'main.dart'
     show ChildDetail, ChildSummary, MimiGoApi, ParentSummary, ParentWorkspace;
 import 'parent_gate_api.dart';
+import 'mimigo_design.dart';
 import 'api_failure.dart';
 import 'learning_screens.dart' show LearningError;
 
@@ -242,11 +243,7 @@ class _ParentHomeState extends State<ParentHome> {
                   key: Key('parent-child-${profile.id}'),
                   minVerticalPadding: 16,
                   title: Text(profile.alias),
-                  leading: Icon(switch (profile.stockAvatarKey) {
-                    'bee-yellow' => Icons.emoji_nature_outlined,
-                    'bear-blue' => Icons.pets_outlined,
-                    _ => Icons.child_care,
-                  }, semanticLabel: 'Predefined child avatar'),
+                  leading: MimiAvatar(stockKey: profile.stockAvatarKey),
                   subtitle: Text(
                     '${widget.openParentArea == null ? 'Profile: ${profile.state} · Age returned by service: ${profile.ageYears}' : 'Profile: ${profile.state}'}\n'
                     '${profile.withinProgramAgeRange ? 'Within program age range' : 'Outside program age range · profile only'}\n'
@@ -261,12 +258,16 @@ class _ParentHomeState extends State<ParentHome> {
               ),
             ),
           ] else ...[
-            Semantics(
-              header: true,
-              child: Text(
-                'Selected child: ${child.alias}',
-                key: const Key('parentSelectedChild'),
-                style: Theme.of(context).textTheme.titleLarge,
+            MimiNotice(
+              icon: Icons.person_outline,
+              color: MimiColors.rose,
+              child: Semantics(
+                header: true,
+                child: Text(
+                  'Selected child: ${child.alias}',
+                  key: const Key('parentSelectedChild'),
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
               ),
             ),
             Text(
