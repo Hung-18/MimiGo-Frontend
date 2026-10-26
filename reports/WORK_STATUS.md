@@ -1,4 +1,8 @@
-﻿# Current R1 work — 2026-10-26
+﻿# Current R2 work — 2026-10-26
+
+WP1–WP3 completed sequentially: no additional independently implementable confirmed Flutter gap established in the supported Parent/Child journey after R1. No speculative runtime code or duplicate feature added. Focused existing regressions **222/222 PASS**, analyzer clean. Fixture and Gate-enabled Android debug builds PASS; evidence in the [R2 handoff](FLUTTER_MVP_FUNCTIONAL_COMPLETION_R2.md). Fresh device/live and postponed four-repository E2E NOT RUN; R1 ADB installation limitation remains unresolved. Current history contract uses non-null `Content unavailable`, already compatible with the client; nullable-title schema is no longer a dependency. PO CUR-COMP/RBAC/D-05 decisions are confirmed within the R5 scope; public adoption/trust/G1 rollout and unresolved recall/media/learning policies remain dependencies. Local report/tracking checkpoint authorized; supplied CURRENT_TASK preserved/excluded. No push/deployment or sibling-repository writes; release gates remain OPEN.
+
+# Previous R1 work — 2026-10-26
 
 WP1 validated: safe Parent roster failure/retry UX, 55 focused tests PASS. WP2 validated: protected roster retry, 70 Gate/navigation tests PASS. WP3 validated: curriculum topic reconciliation, 70 contract tests PASS. WP4 validated: retained feedback redaction and history retry, 96 tests PASS. WP5 validated in automated/build scope: Vietnamese navigation/mode notice and responsive layouts. Analysis clean; final full suite 345 PASS; fixture/Gate APK builds PASS. Android runtime BLOCKED by repeated ADB install/uninstall timeout; no fresh device/live PASS claimed. Five sequential local checkpoints; only supplied CURRENT_TASK remains uncommitted after delivery. See [R1 report](FLUTTER_PARENT_CHILD_MVP_COMPLETION_R1.md). Local checkpoints authorized; no push. Existing evidence below is historical; security gates preserved.
 
