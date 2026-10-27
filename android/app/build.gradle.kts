@@ -47,3 +47,13 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+// Flutter generates one registrant from all pub plugins, including dev-only
+// integration_test. The release classpath intentionally omits that plugin.
+// Compile the release registrant below instead of the generated main copy.
+tasks.withType<JavaCompile>().configureEach {
+    if (name == "compileReleaseJavaWithJavac") {
+        val generatedRegistrant = file("src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java")
+        exclude { it.file == generatedRegistrant }
+    }
+}
