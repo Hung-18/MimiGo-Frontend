@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import 'child_content.dart';
+import 'child_media_access.dart';
 import 'api_failure.dart';
 import 'learning_models.dart';
 import 'learning_screens.dart';
@@ -58,6 +60,8 @@ class ApiConfiguration {
     this.mode,
     this.baseUrl, {
     this.parentGateEnabled = false,
+    this.childMediaEnabled = false,
+    this.childMediaBaseUrl = '',
   });
   factory ApiConfiguration.fromEnvironment() => ApiConfiguration(
     const String.fromEnvironment(
@@ -75,12 +79,27 @@ class ApiConfiguration {
       'MIMIGO_PARENT_GATE_ENABLED',
       defaultValue: false,
     ),
+    childMediaEnabled: const bool.fromEnvironment(
+      'MIMIGO_CHILD_MEDIA_ENABLED',
+      defaultValue: false,
+    ),
+    childMediaBaseUrl: const String.fromEnvironment(
+      'MIMIGO_CHILD_MEDIA_BASE_URL',
+      defaultValue: '',
+    ),
   );
   final ApiMode mode;
   final String baseUrl;
   final bool parentGateEnabled;
+  final bool childMediaEnabled;
+  final String childMediaBaseUrl;
   MimiGoApi createClient() => mode == ApiMode.live
-      ? LiveMimiGoApi(Uri.parse(baseUrl), parentGateEnabled: parentGateEnabled)
+      ? LiveMimiGoApi(
+          Uri.parse(baseUrl),
+          parentGateEnabled: parentGateEnabled,
+          childMediaEnabled: childMediaEnabled,
+          childMediaBaseUrl: childMediaBaseUrl,
+        )
       : FixtureMimiGoApi();
 }
 
@@ -775,9 +794,67 @@ class FixtureMimiGoApi implements MimiGoApi {
   }
 }
 
-class LiveMimiGoApi implements MimiGoApi, ParentGateApi {
+class LiveMimiGoApi implements MimiGoApi, ParentGateApi, ChildMediaAccess {
   @override
   final bool parentGateEnabled;
+  @override
+  bool get childMediaEnabled => _privateMediaOrigin != null;
+  final bool _childMediaRequested;
+  final String childMediaBaseUrl;
+  Uri? get _privateMediaOrigin {
+    if (!kDebugMode || !parentGateEnabled || !_childMediaRequested) return null;
+    final uri = Uri.tryParse(childMediaBaseUrl);
+    if (uri == null ||
+        uri.scheme != 'http' ||
+        !{'10.0.2.2', '127.0.0.1', 'localhost', '::1'}.contains(uri.host) ||
+        uri.hasQuery ||
+        uri.hasFragment ||
+        uri.userInfo.isNotEmpty ||
+        (uri.path.isNotEmpty && uri.path != '/'))
+      return null;
+    return uri;
+  }
+
+  @override
+  Listenable get mediaSessionChanges => gateSession!;
+  @override
+  bool mediaSessionIsCurrent(String childId, String bearer) {
+    final current = gateSession?.current;
+    return _privateMediaOrigin != null &&
+        current?.mode == SessionMode.child &&
+        current?.childId == childId &&
+        current?.token == bearer &&
+        current!.expiresAt.isAfter(DateTime.now());
+  }
+
+  @override
+  Future<ChildMediaSource> childMediaSource(
+    String childId,
+    String lessonId,
+    String revisionId,
+  ) async {
+    final origin = _privateMediaOrigin;
+    if (origin == null || gateSession == null) {
+      throw const ApiFailure(
+        'Private media is unavailable.',
+        code: 'MEDIA_DISABLED',
+        status: 404,
+      );
+    }
+    return gateSession!.authorized(
+      (token, _) async => ChildMediaSource(
+        origin.replace(
+          path:
+              '/private/media/children/lessons/'
+              '${Uri.encodeComponent(lessonId)}/revisions/'
+              '${Uri.encodeComponent(revisionId)}/main-video',
+        ),
+        token,
+      ),
+      childId: childId,
+    );
+  }
+
   @override
   late final GateSessionCoordinator? gateSession = parentGateEnabled
       ? GateSessionCoordinator(
@@ -868,8 +945,11 @@ class LiveMimiGoApi implements MimiGoApi, ParentGateApi {
     this.baseUri, {
     HttpClient? client,
     this.parentGateEnabled = false,
+    bool childMediaEnabled = false,
+    this.childMediaBaseUrl = '',
     CredentialVault? vault,
-  }) : _client = client ?? HttpClient(),
+  }) : _childMediaRequested = childMediaEnabled,
+       _client = client ?? HttpClient(),
        _vault = vault ?? const PlatformCredentialVault();
   final Uri baseUri;
   final HttpClient _client;

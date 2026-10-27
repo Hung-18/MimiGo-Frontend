@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'api_failure.dart';
+import 'child_media_access.dart';
+import 'child_media_player.dart';
 import 'learning_models.dart';
 import 'learning_session_memory.dart';
 import 'mimigo_design.dart';
@@ -222,6 +224,7 @@ class _LearningLessonViewState extends State<LearningLessonView> {
   String? sendingCue;
   String? viewedSessionId;
   bool viewingHistory = false;
+  String? reachedMediaCue;
 
   bool get completing =>
       viewedSessionId != null &&
@@ -291,6 +294,7 @@ class _LearningLessonViewState extends State<LearningLessonView> {
 
   void showSession(SessionDetail value) {
     if (session?.sessionId != value.sessionId) {
+      reachedMediaCue = null;
       selected.clear();
       feedback.clear();
       answerErrors.clear();
@@ -540,6 +544,18 @@ class _LearningLessonViewState extends State<LearningLessonView> {
     final lesson = detail!;
     final cues = List<LearningCue>.of(lesson.cues)
       ..sort((a, b) => a.seq.compareTo(b.seq));
+    final media = widget.api is ChildMediaAccess
+        ? widget.api as ChildMediaAccess
+        : null;
+    final hasMainVideo = lesson.assets.any(
+      (asset) => asset.role == 'MAIN_VIDEO',
+    );
+    final playPrivateMedia =
+        media != null &&
+        media.childMediaEnabled &&
+        hasMainVideo &&
+        session?.state == 'IN_PROGRESS' &&
+        !viewingHistory;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -554,7 +570,7 @@ class _LearningLessonViewState extends State<LearningLessonView> {
         Text(lesson.summary.lessonCode),
         Text(lesson.summary.objective),
         Text(lesson.disclaimer),
-        if (lesson.assets.isNotEmpty)
+        if (lesson.assets.isNotEmpty && !playPrivateMedia)
           const Text(
             'Media references are metadata only. Playback is not available in this development slice.',
           ),
@@ -582,6 +598,23 @@ class _LearningLessonViewState extends State<LearningLessonView> {
             ),
           ),
         if (session != null) ...[
+          if (playPrivateMedia)
+            ChildMediaPlayer(
+              key: ValueKey((
+                'media',
+                widget.childId,
+                session!.sessionId,
+                lesson.revisionId,
+              )),
+              access: media,
+              childId: widget.childId,
+              lesson: lesson,
+              cues: cues,
+              answeredCueIds: answers.map((answer) => answer.cueId).toSet(),
+              onCueReached: (cueId) {
+                if (mounted) setState(() => reachedMediaCue = cueId);
+              },
+            ),
           Text(
             'Session: ${session!.state}',
             key: const Key('learningSessionState'),
@@ -598,7 +631,14 @@ class _LearningLessonViewState extends State<LearningLessonView> {
             ),
           if (cues.isEmpty)
             const Text('No interactive questions were returned.'),
-          ...cues.map((cue) => cueView(context, cue)),
+          ...cues
+              .where(
+                (cue) =>
+                    !playPrivateMedia ||
+                    answers.any((answer) => answer.cueId == cue.cueId) ||
+                    reachedMediaCue == cue.cueId,
+              )
+              .map((cue) => cueView(context, cue)),
           completionView(),
         ],
         if (!denied &&
