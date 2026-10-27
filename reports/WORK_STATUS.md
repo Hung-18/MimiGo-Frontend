@@ -1,3 +1,7 @@
+# Flutter MVP functional completion — 2026-10-27
+
+Frozen Backend/Database contract check found no additional independently implementable Flutter journey beyond Functional R2 and Child Media R1. Focused 67 tests PASS, analyzer clean, Android fixture debug APK PASS. Release registrant issue remains unresolved; fresh release attempt made no progress and was interrupted. No fresh device/real HTTP claim or production approval. [Current completion report](FLUTTER_MVP_FUNCTIONAL_COMPLETION.md). Local documentation checkpoint only; supplied `tasks/CURRENT_TASK.md` preserved.
+
 # Child Media Playback R1 — 2026-10-27
 
 Exact Backend 0048 R2 local Child media route integrated into the existing Flutter lesson screen behind debug, live API, Parent Gate and explicit media build defines. Child bearer is passed as a native HTTP header; cue pause/answer/completion behavior remains server-owned. Focused media and Learning tests **54/54 PASS**; final analyzer clean. Fixture and private-media-enabled Android debug builds PASS after disabling Kotlin incremental compilation for the Windows C:/D: plugin cache issue. Optional release compile FAILED on generated dev-only integration_test registration; real Flutter HTTP/device limitation, trigger-bypass fixture limitation and open Security/Content/Legal/Production gates are in the [R1 report](FLUTTER_CHILD_MEDIA_PLAYBACK_R1.md). No Backend/Database edits, deployment or push. Implementation checkpoint `e69c023`; local report/tracking checkpoint follows. Supplied CURRENT_TASK modification preserved and excluded from both commits.
