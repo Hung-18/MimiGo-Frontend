@@ -1,0 +1,11 @@
+# Android/Gradle generated output
+.gradle/
+**/build/
+.kotlin/
+
+# Local machine and IDE files
+local.properties
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
