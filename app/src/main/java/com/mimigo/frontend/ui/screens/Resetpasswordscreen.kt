@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -52,6 +53,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.mimigo.frontend.R
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import com.mimigo.frontend.ui.components.BackgroundDecor
 import com.mimigo.frontend.ui.components.MimiGoHeader
 import com.mimigo.frontend.ui.components.pressScale
@@ -275,12 +278,12 @@ private fun ResetSuccessDialog(onLoginClick: () -> Unit) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier
-                    .padding(top = 32.dp)
+                    .padding(top = 70.dp)
                     .fillMaxWidth()
                     .shadow(12.dp, RoundedCornerShape(28.dp))
                     .clip(RoundedCornerShape(28.dp))
                     .background(Color.White)
-                    .padding(start = 20.dp, end = 20.dp, top = 44.dp, bottom = 22.dp),
+                    .padding(start = 20.dp, end = 20.dp, top = 62.dp, bottom = 22.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
@@ -306,25 +309,33 @@ private fun ResetSuccessDialog(onLoginClick: () -> Unit) {
                 )
             }
 
-            // Dấu tick xanh đè lên mép trên của pop-up
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .size(64.dp)
-                    .shadow(6.dp, CircleShape)
-                    .clip(CircleShape)
-                    .background(Color.White)
-                    .padding(5.dp)
-                    .clip(CircleShape)
-                    .background(SuccessGreen),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Check,
-                    contentDescription = "Thành công",
-                    tint = Color.White,
-                    modifier = Modifier.size(34.dp)
+            // Ong Mimi hoan hô đè lên mép trên của pop-up
+            Box(modifier = Modifier.align(Alignment.TopCenter)) {
+                Image(
+                    painter = painterResource(R.drawable.mimi_cheer),
+                    contentDescription = "Ong Mimi hoan hô",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.size(width = 124.dp, height = 124.dp)
                 )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .size(34.dp)
+                        .shadow(4.dp, CircleShape)
+                        .clip(CircleShape)
+                        .background(Color.White)
+                        .padding(3.dp)
+                        .clip(CircleShape)
+                        .background(SuccessGreen),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Check,
+                        contentDescription = "Thành công",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }

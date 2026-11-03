@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -35,10 +36,16 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -47,6 +54,7 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -73,6 +81,7 @@ import com.mimigo.frontend.data.MimiGoApi
 import com.mimigo.frontend.ui.components.pressScale
 import com.mimigo.frontend.ui.theme.MimiGoTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -284,6 +293,7 @@ fun ParentProfileScreen(
     onLogout: () -> Unit
 ) {
     var parent by remember { mutableStateOf<JSONObject?>(null) }
+    var childDetails by remember { mutableStateOf<Map<String, ChildHomeProfile>>(emptyMap()) }
     var childPlanStatuses by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -291,6 +301,14 @@ fun ParentProfileScreen(
         try { parent = api.parentProfile() }
         catch (e: Exception) { error = e.message ?: "Không tải được hồ sơ phụ huynh." }
         children.forEach { child ->
+            runCatching { api.childDetails(child.id) }.onSuccess { detail ->
+                childDetails = childDetails + (child.id to ChildHomeProfile(
+                    id = detail.optString("childId").takeIf { it.isNotBlank() && it != "null" } ?: child.id,
+                    name = detail.optString("childAlias").takeIf { it.isNotBlank() && it != "null" } ?: child.name,
+                    ageYears = if (detail.has("ageYears") && !detail.isNull("ageYears")) detail.optInt("ageYears") else child.ageYears,
+                    avatarKey = detail.optString("stockAvatarKey").takeIf { it.isNotBlank() && it != "null" } ?: child.avatarKey
+                ))
+            }
             childPlanStatuses = childPlanStatuses + (child.id to runCatching {
                 when (api.premiumEntitlement(child.id).optString("status")) {
                     "ACTIVE" -> "💎 Premium đang hoạt động"
@@ -304,7 +322,7 @@ fun ParentProfileScreen(
     ParentProfileContent(
         parentName = parent?.optString("displayName")?.takeIf { it.isNotBlank() && it != "null" } ?: "Phụ huynh MimiGo",
         parentEmail = parent?.optString("email")?.takeIf { it.isNotBlank() && it != "null" } ?: "Tài khoản đã đăng nhập",
-        loading = loading, error = error, children = children, statuses = childPlanStatuses,
+        loading = loading, error = error, children = children.map { childDetails[it.id] ?: it }, statuses = childPlanStatuses,
         onBack = onBack, onPremium = onPremium, onAddChild = onAddChild, onLogout = onLogout
     )
 }
@@ -453,7 +471,7 @@ fun PremiumCheckoutScreen(childName: String, plan: JSONObject?, onBack: () -> Un
     ParentPage("Xác nhận gói học", "Thanh toán mô phỏng", onBack) {
         ParentCard {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(painterResource(R.drawable.mimi_happy), null, Modifier.size(width = 78.dp, height = 96.dp))
+                Image(painterResource(R.drawable.mimi_heart), null, Modifier.size(width = 90.dp, height = 96.dp))
                 Column(Modifier.weight(1f).padding(start = 12.dp)) {
                     Text("Gói Premium cho $childName", color = ParentNavy, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp)
                     Text("${plan?.optInt("termMonths") ?: 0} tháng", Modifier.padding(top = 6.dp), color = ParentPink, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
@@ -482,7 +500,7 @@ fun NotificationsScreen(onBack: () -> Unit) {
     ParentPage("Thông báo", "Tin mới dành cho phụ huynh", onBack) {
         ParentCard {
             EmptyMimi(
-                R.drawable.mimi_happy, "Backend chưa có API thông báo",
+                R.drawable.mimi_sleepy, "Backend chưa có API thông báo",
                 "Danh sách thông báo và trạng thái đã đọc sẽ xuất hiện khi backend cung cấp endpoint tương ứng."
             )
         }
@@ -494,7 +512,7 @@ fun FavoritesScreen(onBack: () -> Unit) {
     ParentPage("Bài học yêu thích", "Những bài bé muốn học lại", onBack) {
         ParentCard {
             EmptyMimi(
-                R.drawable.mimi_happy, "Chưa có API yêu thích",
+                R.drawable.mimi_heart, "Chưa có API yêu thích",
                 "Handoff hiện chưa ánh xạ API xem/thêm/xóa bài yêu thích, nên danh sách này chưa thể đồng bộ với backend."
             )
         }
@@ -538,10 +556,16 @@ fun SettingsScreen(english: Boolean, onEnglishChange: (Boolean) -> Unit, onBack:
 @Composable
 fun TermsScreen(api: MimiGoApi, onBack: () -> Unit) {
     var termsText by remember { mutableStateOf<String?>(null) }
+    var termsVersionId by remember { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
+    var accepted by remember { mutableStateOf(false) }
+    var submitting by remember { mutableStateOf(false) }
+    var acceptedOnServer by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
     LaunchedEffect(api) {
         try {
             val terms = api.onboardingReference().optJSONObject("terms")
+            termsVersionId = terms?.optString("termsVersionId")?.takeIf { it.isNotBlank() && it != "null" }
             termsText = listOf("text", "termsText", "content", "noticeText", "summary")
                 .firstNotNullOfOrNull { key -> terms?.optString(key)?.takeIf { it.isNotBlank() && it != "null" } }
                 ?: "API cung cấp phiên bản điều khoản ${terms?.optString("versionLabel", "hiện hành")}, nhưng không trả nội dung văn bản để hiển thị."
@@ -551,8 +575,102 @@ fun TermsScreen(api: MimiGoApi, onBack: () -> Unit) {
         ParentCard {
             CardTitle("📜", "Điều khoản & quyền riêng tư")
             Text(error ?: termsText ?: "Mimi đang tải điều khoản… 🐝", Modifier.padding(top = 12.dp), color = ParentNavy, fontSize = 14.sp, lineHeight = 21.sp)
+            Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(
+                    checked = accepted,
+                    onCheckedChange = { accepted = it },
+                    enabled = !submitting && !acceptedOnServer,
+                    colors = CheckboxDefaults.colors(checkedColor = ParentPink)
+                )
+                Text("Tôi đã đọc và đồng ý với phiên bản điều khoản hiện hành.", color = ParentGray, fontSize = 12.sp, lineHeight = 17.sp)
+            }
+            Button(
+                enabled = accepted && termsVersionId != null && !submitting && !acceptedOnServer,
+                onClick = {
+                    val versionId = termsVersionId ?: return@Button
+                    scope.launch {
+                        submitting = true
+                        error = null
+                        try {
+                            api.acceptTerms(versionId)
+                            acceptedOnServer = true
+                        } catch (e: Exception) {
+                            error = e.message ?: "Chưa gửi được xác nhận điều khoản."
+                        } finally {
+                            submitting = false
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = ParentPink)
+            ) {
+                if (submitting) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                else Text(if (acceptedOnServer) "Đã ghi nhận đồng ý ✓" else "Xác nhận điều khoản", fontWeight = FontWeight.Bold)
+            }
         }
     }
+}
+
+@Composable
+fun RegistrationLegalDialog(api: MimiGoApi, showPrivacy: Boolean, onDismiss: () -> Unit) {
+    var body by remember(api, showPrivacy) { mutableStateOf<String?>(null) }
+    var error by remember(api, showPrivacy) { mutableStateOf<String?>(null) }
+    LaunchedEffect(api, showPrivacy) {
+        try {
+            val reference = api.onboardingReference()
+            if (showPrivacy) {
+                val notices = reference.optJSONArray("notices")
+                    ?: reference.optJSONArray("currentNotices")
+                    ?: JSONArray()
+                val entries = (0 until notices.length()).mapNotNull { index ->
+                    val notice = notices.optJSONObject(index) ?: return@mapNotNull null
+                    val version = notice.optJSONObject("currentVersion") ?: notice
+                    val purpose = when (notice.optString("purposeCode")) {
+                        "CHILD_PROFILE_AGE" -> "Hồ sơ và độ tuổi của trẻ"
+                        "LEARNING_PROGRESS", "CHILD_LEARNING" -> "Hoạt động và tiến độ học tập"
+                        "ACCOUNT_AUTH" -> "Tài khoản và xác thực phụ huynh"
+                        "SECURITY_AUDIT" -> "Bảo mật và nhật ký hệ thống"
+                        "SUPPORT_RIGHTS" -> "Hỗ trợ và quyền của người dùng"
+                        else -> notice.optString("purposeCode").replace('_', ' ').lowercase()
+                    }
+                    val content = listOf("noticeText", "text", "contentText", "content", "summary")
+                        .firstNotNullOfOrNull { key -> version?.optString(key)?.takeIf { it.isNotBlank() && it != "null" } }
+                    val label = version?.optString("versionLabel")?.takeIf { it.isNotBlank() && it != "null" }
+                        ?: "phiên bản hiện hành"
+                    "$purpose · $label" + (content?.let { "\n$it" } ?: "")
+                }
+                body = entries.takeIf { it.isNotEmpty() }?.joinToString("\n\n")
+                    ?.plus("\n\nAPI hiện chỉ cung cấp tên mục và phiên bản; chưa có nội dung văn bản thông báo.")
+                    ?: "API chưa trả các mục thông báo quyền riêng tư."
+            } else {
+                val terms = reference.optJSONObject("terms")
+                val version = terms?.optString("versionLabel")?.takeIf { it.isNotBlank() && it != "null" }
+                    ?: terms?.optString("code")?.takeIf { it.isNotBlank() && it != "null" }
+                    ?: terms?.optString("termsVersionId")?.takeIf { it.isNotBlank() && it != "null" }
+                val content = listOf("text", "termsText", "content", "noticeText", "summary")
+                    .firstNotNullOfOrNull { key -> terms?.optString(key)?.takeIf { it.isNotBlank() && it != "null" } }
+                body = content ?: "API cung cấp phiên bản điều khoản ${version ?: "hiện hành"}, nhưng chưa trả văn bản điều khoản."
+            }
+        } catch (exception: Exception) {
+            error = exception.message ?: "Không tải được nội dung từ API."
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (showPrivacy) "Chính sách bảo mật" else "Điều khoản sử dụng", color = ParentNavy, fontWeight = FontWeight.ExtraBold) },
+        text = {
+            Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
+                when {
+                    error != null -> Text(error.orEmpty(), color = Color(0xFFB43C5D), fontSize = 13.sp)
+                    body == null -> CircularProgressIndicator(color = ParentPink, modifier = Modifier.size(26.dp))
+                    else -> Text(body.orEmpty(), color = ParentNavy, fontSize = 13.sp, lineHeight = 20.sp)
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Đóng", color = ParentPink, fontWeight = FontWeight.Bold) } },
+        containerColor = Color.White
+    )
 }
 
 /* ───────────── Kết quả thanh toán (có tiếng) ───────────── */
@@ -573,7 +691,7 @@ fun PaymentResultScreen(success: Boolean, onBack: () -> Unit) {
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(contentAlignment = Alignment.TopEnd) {
                     Image(
-                        painterResource(if (success) R.drawable.mimi_happy else R.drawable.mimi_happy), null,
+                        painterResource(if (success) R.drawable.mimi_cheer else R.drawable.mimi_shy), null,
                         Modifier.size(width = 150.dp, height = 185.dp).graphicsLayer { translationY = dy }
                     )
                     Text(if (success) "🎉" else "🍯", fontSize = 30.sp)
@@ -619,11 +737,11 @@ fun PremiumCheckoutPreview() {
 
 @Preview(showBackground = true, showSystemUi = true, name = "Thông báo")
 @Composable
-fun NotificationsPreview() { MimiGoTheme { NotificationsScreen {} } }
+fun NotificationsPreview() { MimiGoTheme { NotificationsScreen(onBack = {}) } }
 
 @Preview(showBackground = true, showSystemUi = true, name = "Yêu thích")
 @Composable
-fun FavoritesPreview() { MimiGoTheme { FavoritesScreen {} } }
+fun FavoritesPreview() { MimiGoTheme { FavoritesScreen(onBack = {}) } }
 
 @Preview(showBackground = true, showSystemUi = true, name = "Cài đặt")
 @Composable

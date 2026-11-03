@@ -12,6 +12,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.Modifier
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.mimigo.frontend.data.MimiGoApi
@@ -22,7 +27,7 @@ import org.json.JSONObject
 import org.json.JSONArray
 import java.io.IOException
 
-private enum class Screen { Welcome, Register, RegisterSuccess, Verify, Login, Forgot, ResetPassword, ChildProfile, Home, Learning, Progress, ParentProfile, Premium, Checkout, Notifications, Settings, Terms, Favorites, GatePin, GateSetup, GateChange }
+private enum class Screen { Welcome, Register, RegisterSuccess, Verify, Login, Forgot, ResetPassword, ChildProfile, Home, Lessons, Learning, Progress, ParentProfile, Premium, Checkout, Notifications, Settings, Terms, Favorites, GatePin, GateSetup, GateChange }
 
 class MainActivity : ComponentActivity() {
     private var incomingResetToken by mutableStateOf<String?>(null)
@@ -38,11 +43,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         if (savedInstanceState == null) handleDeepLink(intent)
-        val api = MimiGoApi(applicationContext)
         setContent {
             MimiGoTheme {
+                val api = remember { MimiGoApi(applicationContext) }
                 val backStack = remember { mutableStateListOf(Screen.Welcome) }
                 val current = backStack.last()
+                var selectedTab by rememberSaveable { mutableStateOf("HOME") }
                 val scope = rememberCoroutineScope()
                 var pendingEmail by rememberSaveable { mutableStateOf("") }
                 var resetToken by rememberSaveable { mutableStateOf("") }
@@ -59,14 +65,41 @@ class MainActivity : ComponentActivity() {
                 var isLoading by remember { mutableStateOf(false) }
                 var serverError by remember { mutableStateOf<String?>(null) }
                 var gateError by remember { mutableStateOf<String?>(null) }
+                var registrationDocument by remember { mutableStateOf<String?>(null) }
 
                 fun navigate(screen: Screen) { backStack.add(screen) }
                 fun switch(screen: Screen) { backStack[backStack.lastIndex] = screen }
+                fun selectTab(tab: String) {
+                    selectedTab = tab
+                    val destination = when (tab) {
+                        "LESSONS" -> Screen.Lessons
+                        "FAVORITES" -> Screen.Favorites
+                        "PROGRESS" -> Screen.Progress
+                        "PROFILE" -> Screen.ParentProfile
+                        else -> Screen.Home
+                    }
+                    backStack.clear(); backStack.add(destination)
+                }
                 fun welcome() { backStack.clear(); backStack.add(Screen.Welcome); api.clearSession() }
+                fun logoutToWelcome() {
+                    scope.launch {
+                        try {
+                            api.logout()
+                        } catch (_: Exception) {
+                            Toast.makeText(this@MainActivity, "Đã xóa phiên trên thiết bị; máy chủ chưa xác nhận thu hồi do mất kết nối.", Toast.LENGTH_LONG).show()
+                        } finally {
+                            welcome()
+                        }
+                    }
+                }
                 fun back() { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) }
+                fun backFromTab() {
+                    if (backStack.size > 1) back() else selectTab("HOME")
+                }
                 fun home(name: String?, id: String = "", roster: List<ChildHomeProfile> = emptyList()) {
                     childName = name.orEmpty(); childId = id
                     childRoster = roster.ifEmpty { if (id.isBlank()) emptyList() else listOf(ChildHomeProfile(id, name.orEmpty())) }
+                    selectedTab = "HOME"
                     backStack.clear(); backStack.add(Screen.Home)
                 }
                 fun request(block: suspend () -> Unit) {
@@ -93,7 +126,32 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                AnimatedContent(targetState = current, transitionSpec = { fadeIn(tween(400)) togetherWith fadeOut(tween(400)) }, label = "screen_transition") { screen ->
+                val tabOrder = listOf("HOME", "LESSONS", "FAVORITES", "PROGRESS", "PROFILE")
+                val tabScreens = setOf(Screen.Home, Screen.Lessons, Screen.Favorites, Screen.Progress, Screen.ParentProfile)
+                Column(Modifier.fillMaxSize()) {
+                AnimatedContent(
+                    targetState = current,
+                    modifier = Modifier.weight(1f).pointerInput(current, selectedTab) {
+                        var horizontalDistance = 0f
+                        detectHorizontalDragGestures(
+                            onHorizontalDrag = { change, amount ->
+                                horizontalDistance += amount
+                                change.consume()
+                            },
+                            onDragEnd = {
+                                if (current in tabScreens && kotlin.math.abs(horizontalDistance) > 80f) {
+                                    val direction = if (horizontalDistance < 0) 1 else -1
+                                    val next = tabOrder.getOrNull(tabOrder.indexOf(selectedTab) + direction)
+                                    if (next != null) selectTab(next)
+                                }
+                                horizontalDistance = 0f
+                            },
+                            onDragCancel = { horizontalDistance = 0f }
+                        )
+                    },
+                    transitionSpec = { fadeIn(tween(280)) togetherWith fadeOut(tween(220)) },
+                    label = "screen_transition"
+                ) { screen ->
                     when (screen) {
                         Screen.Welcome -> WelcomeScreen(
                             onRegisterClick = { navigate(Screen.Register) },
@@ -103,6 +161,8 @@ class MainActivity : ComponentActivity() {
                         )
                         Screen.Register -> RegisterScreen(
                             isLoading = isLoading, serverError = serverError, onBackClick = { back() },
+                            onTermsClick = { registrationDocument = "terms" },
+                            onPrivacyClick = { registrationDocument = "privacy" },
                             onSubmit = { email, password, name ->
                                 request {
                                     api.register(email, password, name)
@@ -221,17 +281,32 @@ class MainActivity : ComponentActivity() {
                                 }
                             },
                             onLessonClick = { lessonId -> selectedLessonId = lessonId; navigate(Screen.Learning) },
-                            onProgressClick = { navigate(Screen.Progress) },
-                            onFavoritesClick = { navigate(Screen.Favorites) },
-                            onParentProfileClick = { navigate(Screen.ParentProfile) },
                             onNotificationsClick = { navigate(Screen.Notifications) },
-                            onSettingsClick = { navigate(Screen.Settings) },
-                            onRestartClick = { }
+                            onSettingsClick = { navigate(Screen.Settings) }
+                        )
+                        Screen.Lessons -> HomeScreen(
+                            childId = childId,
+                            childName = childName,
+                            children = childRoster,
+                            api = api,
+                            lessonsOnly = true,
+                            onChildSelect = { profile -> childId = profile.id; childName = profile.name },
+                            onAddChildClick = {
+                                request {
+                                    childIdempotencyKey = ""
+                                    childAttempt = api.beginChildOnboarding()
+                                    childNoticeSummaries = api.onboardingNoticeSummaries(childAttempt!!)
+                                    navigate(Screen.ChildProfile)
+                                }
+                            },
+                            onLessonClick = { lessonId -> selectedLessonId = lessonId; navigate(Screen.Learning) },
+                            onNotificationsClick = { navigate(Screen.Notifications) },
+                            onSettingsClick = { navigate(Screen.Settings) }
                         )
                         Screen.Learning -> LearningScreen(childId = childId, lessonId = selectedLessonId, api = api, onExit = { back() })
-                        Screen.Progress -> ProgressScreen(childId = childId, api = api, onExit = { back() }, onLessonClick = { lessonId -> selectedLessonId = lessonId; navigate(Screen.Learning) })
+                        Screen.Progress -> ProgressScreen(childId = childId, api = api, onExit = { backFromTab() }, onLessonClick = { lessonId -> selectedLessonId = lessonId; navigate(Screen.Learning) })
                         Screen.ParentProfile -> ParentProfileScreen(
-                            api = api, children = childRoster, onBack = { back() },
+                            api = api, children = childRoster, onBack = { backFromTab() },
                             onPremium = { navigate(Screen.Premium) },
                             onAddChild = {
                                 request {
@@ -241,7 +316,7 @@ class MainActivity : ComponentActivity() {
                                     navigate(Screen.ChildProfile)
                                 }
                             },
-                            onLogout = { welcome() }
+                            onLogout = { logoutToWelcome() }
                         )
                         Screen.Premium -> PremiumPlansScreen(
                             childId = childId, childName = childName, api = api, onBack = { back() },
@@ -256,10 +331,10 @@ class MainActivity : ComponentActivity() {
                             english = useEnglish,
                             onEnglishChange = { value -> useEnglish = value; getSharedPreferences("mimigo_preferences", MODE_PRIVATE).edit().putBoolean("english", value).apply() },
                             onBack = { back() }, onTerms = { navigate(Screen.Terms) },
-                            onPremium = { navigate(Screen.Premium) }, onParentGate = { navigate(Screen.GatePin) }, onLogout = { welcome() }
+                            onPremium = { navigate(Screen.Premium) }, onParentGate = { navigate(Screen.GatePin) }, onLogout = { logoutToWelcome() }
                         )
                         Screen.Terms -> TermsScreen(api = api, onBack = { back() })
-                        Screen.Favorites -> FavoritesScreen(onBack = { back() })
+                        Screen.Favorites -> FavoritesScreen(onBack = { backFromTab() })
                         Screen.GatePin -> ParentGatePinScreen(
                             onBack = { back() },
                             onVerify = { gateError = "API Parent Gate chưa bật trên backend; PIN chưa được xác minh." },
@@ -283,7 +358,17 @@ class MainActivity : ComponentActivity() {
                             onHomeClick = { welcome() }, onSubmit = { },
                             onLoginClick = { resetSuccess = false; resetToken = ""; backStack.clear(); backStack.add(Screen.Welcome); backStack.add(Screen.Login) }
                         )
-                    }
+                }
+                if (current in tabScreens) {
+                    MainBottomBar(selectedTab = selectedTab, onTabClick = { tab -> selectTab(tab) })
+                }
+                }
+                registrationDocument?.let { document ->
+                    RegistrationLegalDialog(
+                        api = api,
+                        showPrivacy = document == "privacy",
+                        onDismiss = { registrationDocument = null }
+                    )
                 }
             }
         }
@@ -302,4 +387,4 @@ private fun JSONArray?.toPurposeSummaries(): List<String> {
             "$purpose · phiên bản ${notice.optString("versionLabel", "hiện hành")}"
         }
     }
-}
+}}

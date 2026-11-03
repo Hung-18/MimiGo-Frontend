@@ -111,7 +111,7 @@ private fun GatePage(
     title: String,
     subtitle: String,
     onBack: () -> Unit,
-    mimi: Int = R.drawable.mimi_happy,
+    mimi: Int = R.drawable.mimi_think,
     badge: String = "🔒",
     sfx: GateSfx? = null,
     error: String? = null,
@@ -155,7 +155,7 @@ private fun GatePage(
 
             Box(Modifier.padding(top = 4.dp)) {
                 Image(
-                    painterResource(mimi), "Ong Mimi",
+                    painterResource(if (!error.isNullOrBlank()) R.drawable.mimi_angry else mimi), "Ong Mimi",
                     Modifier.size(width = 96.dp, height = 112.dp).graphicsLayer { translationY = dy; rotationZ = tilt },
                     contentScale = ContentScale.Fit
                 )
@@ -291,6 +291,7 @@ fun ParentGatePinScreen(
         title = if (locked) "Tạm khóa xác minh" else "Khu vực phụ huynh",
         subtitle = if (locked) "Mimi sẽ cho thử lại sau ${lockedSeconds}s. Hãy kiểm tra với ba mẹ nhé." else "Ba mẹ nhập PIN để xem thông tin gia đình và quản lý gói học.",
         onBack = onBack,
+        mimi = if (locked) R.drawable.mimi_sleepy else R.drawable.mimi_think,
         badge = if (locked) "⏳" else "🔒",
         sfx = sfx,
         error = error
@@ -314,7 +315,7 @@ fun ParentGateSetupScreen(onBack: () -> Unit, onSubmit: (password: String, pin: 
     val sfx = rememberGateSfx()
     GatePage(
         "Thiết lập PIN phụ huynh", "Xác nhận mật khẩu tài khoản, sau đó tạo và xác nhận PIN.", onBack,
-        mimi = R.drawable.mimi_happy, badge = "🛡️", sfx = sfx, error = error
+        mimi = R.drawable.mimi_heart, badge = "🛡️", sfx = sfx, error = error
     ) {
         GateField(password, { password = it }, "Mật khẩu tài khoản", emoji = "🔐", keyboardType = KeyboardType.Password)
         Spacer(Modifier.height(10.dp))
@@ -341,7 +342,7 @@ fun ParentGateChangeScreen(onBack: () -> Unit, onSubmit: (oldPin: String, newPin
     val sfx = rememberGateSfx()
     GatePage(
         "Đổi PIN phụ huynh", "Nhập PIN hiện tại và đặt PIN mới cho khu vực phụ huynh.", onBack,
-        mimi = R.drawable.mimi_happy, badge = "🔄", sfx = sfx, error = error
+        mimi = R.drawable.mimi_cheer, badge = "🔄", sfx = sfx, error = error
     ) {
         GateField(oldPin, { oldPin = it }, "PIN hiện tại")
         Spacer(Modifier.height(10.dp))

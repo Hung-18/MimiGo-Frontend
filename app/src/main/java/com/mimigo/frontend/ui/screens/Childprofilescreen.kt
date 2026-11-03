@@ -1,5 +1,6 @@
 package com.mimigo.frontend.ui.screens
 
+import android.app.DatePickerDialog
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -40,8 +41,6 @@ import androidx.compose.material.icons.filled.Male
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
@@ -58,9 +57,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -70,11 +72,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import android.app.DatePickerDialog
-import java.time.LocalDate
 import com.mimigo.frontend.R
 import com.mimigo.frontend.ui.components.BackgroundDecor
 import com.mimigo.frontend.ui.components.pressScale
@@ -85,6 +84,9 @@ import com.mimigo.frontend.ui.theme.MimiPink
 import com.mimigo.frontend.ui.theme.TextSecondary
 import com.mimigo.frontend.ui.theme.TextSubtle
 import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 // ---------------------------------------------------------------------------
 // Dữ liệu hồ sơ của bé (sau này gửi lên API)
@@ -113,6 +115,8 @@ private val FieldBorder = Color(0xFFE3E8F0)
 private val GirlColor = Color(0xFFFF4F9A)
 private val BoyColor = Color(0xFF2F80ED)
 
+val CHILD_AGE_RANGE = 2..6
+
 private fun ChildAvatar.drawable() = when (this) {
     ChildAvatar.Girl1 -> R.drawable.avatar_girl
     ChildAvatar.Girl2 -> R.drawable.avatar_girl_2
@@ -122,6 +126,17 @@ private fun ChildAvatar.drawable() = when (this) {
 
 private fun ChildGender.defaultAvatar() =
     if (this == ChildGender.Girl) ChildAvatar.Girl1 else ChildAvatar.Boy1
+
+private fun formatBirthDate(millis: Long): String =
+    SimpleDateFormat("yyyy-MM-dd", Locale.US).format(millis)
+
+private fun ageFromBirthDate(millis: Long): Int {
+    val today = Calendar.getInstance()
+    val birthday = Calendar.getInstance().apply { timeInMillis = millis }
+    var age = today.get(Calendar.YEAR) - birthday.get(Calendar.YEAR)
+    if (today.get(Calendar.DAY_OF_YEAR) < birthday.get(Calendar.DAY_OF_YEAR)) age--
+    return age
+}
 
 /** Gợi ý nội dung học theo độ tuổi, hiện ngay dưới ô chọn tuổi. */
 private fun ageHint(age: Int?): String = when (age) {
@@ -143,23 +158,20 @@ private fun ageHint(age: Int?): String = when (age) {
  */
 @Composable
 fun ChildProfileScreen(
+    modifier: Modifier = Modifier,
     isLoading: Boolean = false,
     serverError: String? = null,
-    onSubmit: (ChildProfile) -> Unit = {},
-    onSkip: () -> Unit = {},
     requiredNotices: List<String> = emptyList(),
-    modifier: Modifier = Modifier
+    onSubmit: (ChildProfile) -> Unit = {},
+    onSkip: () -> Unit = {}
 ) {
     var name by remember { mutableStateOf("") }
     var nickname by remember { mutableStateOf("") }
-    var age by remember { mutableStateOf<Int?>(null) }
-    var dateOfBirth by remember { mutableStateOf<LocalDate?>(null) }
-    val context = LocalContext.current
+    var birthDateMillis by remember { mutableStateOf<Long?>(null) }
     var gender by remember { mutableStateOf<ChildGender?>(null) }
     var avatar by remember { mutableStateOf<ChildAvatar?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var showConfirm by remember { mutableStateOf(false) }
-    var noticesConfirmed by remember(requiredNotices) { mutableStateOf(false) }
 
     var contentVisible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -183,9 +195,9 @@ fun ChildProfileScreen(
     fun validateAndAsk() {
         errorMessage = when {
             name.isBlank() -> "Vui lòng nhập họ và tên của bé"
-            dateOfBirth == null -> "Vui lòng chọn ngày sinh chính xác của bé"
+            birthDateMillis == null -> "Vui lòng chọn ngày sinh của bé"
+            ageFromBirthDate(birthDateMillis!!) !in CHILD_AGE_RANGE -> "MimiGo hiện nhận hồ sơ bé từ 2 đến 6 tuổi"
             gender == null -> "Vui lòng chọn giới tính của bé"
-            requiredNotices.isNotEmpty() && !noticesConfirmed -> "Vui lòng xác nhận các mục thông báo bắt buộc"
             else -> null
         }
         if (errorMessage == null) showConfirm = true
@@ -296,46 +308,28 @@ fun ChildProfileScreen(
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            FormRow(label = "Ngày sinh của bé", subLabel = "(dùng để chọn nội dung phù hợp)") {
-                                val today = LocalDate.now()
-                                val selected = dateOfBirth
-                                val birthYear = selected?.year ?: today.minusYears(3).year
-                                val birthMonth = (selected?.monthValue ?: today.monthValue) - 1
-                                val birthDay = selected?.dayOfMonth ?: today.dayOfMonth
-                                OutlineActionButton(
-                                    text = selected?.toString() ?: "Chọn ngày sinh",
-                                    onClick = {
-                                        DatePickerDialog(context, { _, year, month, day ->
-                                            val selectedDate = LocalDate.of(year, month + 1, day)
-                                            dateOfBirth = selectedDate
-                                            age = java.time.Period.between(selectedDate, LocalDate.now()).years
-                                            errorMessage = null
-                                        }, birthYear, birthMonth, birthDay).apply {
-                                            datePicker.maxDate = System.currentTimeMillis()
-                                            show()
-                                        }
-                                    }
-                                )
+                            FormRow(label = "Ngày sinh của bé", subLabel = "(bé từ 2 đến 6 tuổi)") {
+                                DateOfBirthPicker(birthDateMillis) { selected ->
+                                    birthDateMillis = selected
+                                    errorMessage = null
+                                }
                             }
-                            dateOfBirth?.let { AgeHint(age = java.time.Period.between(it, LocalDate.now()).years) }
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                birthDateMillis?.let { "Bé ${ageFromBirthDate(it)} tuổi · Ngày sinh dùng để chọn nội dung phù hợp." }
+                                    ?: "Chọn ngày, tháng, năm sinh của bé.",
+                                color = TextSubtle, fontSize = 12.sp, textAlign = TextAlign.Center
+                            )
 
                             if (requiredNotices.isNotEmpty()) {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Column(
-                                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-                                        .background(Color(0xFFF3F8FF)).padding(10.dp)
+                                    Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+                                        .background(Color(0xFFFFF3F8)).padding(10.dp)
                                 ) {
-                                    Text("Thông báo về dữ liệu của bé", color = MimiNavyText, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                    Text("Thông tin đồng ý từ phụ huynh", color = MimiNavyText, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                                     requiredNotices.forEach { notice ->
-                                        Text(notice, color = TextSecondary, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
-                                    }
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Checkbox(
-                                            checked = noticesConfirmed,
-                                            onCheckedChange = { noticesConfirmed = it },
-                                            colors = CheckboxDefaults.colors(checkedColor = MimiPink)
-                                        )
-                                        Text("Tôi xác nhận các mục đích xử lý dữ liệu trên.", color = MimiNavyText, fontSize = 12.sp)
+                                        Text("• $notice", Modifier.padding(top = 5.dp), color = TextSecondary, fontSize = 11.sp, lineHeight = 15.sp)
                                     }
                                 }
                             }
@@ -400,8 +394,8 @@ fun ChildProfileScreen(
                 profile = ChildProfile(
                     name = name.trim(),
                     nickname = nickname.trim(),
-                    age = age ?: 3,
-                    dateOfBirth = dateOfBirth?.toString().orEmpty(),
+                    age = birthDateMillis?.let(::ageFromBirthDate) ?: CHILD_AGE_RANGE.first,
+                    dateOfBirth = birthDateMillis?.let(::formatBirthDate).orEmpty(),
                     gender = chosenGender,
                     avatar = avatar ?: chosenGender.defaultAvatar()
                 ),
@@ -588,6 +582,79 @@ private fun AvatarOption(
     }
 }
 
+/** Date-of-birth input; backend receives the ISO date while age is derived for display only. */
+@Composable
+private fun DateOfBirthPicker(selectedMillis: Long?, onSelect: (Long) -> Unit) {
+    val context = LocalContext.current
+    val selected = Calendar.getInstance().apply { selectedMillis?.let { timeInMillis = it } }
+    val label = selectedMillis?.let { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(it) }
+        ?: "Chọn ngày / tháng / năm"
+    Box(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color.White)
+            .border(1.dp, FieldBorder, RoundedCornerShape(16.dp))
+            .clickable {
+                DatePickerDialog(
+                    context,
+                    { _, year, month, day ->
+                        val chosen = Calendar.getInstance().apply {
+                            set(year, month, day, 12, 0, 0)
+                            set(Calendar.MILLISECOND, 0)
+                        }
+                        onSelect(chosen.timeInMillis)
+                    },
+                    selected.get(Calendar.YEAR), selected.get(Calendar.MONTH), selected.get(Calendar.DAY_OF_MONTH)
+                ).apply { datePicker.maxDate = System.currentTimeMillis() }.show()
+            }
+            .padding(horizontal = 14.dp, vertical = 13.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Text("📅  $label", color = if (selectedMillis == null) TextSubtle else MimiNavyText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+private fun AgeChip(
+    age: Int,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val textColor by animateColorAsState(
+        targetValue = if (selected) Color.White else MimiNavyText,
+        label = "age_text"
+    )
+    // Nút được chọn to hơn một chút để nổi bật
+    val size = if (selected) 40.dp else 36.dp
+    Box(
+        modifier = Modifier
+            .pressScale(interactionSource, pressedScale = 0.85f)
+            .size(size)
+            .clip(CircleShape)
+            .background(
+                if (selected) Brush.verticalGradient(listOf(Color(0xFFFF6FA5), Color(0xFFFF3D8B)))
+                else Brush.verticalGradient(listOf(Color.White, Color.White))
+            )
+            .border(
+                width = if (selected) 0.dp else 1.dp,
+                color = FieldBorder,
+                shape = CircleShape
+            )
+            .clickable(
+                interactionSource = interactionSource,
+                indication = ripple(),
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = age.toString(),
+            color = textColor,
+            fontSize = if (selected) 18.sp else 16.sp,
+            fontWeight = FontWeight.ExtraBold
+        )
+    }
+}
+
 /** Khung gợi ý đổi nội dung (hiệu ứng mờ dần) mỗi khi chọn tuổi khác. */
 @Composable
 private fun AgeHint(age: Int?) {
@@ -716,15 +783,26 @@ private fun ConfirmProfileDialog(
                 .padding(horizontal = 20.dp, vertical = 22.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Image(
-                painter = painterResource(profile.avatar.drawable()),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(84.dp)
-                    .clip(CircleShape)
-                    .border(3.dp, MimiPink, CircleShape)
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Image(
+                    painter = painterResource(profile.avatar.drawable()),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(84.dp)
+                        .clip(CircleShape)
+                        .border(3.dp, MimiPink, CircleShape)
+                )
+                Image(
+                    painter = painterResource(R.drawable.mimi_love),
+                    contentDescription = "Ong Mimi",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.size(92.dp)
+                )
+            }
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = "Tạo hồ sơ cho bé này?",

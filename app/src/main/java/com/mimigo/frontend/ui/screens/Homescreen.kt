@@ -110,19 +110,18 @@ fun HomeScreen(
     onChildSelect: (ChildHomeProfile) -> Unit = {},
     onAddChildClick: () -> Unit = {},
     onLessonClick: (String) -> Unit = {},
-    onProgressClick: () -> Unit = {},
-    onFavoritesClick: () -> Unit = {},
-    onParentProfileClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     api: MimiGoApi? = null,
-    onRestartClick: () -> Unit = {},
+    lessonsOnly: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     var lessons by remember(childId) { mutableStateOf(JSONArray()) }
     var loading by remember(childId) { mutableStateOf(false) }
     var error by remember(childId) { mutableStateOf<String?>(null) }
     var selectedDomain by remember(childId) { mutableStateOf("ALL") }
+    var selectedTopic by remember(childId) { mutableStateOf("ALL") }
+    var curriculum by remember(childId) { mutableStateOf(JSONObject()) }
     var profileMenuExpanded by remember(childId) { mutableStateOf(false) }
     var premiumLessonTitle by remember { mutableStateOf<String?>(null) }
     fun openLesson(lesson: JSONObject) {
@@ -131,34 +130,58 @@ fun HomeScreen(
     }
     LaunchedEffect(childId, api) {
         if (api != null && childId.isNotBlank()) {
+            try { curriculum = api.curriculum(childId) }
+            catch (e: Exception) { error = e.message ?: "Không tải được chương trình học." }
+        }
+    }
+
+    LaunchedEffect(childId, api, selectedDomain, selectedTopic) {
+        if (api != null && childId.isNotBlank()) {
             loading = true
-            try { lessons = api.lessons(childId).optJSONArray("items") ?: JSONArray() }
-            catch (e: Exception) { error = e.message ?: "Không tải được bài học." }
+            error = null
+            try {
+                lessons = api.lessons(
+                    childId,
+                    selectedDomain.takeIf { it != "ALL" },
+                    selectedTopic.takeIf { it != "ALL" }
+                ).optJSONArray("items") ?: JSONArray()
+            } catch (e: Exception) { error = e.message ?: "Không tải được bài học theo bộ lọc." }
             finally { loading = false }
         }
     }
 
-    val domains = remember(lessons) {
+    val curriculumDomains = remember(curriculum) { curriculum.optJSONArray("domains") ?: JSONArray() }
+    val domains = remember(curriculumDomains) {
         buildList {
             add("ALL" to "Tất cả")
-            val seen = mutableSetOf<String>()
-            for (i in 0 until lessons.length()) {
-                val code = lessons.optJSONObject(i)?.optString("domainCode").orEmpty()
-                if (code.isNotBlank() && seen.add(code)) add(code to domainTitle(code))
+            for (i in 0 until curriculumDomains.length()) {
+                val code = curriculumDomains.optJSONObject(i)?.optString("domainCode").orEmpty()
+                if (code.isNotBlank() && code != "null") add(code to domainTitle(code))
             }
         }
     }
-    val visibleLessons = remember(lessons, selectedDomain) {
-        (0 until lessons.length()).mapNotNull { lessons.optJSONObject(it) }
-            .filter { selectedDomain == "ALL" || it.optString("domainCode") == selectedDomain }
+    val selectedDomainItem = remember(curriculumDomains, selectedDomain) {
+        (0 until curriculumDomains.length()).mapNotNull { curriculumDomains.optJSONObject(it) }
+            .firstOrNull { it.optString("domainCode") == selectedDomain }
     }
+    val curriculumTopics = remember(selectedDomainItem) { selectedDomainItem?.optJSONArray("topics") ?: JSONArray() }
+    val topics = remember(curriculumTopics) {
+        buildList {
+            add("ALL" to "Tất cả chủ đề")
+            for (i in 0 until curriculumTopics.length()) {
+                val code = curriculumTopics.optJSONObject(i)?.optString("topicCode").orEmpty()
+                if (code.isNotBlank() && code != "null") add(code to code.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() })
+            }
+        }
+    }
+    val visibleLessons = remember(lessons) { (0 until lessons.length()).mapNotNull { lessons.optJSONObject(it) } }
     val featured = visibleLessons.firstOrNull()
     val activeProfile = children.firstOrNull { it.id == childId }
     val shownName = childName?.takeIf { it.isNotBlank() } ?: "bé"
 
     Column(modifier = modifier.fillMaxSize().background(SoftBg)) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-            WelcomeBanner(
+            if (!lessonsOnly) WelcomeBanner(
                 childName = shownName,
                 ageYears = activeProfile?.ageYears,
                 onNotificationsClick = onNotificationsClick,
@@ -201,6 +224,13 @@ fun HomeScreen(
                     }
                 }
             )
+            else {
+                Text(
+                    "📚  Bài học của $shownName",
+                    Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 18.dp, vertical = 18.dp),
+                    color = Navy, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold
+                )
+            }
 
             SectionTitle("Chọn chủ đề", null)
             Row(
@@ -208,7 +238,21 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 domains.forEach { (code, title) ->
-                    CategoryChip(title = title, selected = selectedDomain == code) { selectedDomain = code }
+                    CategoryChip(title = title, selected = selectedDomain == code) {
+                        selectedDomain = code
+                        selectedTopic = "ALL"
+                    }
+                }
+            }
+
+            if (selectedDomain != "ALL" && topics.size > 1) {
+                Row(
+                    Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    topics.forEach { (code, title) ->
+                        CategoryChip(title = title, selected = selectedTopic == code) { selectedTopic = code }
+                    }
                 }
             }
 
@@ -221,19 +265,18 @@ fun HomeScreen(
             when {
                 loading -> InfoBubble("Mimi đang tìm bài học cho con… 🐝")
                 error != null -> Text(error.orEmpty(), Modifier.padding(20.dp), color = MaterialTheme.colorScheme.error)
-                visibleLessons.isEmpty() -> InfoBubble("Chưa có bài học phù hợp cho hồ sơ này, Mimi sẽ sớm chuẩn bị thêm nhé!")
+                visibleLessons.isEmpty() -> InfoBubble("Chưa có bài học phù hợp cho hồ sơ này, Mimi sẽ sớm chuẩn bị thêm nhé!", R.drawable.mimi_sleepy)
                 else -> visibleLessons.forEachIndexed { index, lesson ->
                     LessonRow(index + 1, lesson) { openLesson(lesson) }
                 }
             }
             Spacer(Modifier.height(16.dp))
         }
-        BottomBar(onHome = onRestartClick, onProfile = onParentProfileClick, onProgress = onProgressClick, onFavorites = onFavoritesClick)
     }
     premiumLessonTitle?.let { title ->
         AlertDialog(
             onDismissRequest = { premiumLessonTitle = null },
-            icon = { Image(painterResource(R.drawable.mimi_happy), "Ong Mimi", Modifier.size(86.dp)) },
+            icon = { Image(painterResource(R.drawable.mimi_think), "Ong Mimi", Modifier.size(86.dp)) },
             title = { Text("Bài học Premium 💎", color = Navy, fontWeight = FontWeight.ExtraBold) },
             text = { Text("Bài học ‘$title’ thuộc gói Premium. Ba mẹ cần mua gói phù hợp thì con mới sử dụng được nhé!", color = Color(0xFF66728C), textAlign = TextAlign.Center) },
             confirmButton = { TextButton(onClick = { premiumLessonTitle = null }) { Text("Mimi hiểu rồi 🐝", color = Pink, fontWeight = FontWeight.Bold) } },
@@ -455,12 +498,16 @@ private fun SectionTitle(title: String, trailing: String?) {
 }
 
 @Composable
-private fun InfoBubble(text: String) {
-    Text(
-        text, color = Color(0xFF78839B), fontSize = 13.sp, textAlign = TextAlign.Center,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
-            .clip(RoundedCornerShape(20.dp)).background(Color.White).padding(18.dp)
-    )
+private fun InfoBubble(text: String, mimi: Int = R.drawable.mimi_think) {
+    Column(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(24.dp)).background(Color.White)
+            .border(2.dp, Color(0xFFFFE3EF), RoundedCornerShape(24.dp)).padding(18.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(painterResource(mimi), null, Modifier.size(110.dp), contentScale = ContentScale.Fit)
+        Text(text, color = Color(0xFF78839B), fontSize = 13.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
+    }
 }
 
 /** Nút hồng tròn mập, bóng nổi, nhấn lún xuống – dùng cho "Học ngay". */
@@ -505,8 +552,8 @@ private fun FeaturedLesson(lesson: JSONObject, onClick: () -> Unit) {
                 CuteButton("Học ngay", onClick)
             }
             Image(
-                painterResource(R.drawable.mimi_happy), null,
-                Modifier.align(Alignment.BottomEnd).padding(end = 8.dp, bottom = 6.dp).size(86.dp)
+                painterResource(R.drawable.mimi_cheer), null,
+                Modifier.align(Alignment.BottomEnd).padding(end = 6.dp, bottom = 4.dp).size(96.dp)
             )
         }
     }
@@ -625,7 +672,7 @@ private fun LessonRow(number: Int, lesson: JSONObject, onClick: () -> Unit) {
 }
 
 @Composable
-private fun BottomBar(onHome: () -> Unit, onProfile: () -> Unit, onProgress: () -> Unit, onFavorites: () -> Unit) {
+fun MainBottomBar(selectedTab: String, onTabClick: (String) -> Unit) {
     val shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp)
     Row(
         Modifier.fillMaxWidth().shadow(16.dp, shape).clip(shape)
@@ -633,11 +680,11 @@ private fun BottomBar(onHome: () -> Unit, onProfile: () -> Unit, onProgress: () 
             .navigationBarsPadding().padding(horizontal = 8.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically
     ) {
-        BottomItem("Trang chủ", "🏠", Color(0xFFFF8DBB), true, onHome)
-        BottomItem("Bài học", "📚", Color(0xFFFFB84D), false, {})
-        BottomItem("Yêu thích", "💖", Color(0xFFFF6FA5), false, onFavorites)
-        BottomItem("Tiến độ", "🌟", Color(0xFF7CC4FF), false, onProgress)
-        BottomItem("Phụ huynh", "👨‍👩‍👧", Color(0xFFB98CFF), false, onProfile)
+        BottomItem("Trang chủ", "🏠", Color(0xFFFF8DBB), selectedTab == "HOME") { onTabClick("HOME") }
+        BottomItem("Bài học", "📚", Color(0xFFFFB84D), selectedTab == "LESSONS") { onTabClick("LESSONS") }
+        BottomItem("Yêu thích", "💖", Color(0xFFFF6FA5), selectedTab == "FAVORITES") { onTabClick("FAVORITES") }
+        BottomItem("Tiến độ", "🌟", Color(0xFF7CC4FF), selectedTab == "PROGRESS") { onTabClick("PROGRESS") }
+        BottomItem("Phụ huynh", "👨‍👩‍👧", Color(0xFFB98CFF), selectedTab == "PROFILE") { onTabClick("PROFILE") }
     }
 }
 
@@ -683,4 +730,4 @@ private fun domainTitle(code: String): String = when (code.uppercase()) {
 
 @Preview(showBackground = true, showSystemUi = true, device = "id:pixel_7")
 @Composable
-fun HomeScreenPreview() { MimiGoTheme { HomeScreen(childName = "Suri") } }
+fun HomeScreenPreview() { MimiGoTheme { HomeScreen(childName = "Bé") } }

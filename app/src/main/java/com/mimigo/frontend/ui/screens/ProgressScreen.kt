@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import com.mimigo.frontend.R
 import com.mimigo.frontend.data.MimiGoApi
 import com.mimigo.frontend.ui.theme.MimiGoTheme
+import java.io.IOException
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -80,8 +81,12 @@ fun ProgressScreen(
         error = null
         rows = emptyList()
         try {
-            // Session history is intentionally protected by Parent Gate in the ordinary backend.
-            // Do not create new sessions here just to fabricate progress.
+            // Workspace is an ordinary mapped route that reports when session items
+            // are hidden behind Parent Gate. It is not a score or fabricated history.
+            val workspace = api.learningWorkspace()
+            if (workspace.toString().contains("PARENT_GATE_REQUIRED", ignoreCase = true)) {
+                throw IOException("PARENT_GATE_REQUIRED: Lịch sử học yêu cầu xác minh phụ huynh (Parent Gate).")
+            }
             val sessions = api.learningHistory(childId)
             val assembled = mutableListOf<LessonProgress>()
             for (index in 0 until sessions.length()) {

@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -57,6 +58,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -259,9 +261,9 @@ fun RegisterScreen(
                                     checkmarkColor = Color.White
                                 )
                             )
-                            Text(
-                                text = buildAnnotatedString {
+                            val legalText = buildAnnotatedString {
                                     append("Tôi đồng ý với ")
+                                    pushStringAnnotation(tag = "LEGAL", annotation = "TERMS")
                                     withStyle(
                                         SpanStyle(
                                             color = MimiBlue,
@@ -269,7 +271,9 @@ fun RegisterScreen(
                                             textDecoration = TextDecoration.Underline
                                         )
                                     ) { append("Điều khoản sử dụng") }
+                                    pop()
                                     append(" và ")
+                                    pushStringAnnotation(tag = "LEGAL", annotation = "PRIVACY")
                                     withStyle(
                                         SpanStyle(
                                             color = MimiBlue,
@@ -277,11 +281,18 @@ fun RegisterScreen(
                                             textDecoration = TextDecoration.Underline
                                         )
                                     ) { append("Chính sách bảo mật") }
+                                    pop()
                                     append(" của MimiGo.")
-                                },
-                                color = MimiNavyText,
-                                fontSize = 12.sp,
-                                lineHeight = 17.sp
+                                }
+                            ClickableText(
+                                text = legalText,
+                                modifier = Modifier.weight(1f),
+                                style = TextStyle(color = MimiNavyText, fontSize = 12.sp, lineHeight = 17.sp),
+                                onClick = { offset ->
+                                    legalText.getStringAnnotations("LEGAL", offset, offset).firstOrNull()?.let { link ->
+                                        if (link.item == "TERMS") onTermsClick() else onPrivacyClick()
+                                    }
+                                }
                             )
                         }
 

@@ -9,6 +9,7 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -56,6 +57,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -116,7 +118,6 @@ fun LearningScreen(childId: String, lessonId: String, api: MimiGoApi, onExit: ()
     var allAnswered by remember { mutableStateOf(false) }
     var selectedOptionId by remember { mutableStateOf<String?>(null) }
     val answers = remember { mutableStateMapOf<String, String>() }
-    val eventIds = remember { mutableStateMapOf<String, String>() }
 
     LaunchedEffect(childId, lessonId) {
         busy = true
@@ -129,7 +130,10 @@ fun LearningScreen(childId: String, lessonId: String, api: MimiGoApi, onExit: ()
             val history = state.optJSONArray("answers") ?: JSONArray()
             for (index in 0 until history.length()) {
                 val answer = history.optJSONObject(index) ?: continue
-                answers[answer.optString("cueId")] = answer.optString("optionId")
+                // A previously incorrect attempt must not mark the cue complete; resume it for retry.
+                if (answer.opt("isCorrect") as? Boolean != false) {
+                    answers[answer.optString("cueId")] = answer.optString("optionId")
+                }
             }
             val cues = lesson?.optJSONArray("cues") ?: JSONArray()
             val firstUnanswered = (0 until cues.length()).firstOrNull { index ->
@@ -206,11 +210,37 @@ fun LearningScreen(childId: String, lessonId: String, api: MimiGoApi, onExit: ()
                         colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.95f))
                     ) {
                         Column(Modifier.fillMaxWidth().padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Filled.Check, null, tint = Color(0xFF19A874), modifier = Modifier.size(52.dp))
-                            Text("Bài học hoàn thành!", color = Color(0xFF173FBD), fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
-                            Text("Bé đã hoàn thành các câu hỏi trong bài.", color = Color(0xFF768198), textAlign = TextAlign.Center)
+                            Text("🎉", fontSize = 48.sp)
+                            Text("Giỏi quá, con yêu!", color = Color(0xFFEF4E91), fontSize = 23.sp, fontWeight = FontWeight.ExtraBold)
+                            Text("Con đã hoàn thành bài học thật xuất sắc. Mimi rất tự hào về con!", color = Color(0xFF173FBD), textAlign = TextAlign.Center, fontWeight = FontWeight.SemiBold)
                             Spacer(Modifier.height(12.dp))
-                            Button(onClick = onExit) { Text("Về danh sách bài học") }
+                            Button(
+                                enabled = !busy,
+                                onClick = {
+                                    busy = true
+                                    error = null
+                                    scope.launch {
+                                        try {
+                                            val restarted = api.startLearningSession(childId, lessonId)
+                                            sessionId = restarted.getString("sessionId")
+                                            completed = restarted.optString("state") == "COMPLETED"
+                                            if (!completed) {
+                                                answers.clear()
+                                                currentCue = 0
+                                                feedback = null
+                                                selectedOptionId = null
+                                                allAnswered = false
+                                            }
+                                        } catch (e: Exception) {
+                                            error = e.message ?: "Chưa thể bắt đầu học lại. Con thử lại nhé!"
+                                        } finally {
+                                            busy = false
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text(if (busy) "Đang chuẩn bị…" else "🔄  Học lại") }
+                            TextButton(onClick = onExit, enabled = !busy) { Text("Về danh sách bài học") }
                         }
                     }
                 } else if (!busy || lesson != null) {
@@ -235,21 +265,24 @@ fun LearningScreen(childId: String, lessonId: String, api: MimiGoApi, onExit: ()
                         if (feedback == null) SoftChip("Chọn đáp án nhé!")
                         AnswerOptionsRow(
                             items = optionItems,
-                            enabled = !busy && feedback == null,
+                            enabled = !busy && (feedback == null || isCorrect == false),
                             selectedOptionId = selectedOptionId,
                             isCorrect = isCorrect,
                             onSelect = { optionId ->
                                 val cueId = cue?.optString("cueId").orEmpty()
-                                val eventId = eventIds.getOrPut("$cueId:$optionId") { UUID.randomUUID().toString() }
+                                // Each retry is a new answer event, even when the child picks the same option.
+                                val eventId = UUID.randomUUID().toString()
                                 selectedOptionId = optionId
+                                feedback = null
                                 effects.onTap()
                                 busy = true; error = null
                                 scope.launch {
                                     try {
                                         val result = api.submitAnswer(childId, sessionId!!, cueId, optionId, eventId)
                                         feedback = result
-                                        answers[cueId] = optionId
-                                        when (result.opt("isCorrect") as? Boolean) {
+                                        val correctness = result.opt("isCorrect") as? Boolean
+                                        if (correctness == false) answers.remove(cueId) else answers[cueId] = optionId
+                                        when (correctness) {
                                             true -> effects.onCorrect()
                                             false -> effects.onTryAgain()
                                             null -> Unit
@@ -263,11 +296,11 @@ fun LearningScreen(childId: String, lessonId: String, api: MimiGoApi, onExit: ()
                         )
                     }
 
-                    if (feedback != null || allAnswered) {
+                    if (isCorrect != false && (feedback != null || allAnswered)) {
                         if (feedback != null) {
                             Spacer(Modifier.height(10.dp))
                             SoftChip(
-                                when (isCorrect) { true -> "Chính xác!"; false -> "Mình thử câu tiếp theo nhé!"; else -> "Đã ghi nhận câu trả lời." },
+                                when (isCorrect) { true -> "Chính xác!"; false -> "Không sao, con chọn lại nhé!"; else -> "Đã ghi nhận câu trả lời." },
                                 Color(0xFFEF4E91)
                             )
                         }
@@ -470,8 +503,16 @@ private fun MimiAvatar(mood: MimiMood) {
     )
     val jump = remember { Animatable(0f) }
     val tilt = remember { Animatable(0f) }
+    val pop = remember { Animatable(1f) }
+    // đếm số lần Mimi phản hồi để đổi luân phiên 2 biểu cảm cho đỡ nhàm
+    var reactionCount by remember { mutableStateOf(0) }
 
     LaunchedEffect(mood) {
+        if (mood != MimiMood.Talking) {
+            reactionCount++
+            pop.snapTo(0.7f)
+            pop.animateTo(1f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium))
+        } else pop.snapTo(1f)
         when (mood) {
             MimiMood.Happy -> {
                 repeat(2) {
@@ -495,15 +536,24 @@ private fun MimiAvatar(mood: MimiMood) {
     }
 
     Box(Modifier.size(96.dp)) {
-        // Bé làm đúng: Mimi đổi sang ảnh ong cầm tim; còn lại dùng ảnh Mimi thường
-        Image(
-            painterResource(if (mood == MimiMood.Happy) R.drawable.mimi_happy else R.drawable.mimi_happy), "Ong Mimi",
-            Modifier.fillMaxSize().graphicsLayer {
-                translationY = (bob + jump.value).dp.toPx()
-                rotationZ = tilt.value
-            },
-            contentScale = ContentScale.Fit
-        )
+        // Mimi đổi biểu cảm theo tình huống
+        val face = when (mood) {
+            MimiMood.Talking -> R.drawable.mimi_think                                   // đang hỏi bé
+            MimiMood.Happy -> if (reactionCount % 2 == 0) R.drawable.mimi_love else R.drawable.mimi_cheer // bé đúng
+            MimiMood.Cheer -> if (reactionCount % 2 == 0) R.drawable.mimi_think else R.drawable.mimi_shy  // bé chưa đúng
+        }
+        Crossfade(targetState = face, animationSpec = tween(220), label = "mimi_face", modifier = Modifier.fillMaxSize()) { res ->
+            Image(
+                painterResource(res), "Ong Mimi",
+                Modifier.fillMaxSize().graphicsLayer {
+                    translationY = (bob + jump.value).dp.toPx()
+                    rotationZ = tilt.value
+                    scaleX = pop.value
+                    scaleY = pop.value
+                },
+                contentScale = ContentScale.Fit
+            )
+        }
         AnimatedVisibility(
             visible = mood == MimiMood.Cheer,
             enter = scaleIn(spring(dampingRatio = Spring.DampingRatioMediumBouncy)) + fadeIn(),
