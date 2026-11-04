@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'api_failure.dart';
 
 String friendlyError(ApiFailure e) => switch (e.code) {
+  'INVALID_RESET_CODE' => 'Mã chưa đúng, đã hết hạn hoặc đã được sử dụng. Ba mẹ kiểm tra mã mới nhất hoặc yêu cầu mã mới nhé.',
+  'PASSWORD_RESET_UNAVAILABLE' =>
+    'Khôi phục mật khẩu hiện chưa khả dụng. Ba mẹ vui lòng thử lại sau.',
   'TERMS_DOCUMENT_UNAVAILABLE' || 'NOTICE_DOCUMENT_UNAVAILABLE' => 'Nội dung pháp lý đã được phê duyệt hiện chưa có. Ba mẹ chưa thể đồng ý hoặc tiếp tục bước này. Vui lòng thử lại sau.',
   'TERMS_VERSION_NOT_CURRENT' =>
     'Điều khoản đã thay đổi. Vui lòng tải lại và đọc trước khi lựa chọn.',

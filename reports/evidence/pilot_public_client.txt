@@ -1,0 +1,4 @@
+00:00 +0: loading D:/Projects/MimiGo/MimiGo-Frontend/test/live_staging_acceptance_test.dart
+00:00 +0: PUBLIC_STAGING: actual client loads current onboarding reference
+00:00 +1: AUTHORIZED_STAGING: existing Parent, protected history and Child catalog; optional authorized learning persistence
+00:00 +1 ~1: All tests passed!

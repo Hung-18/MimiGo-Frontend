@@ -30,6 +30,7 @@ import 'po/po_boot.dart';
 import 'po/live_child_home.dart';
 import 'user_messages.dart';
 import 'account_availability.dart';
+import 'password_reset.dart';
 
 export 'api_failure.dart';
 export 'account_availability.dart' show ApprovedLegalDocument;
@@ -806,7 +807,49 @@ class FixtureMimiGoApi implements MimiGoApi {
 }
 
 class LiveMimiGoApi
-    implements MimiGoApi, ParentGateApi, ChildMediaAccess, MobileCapabilities {
+    implements
+        MimiGoApi,
+        ParentGateApi,
+        ChildMediaAccess,
+        MobileCapabilities,
+        PasswordResetApi {
+  @override
+  Future<int> requestPasswordReset(String email) async {
+    final result = await _rawRequest(
+      'POST',
+      'auth/password-reset/request',
+      body: {'email': email},
+      statuses: {202},
+    );
+    final cooldown = result['resendCooldownSeconds'];
+    if (result['status'] != 'ACCEPTED' ||
+        cooldown is! int ||
+        cooldown < 0 ||
+        result['notice'] is! String) {
+      throw const ApiInvalidResponse(
+        'Invalid password recovery acknowledgment.',
+      );
+    }
+    return cooldown;
+  }
+
+  @override
+  Future<void> confirmPasswordReset(
+    String email,
+    String otp,
+    String password,
+  ) async {
+    final result = await _rawRequest(
+      'POST',
+      'auth/password-reset/confirm',
+      body: {'email': email, 'otp': otp, 'newPassword': password},
+      statuses: {200},
+    );
+    if (result['status'] != 'PASSWORD_RESET' || result['notice'] is! String) {
+      throw const ApiInvalidResponse('Invalid password reset acknowledgment.');
+    }
+  }
+
   int _transportGeneration = 0;
   final _inFlight = <HttpClientRequest>{};
 
@@ -2273,6 +2316,9 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
               signIn: () => setState(() => page = Page.signIn),
             ),
             Page.signIn => SignIn(
+              recovery: api is PasswordResetApi
+                  ? api as PasswordResetApi
+                  : null,
               parentGateEnabled: gate != null,
               back: () => setState(() => page = Page.welcome),
               submitted: (email, password) => authenticate(
@@ -2883,11 +2929,13 @@ class SignIn extends StatefulWidget {
     required this.submitted,
     this.verify,
     this.parentGateEnabled = false,
+    this.recovery,
   });
   final VoidCallback back;
   final Future<void> Function(String email, String password) submitted;
   final void Function(String email, String password)? verify;
   final bool parentGateEnabled;
+  final PasswordResetApi? recovery;
 
   @override
   State<SignIn> createState() => _SignInState();
@@ -3038,19 +3086,50 @@ class _SignInState extends State<SignIn> {
         ),
       ),
       TextButton(
-        onPressed: () => showDialog<void>(
-          context: context,
-          builder: (c) => AlertDialog(
-            title: const Text('Quên mật khẩu?'),
-            content: const Text(AccountAvailability.passwordRecoveryMessage),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(c),
-                child: const Text('Đã hiểu'),
+        key: const Key('forgotPassword'),
+        onPressed: busy
+            ? null
+            : widget.recovery != null
+            ? () async {
+                final reset = await Navigator.of(context).push<bool>(
+                  MaterialPageRoute(
+                    builder: (_) => PasswordResetScreen(
+                      api: widget.recovery!,
+                      email: email.text.trim(),
+                    ),
+                  ),
+                );
+                if (!mounted || !context.mounted) return;
+                if (reset == true) {
+                  password.clear();
+                  setState(() {
+                    error = null;
+                    retryAt = null;
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Đã đổi mật khẩu. Ba mẹ đăng nhập bằng mật khẩu mới nhé.',
+                      ),
+                    ),
+                  );
+                }
+              }
+            : () => showDialog<void>(
+                context: context,
+                builder: (c) => AlertDialog(
+                  title: const Text('Quên mật khẩu?'),
+                  content: const Text(
+                    AccountAvailability.passwordRecoveryMessage,
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(c),
+                      child: const Text('Đã hiểu'),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
-        ),
         child: const Text('Quên mật khẩu?'),
       ),
     ],

@@ -1,0 +1,6 @@
+00:00 +0: loading D:/Projects/MimiGo/MimiGo-Frontend/test/public_recovery_staging_test.dart
+00:00 +0: PUBLIC_STAGING recovery availability and legal boundaries
+RECOVERY_request status=503 code=CLOUD_SURFACE_LOCKED
+RECOVERY_confirm status=503 code=CLOUD_SURFACE_LOCKED
+LEGAL_REFERENCE status=200 keys=terms,purposes,currentNotices,disclaimer
+00:00 +1: All tests passed!

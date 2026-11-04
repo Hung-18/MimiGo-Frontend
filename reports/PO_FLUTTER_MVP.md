@@ -1,5 +1,7 @@
 # PO-owned Flutter mobile MVP — 2026-11-04
 
+Latest functional disposition: [pilot status matrix](MOBILE_PILOT_FUNCTIONAL_STATUS.md), baseline `f02a431`. Real reset UI/contract is now integrated; staging recovery is locked. Legal/pilot gates and fresh authenticated live acceptance remain open. Earlier “recovery contract absent” statements below are historical.
+
 Latest presentation/legal disposition: [Vietnamese cleanup](UI_VIETNAMESE_CLEANUP.md), from `de096fb`. Normal registration/Terms acceptance now fail closed for placeholder/metadata-only legal content; unapproved child notices cannot collect consent. Earlier API integration remains, but its availability statements do not override this new legal-content guard. No new authenticated live acceptance is implied.
 
 ## Current: real Backend integration correction

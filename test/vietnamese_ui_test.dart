@@ -109,7 +109,6 @@ void main() {
       ).hasApprovedDocument,
       isTrue,
     );
-    expect(AccountAvailability.passwordRecoveryAvailable, isFalse);
   });
   testWidgets(
     'registration with actual metadata shape is unavailable and cannot submit consent',

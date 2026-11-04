@@ -19,10 +19,9 @@ class ApprovedLegalDocument {
       body.trim().isNotEmpty;
 }
 
-/// No password-reset route has been approved for this client. A forthcoming
-/// implementation must provide the verified contract before this can change.
+/// Legal availability and the fallback for clients without a recovery adapter.
+/// The normal live client uses PasswordResetApi and server availability.
 abstract final class AccountAvailability {
-  static const passwordRecoveryAvailable = false;
   static const passwordRecoveryMessage =
       'Khôi phục mật khẩu hiện chưa khả dụng. Ba mẹ vui lòng liên hệ hỗ trợ để được hướng dẫn.';
   static const termsUnavailable =
