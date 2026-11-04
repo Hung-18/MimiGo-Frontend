@@ -15,10 +15,17 @@ List<Notice> noticeSnapshot() => [
     Notice(
       code,
       '$code-version',
-      'SYN_NOTICE_V1',
+      'NOTICE_V1',
       contentHash: List.filled(64, 'a').join(),
       effectiveFrom: DateTime.utc(2026, 1, 1),
-      isApprovedForRealUsers: false,
+      isApprovedForRealUsers: true,
+      document: ApprovedLegalDocument(
+        versionId: '$code-version',
+        contentHash: List.filled(64, 'a').join(),
+        title: 'Thông báo kiểm thử',
+        body: 'Nội dung đầy đủ chỉ dùng để kiểm thử.',
+        approved: true,
+      ),
     ),
 ];
 
@@ -228,7 +235,7 @@ void main() {
   );
 
   testWidgets(
-    'notice metadata precedes DOB and independent required choices; refusal returns to Parent Home',
+    'notice metadata precedes DOB and independent required choices; refusal returns to Góc phụ huynh',
     (tester) async {
       final api = ChildApi();
       await openChildOnboarding(tester, api);
@@ -240,10 +247,10 @@ void main() {
         await tester.tap(details);
         await tester.pumpAndSettle();
       }
-      expect(find.textContaining('Content hash:'), findsNWidgets(2));
+      expect(find.textContaining('Mã kiểm tra nội dung:'), findsNWidgets(2));
       expect(
-        find.textContaining('not a production legal consent flow'),
-        findsOneWidget,
+        find.textContaining('Nội dung đầy đủ chỉ dùng để kiểm thử.'),
+        findsNWidgets(2),
       );
       await tapVisible(tester, 'guardianAssertion');
       await tapVisible(tester, 'consent-CHILD_PROFILE_AGE');
@@ -283,11 +290,8 @@ void main() {
       await tapVisible(tester, 'createChild');
       expect(find.byType(ChildCreated), findsOneWidget);
       expect(find.byType(ChildHome), findsNothing);
-      expect(find.textContaining('Age returned by service: 7'), findsOneWidget);
-      expect(
-        find.textContaining('outside the program age range'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('7 tuổi'), findsOneWidget);
+      expect(find.textContaining('ngoài độ tuổi thông thường'), findsOneWidget);
       expect(api.requests.single.stockAvatarKey, 'bee-yellow');
       expect(api.requests.single.attemptId, 'attempt-2');
       await tapVisible(tester, 'createdParentHome');

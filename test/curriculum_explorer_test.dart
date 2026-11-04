@@ -1,3 +1,5 @@
+import 'ui_test_support.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -75,7 +77,7 @@ void main() {
     api.catalog = [];
     api.emptyReason = 'NO_ELIGIBLE_CONTENT';
     await tapVisible(tester, 'explorerRefresh');
-    expect(find.text('Topics in Math'), findsOneWidget);
+    expect(find.text('Chủ đề: Toán học'), findsOneWidget);
     expect(find.byKey(const Key('explorerEmpty')), findsOneWidget);
     expect(find.byKey(const Key('explorer-lesson-$lessonId')), findsNothing);
     expect(
@@ -128,7 +130,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(
           tester
-              .getSemantics(find.text('Curriculum domains'))
+              .getSemantics(find.text('Các lĩnh vực khám phá'))
               .flagsCollection
               .isHeader,
           isTrue,
@@ -279,14 +281,14 @@ void main() {
   });
 
   testWidgets(
-    'Parent Home to Domain/Topic/Lesson/player; Back preserves child and hierarchy',
+    'Góc phụ huynh to Domain/Topic/Lesson/player; Back preserves child and hierarchy',
     (tester) async {
       final api = ExplorerApi();
       await topicScreen(tester, api);
-      expect(find.text('Learning for SYN-Explorer'), findsOneWidget);
+      expect(find.text('Bài học của SYN-Explorer'), findsOneWidget);
       expect(
         find.text('Primary skill: ${summaryJson()['primarySkill']}'),
-        findsOneWidget,
+        findsNothing,
       );
       await tapVisible(tester, 'explorer-lesson-$lessonId');
       expect(find.byType(LearningLessonView), findsOneWidget);
@@ -297,14 +299,14 @@ void main() {
         find.byKey(const Key('explorer-lesson-$lessonId')),
         findsOneWidget,
       );
-      expect(find.text('Back to topics'), findsOneWidget);
+      expect(find.text('Về danh sách chủ đề'), findsOneWidget);
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
       expect(
         find.byKey(Key('topic-${summaryJson()['topicCode']}')),
         findsOneWidget,
       );
-      expect(find.text('Back to domains'), findsOneWidget);
+      expect(find.text('Về các lĩnh vực'), findsOneWidget);
       await tapVisible(tester, 'explorerBack');
       expect(find.byKey(const Key('domain-ENGLISH')), findsOneWidget);
       await tapVisible(tester, 'explorerHome');
@@ -328,7 +330,7 @@ void main() {
     expect(find.byKey(const Key('domain-ARTS')), findsNothing);
     await tapVisible(tester, 'domain-ENGLISH');
     expect(find.byKey(const Key('explorerEmpty')), findsOneWidget);
-    expect(find.text('Topics in English'), findsOneWidget);
+    expect(find.text('Chủ đề: Tiếng Anh'), findsOneWidget);
     expect(
       find.byKey(Key('topic-${summaryJson()['topicCode']}')),
       findsNothing,
@@ -343,7 +345,8 @@ void main() {
         ..catalog = []
         ..emptyReason = reason;
       await explorerRoot(tester, api);
-      expect(find.text(reason), findsOneWidget);
+      expect(find.text(reason), findsNothing);
+      expect(find.byKey(const Key('explorerEmpty')), findsOneWidget);
       expect(find.byKey(const Key('domain-MATH')), findsOneWidget);
       expect(find.byKey(const Key('explorerEmpty')), findsOneWidget);
       expect(api.starts, 0);
@@ -362,7 +365,7 @@ void main() {
           status: status,
         );
         await tapVisible(tester, 'explorerRefresh');
-        expect(find.textContaining('CATALOG_$status'), findsOneWidget);
+        expect(findErrorCode('CATALOG_$status'), findsOneWidget);
         expect(find.textContaining('Internal response'), findsNothing);
         expect(
           find.byKey(const Key('explorer-lesson-$lessonId')),
@@ -416,7 +419,7 @@ void main() {
       await tapVisible(tester, 'domain-ENGLISH');
       await tapVisible(tester, 'topic-${summaryJson()['topicCode']}');
       await tapVisible(tester, 'explorer-lesson-$lessonId');
-      expect(find.textContaining('INVALID_RESPONSE'), findsOneWidget);
+      expect(findErrorCode('INVALID_RESPONSE'), findsOneWidget);
       expect(find.byKey(const Key('startLearning')), findsNothing);
       expect(api.starts, 0);
     },

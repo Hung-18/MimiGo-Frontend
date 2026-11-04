@@ -1,81 +1,29 @@
+import 'user_messages.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'main.dart'
-    show MimiGoApi, ChildSummary, ChildDetail, ParentSummary, Frame, dateText;
+    show MimiGoApi, ChildSummary, ChildDetail, ParentSummary, Frame;
 import 'po/po_design.dart';
 import 'api_failure.dart';
 import 'parent_gate_api.dart';
 import 'parent_gate_session.dart';
 import 'gate_screen_security.dart';
-import 'mimigo_design.dart';
 import 'po/mobile_services.dart';
 import 'po/premium_panel.dart';
 import 'po/profile_panel.dart';
 
-String gateFailureText(ApiFailure failure) => switch (failure.code) {
-  'INVALID_CREDENTIALS' => 'Email or password is incorrect.',
-  'EMAIL_NOT_VERIFIED' => 'Verify this synthetic email before signing in.',
-  'PARENT_GATE_FAILED' => 'The PIN could not be verified. Try again.',
-  'INVALID_PIN_FORMAT' => 'Enter exactly six ASCII digits.',
-  'PIN_CONFIRMATION_MISMATCH' => 'The two PIN entries must match.',
-  'PIN_TOO_WEAK' =>
-    'Choose a less predictable PIN. The service rejected this choice.',
-  'PARENT_GATE_LOCKED' || 'ACCOUNT_LOGIN_LOCKED' =>
-    'Verification is temporarily locked. Wait for the service retry time.',
-  'PARENT_GATE_RECOVERY_REQUIRED' => 'PIN recovery is required. In Parent Mode, reauthenticate with your password to reset it.',
-  'PARENT_GATE_NOT_ENROLLED' =>
-    'Set up a Parent PIN with password reauthentication first.',
-  'PARENT_GATE_ALREADY_ENROLLED' => 'A PIN is already enrolled. Check status or use password-authorized change/reset.',
-  'STEP_UP_FAILED' => 'Password reauthentication failed.',
-  'STEP_UP_REQUIRED' => 'Fresh password reauthentication is required. Re-enter the password and new PIN.',
-  'PARENT_GATE_REQUIRED' =>
-    'Verify your PIN again to open protected Parent information.',
-  'CHILD_CONTEXT_REQUIRED' =>
-    'Enter the selected child’s authorized Child Mode first.',
-  'CHILD_CONTEXT_FORBIDDEN' =>
-    'This Parent operation is unavailable in Child Mode.',
-  'SESSION_REVOKED' ||
-  'UNAUTHENTICATED' => 'The session could not be validated. Sign in again.',
-  'CHILD_NOT_FOUND' =>
-    'This child is unavailable. Return to the authorized roster.',
-  'PARENT_NOT_ACTIVE' => 'This Parent account is unavailable. Sign in again or contact the operator.',
-  'CHILD_NOT_ACTIVE' =>
-    'This child is unavailable. Return to authorized Parent selection.',
-  'SECURE_STORAGE_UNAVAILABLE' =>
-    'Secure credential storage is unavailable. No session is assumed.',
-  'SCREEN_PROTECTION_UNAVAILABLE' =>
-    'Sensitive screen protection is unavailable. PIN entry is disabled.',
-  'CONNECTIVITY' || 'TIMEOUT' => 'The service response could not be confirmed. Check connectivity and retry; no success is assumed.',
-  _ when failure.status == 503 =>
-    'The security service is unavailable. Try again later.',
-  _ when failure.status == 429 => 'Please wait before trying again.',
-  _ when failure.status == 403 =>
-    'This operation is not authorized by the service.',
-  _ =>
-    'The operation could not be confirmed. Retry or return to account entry.',
-};
+String gateFailureText(ApiFailure failure) => friendlyError(failure);
 
 class GateError extends StatelessWidget {
   const GateError(this.error, {super.key});
   final ApiFailure? error;
   @override
-  Widget build(BuildContext context) => error == null
-      ? const SizedBox.shrink()
-      : Semantics(
-          liveRegion: true,
-          child: MimiNotice(
-            icon: Icons.lock_outline,
-            color: MimiColors.rose,
-            child: Text(
-              '${gateFailureText(error!)}\n${error!.code ?? 'REQUEST_FAILED'}',
-              key: const Key('gateError'),
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-          ),
-        );
+  Widget build(BuildContext context) =>
+      UserError(error, messageKey: const Key('gateError'));
 }
 
 /// All enrollment/change/reset and PIN verification use the same protected
@@ -300,41 +248,39 @@ class _GatePinScreenState extends State<GatePinScreen>
   Widget build(BuildContext context) {
     final title = widget.pinAction == null
         ? widget.childId == null
-              ? 'Verify PIN for Parent Area'
-              : 'Verify PIN to enter selected Child Mode'
+              ? 'Nhập PIN của ba mẹ'
+              : 'Nhập PIN để bé vào học'
         : switch (widget.pinAction!) {
-            PinAction.enroll => 'Set up Parent PIN',
-            PinAction.change => 'Change Parent PIN',
-            PinAction.reset => 'Reset Parent PIN',
+            PinAction.enroll => 'Thiết lập mã PIN',
+            PinAction.change => 'Đổi mã PIN',
+            PinAction.reset => 'Đặt lại mã PIN',
           };
     return Frame(
       title: title,
       back: busy || leaving ? null : widget.back,
       children: [
         const Text(
-          'R0 SYNTHETIC CANDIDATE · Not Security/Legal approved. A PIN or password does not prove guardian authority or child consent.',
+          'Mã PIN giúp bảo vệ thông tin của gia đình. Ba mẹ không chia sẻ mã này với bé nhé.',
         ),
         if (!protected) ...[
           if (error == null)
             const LinearProgressIndicator(
-              semanticsLabel: 'Securing PIN screen',
+              semanticsLabel: 'Đang bảo vệ màn hình PIN',
             ),
           GateError(error),
         ],
         if (protected) ...[
           if (widget.pinAction != null) ...[
-            const Text(
-              'Fresh password reauthentication is required for this PIN action. No email/PIN recovery provider is simulated.',
-            ),
-            secret(password, 'gatePassword', 'Current parent password'),
+            const Text('Ba mẹ nhập mật khẩu để xác nhận việc đổi mã PIN.'),
+            secret(password, 'gatePassword', 'Mật khẩu của ba mẹ'),
             const SizedBox(height: 12),
           ],
           secret(
             pin,
             'gatePin',
             widget.pinAction == null
-                ? 'Six-digit Parent PIN'
-                : 'New six-digit Parent PIN',
+                ? 'Mã PIN 6 chữ số'
+                : 'Mã PIN mới gồm 6 chữ số',
             digits: true,
           ),
           if (widget.pinAction != null) ...[
@@ -342,26 +288,24 @@ class _GatePinScreenState extends State<GatePinScreen>
             secret(
               confirmation,
               'gatePinConfirmation',
-              'Confirm new PIN',
+              'Nhập lại PIN mới',
               digits: true,
             ),
           ],
           if (busy)
-            const LinearProgressIndicator(
-              semanticsLabel: 'Waiting for security service',
-            ),
+            const LinearProgressIndicator(semanticsLabel: 'Đang xác minh'),
           GateError(error),
           if (waitSeconds > 0)
             Semantics(
               liveRegion: true,
               child: Text(
-                'Try again in $waitSeconds seconds.',
+                'Vui lòng thử lại sau $waitSeconds giây.',
                 key: const Key('gateRetryAfter'),
               ),
             ),
           if (recoveryRequired)
             const Text(
-              'Recovery is required. Leave Child Mode by signing out, then sign in for password-authorized reset.',
+              'Ba mẹ cần đăng xuất, đăng nhập lại rồi dùng mật khẩu để đặt lại PIN.',
             ),
           ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 64),
@@ -372,10 +316,10 @@ class _GatePinScreenState extends State<GatePinScreen>
                   : submit,
               child: Text(
                 busy
-                    ? 'Waiting for service…'
+                    ? 'Đang chờ xác nhận…'
                     : widget.pinAction == null
-                    ? 'Verify PIN'
-                    : 'Reauthenticate and save PIN',
+                    ? 'Xác nhận PIN'
+                    : 'Xác nhận và lưu PIN',
               ),
             ),
           ),
@@ -386,14 +330,14 @@ class _GatePinScreenState extends State<GatePinScreen>
             onPressed: busy || leaving ? null : widget.recover,
             child: Text(
               widget.api.gateSession?.current?.mode == SessionMode.child
-                  ? 'Forgot PIN? Sign out and sign in'
-                  : 'Forgot PIN / set up PIN with password',
+                  ? 'Quên PIN? Đăng xuất để đặt lại'
+                  : 'Quên PIN hoặc cần thiết lập PIN?',
             ),
           ),
         TextButton(
           key: const Key('gateAccountEntry'),
           onPressed: leaving ? null : widget.accountEntry,
-          child: const Text('Sign out and return to account entry'),
+          child: const Text('Đăng xuất và về màn hình đăng nhập'),
         ),
       ],
     );
@@ -502,24 +446,22 @@ class _GatedParentAreaState extends State<GatedParentArea> {
   });
   @override
   Widget build(BuildContext context) => Frame(
-    title: 'Authorized Parent Area',
+    title: 'Cài đặt của ba mẹ',
     back: busy ? null : widget.home,
     children: [
       const Text(
-        'Thông tin phụ huynh cần xác minh PIN. Tên gọi và ảnh đại diện có thể chỉnh sửa khi dịch vụ cho phép. Đổi ngày sinh và các yêu cầu quyền riêng tư chưa được mở trên môi trường này.',
+        'Thông tin riêng tư được bảo vệ bằng PIN. Một số thay đổi hiện chưa được hỗ trợ.',
       ),
       if (busy)
         const LinearProgressIndicator(
-          semanticsLabel: 'Loading authorized Parent information',
+          semanticsLabel: 'Đang tải thông tin của ba mẹ',
         ),
       GateError(error),
       if (info != null) Text(info!),
       if (!protected && error == null)
-        const LinearProgressIndicator(
-          semanticsLabel: 'Protecting Parent information',
-        ),
+        const LinearProgressIndicator(semanticsLabel: 'Đang bảo vệ thông tin'),
       if (protected && children.isEmpty && !busy && error == null)
-        const Text('No child profiles returned.'),
+        const Text('Chưa có hồ sơ bé.'),
       if (protected)
         if (widget.parent != null)
           PoCard(
@@ -546,7 +488,7 @@ class _GatedParentAreaState extends State<GatedParentArea> {
         OutlinedButton(
           key: Key('gated-child-${child.id}'),
           onPressed: busy ? null : () => choose(child),
-          child: Text('View protected profile: ${child.alias}'),
+          child: Text('Xem hồ sơ: ${child.alias}'),
         ),
       if (detail != null) ...[
         if (widget.api is MobileCapabilities)
@@ -575,17 +517,16 @@ class _GatedParentAreaState extends State<GatedParentArea> {
             service: (widget.api as MobileCapabilities).premium,
             childId: detail!.id,
           ),
+        Text('Hồ sơ: ${detail!.alias}', key: const Key('protectedChildAlias')),
         Text(
-          'Protected profile: ${detail!.alias}',
-          key: const Key('protectedChildAlias'),
-        ),
-        Text(
-          'Date of birth: ${dateText(detail!.dateOfBirth!)}',
+          'Ngày sinh: ${viDate(detail!.dateOfBirth!)}',
           key: const Key('protectedChildDob'),
         ),
-        Text('Age returned by service: ${detail!.ageYears}'),
+        Text('${detail!.ageYears} tuổi'),
         for (final decision in detail!.recordedDecisions)
-          Text('${decision.purposeCode}: ${decision.recordedState}'),
+          Text(
+            '${viPurpose(decision.purposeCode)}: ${viState(decision.recordedState)}',
+          ),
         OutlinedButton(
           key: const Key('loadParentActivity'),
           onPressed: busy
@@ -603,15 +544,17 @@ class _GatedParentAreaState extends State<GatedParentArea> {
           const Text('Chưa có phiên học được máy chủ trả về.'),
         if (activity != null)
           const Text(
-            'Các phiên học gần đây do máy chủ lưu (tối đa 20). Không phải điểm số hay chỉ số thành thạo tổng hợp.',
+            'Các lượt học gần đây đã được lưu. Hiển thị tối đa 20 lượt.',
           ),
         if (activity != null)
           for (final item in activity!)
             Card(
               child: ListTile(
-                title: Text('${item.lessonTitle} · ${item.state}'),
+                title: Text(
+                  '${item.lessonTitle == 'Content unavailable' ? 'Nội dung chưa khả dụng' : item.lessonTitle} · ${viState(item.state)}',
+                ),
                 subtitle: Text(
-                  'Session: ${item.sessionId}\nStarted: ${item.startedAt.toUtc().toIso8601String()}${item.endedAt == null ? '' : '\nEnded: ${item.endedAt!.toUtc().toIso8601String()}'}',
+                  'Bắt đầu: ${viTime(item.startedAt)}${item.endedAt == null ? '' : '\nKết thúc: ${viTime(item.endedAt)}'}',
                 ),
               ),
             ),
@@ -619,12 +562,12 @@ class _GatedParentAreaState extends State<GatedParentArea> {
       OutlinedButton(
         key: const Key('gateChangePin'),
         onPressed: busy ? null : widget.changePin,
-        child: const Text('Change PIN with password reauthentication'),
+        child: const Text('Đổi PIN bằng mật khẩu'),
       ),
       OutlinedButton(
         key: const Key('gateResetPin'),
         onPressed: busy ? null : widget.resetPin,
-        child: const Text('Reset PIN with password reauthentication'),
+        child: const Text('Đặt lại PIN bằng mật khẩu'),
       ),
       OutlinedButton(
         key: const Key('revokeOtherDevices'),
@@ -634,15 +577,16 @@ class _GatedParentAreaState extends State<GatedParentArea> {
                 final count = await widget.gate.revokeOtherDevices();
                 if (mounted)
                   setState(
-                    () => info = 'Other device sessions revoked: $count',
+                    () =>
+                        info = 'Đã đăng xuất $count phiên trên thiết bị khác.',
                   );
               }),
-        child: const Text('Sign out other device sessions'),
+        child: const Text('Đăng xuất các thiết bị khác'),
       ),
       TextButton(
         key: const Key('gatedParentHome'),
         onPressed: busy ? null : widget.home,
-        child: const Text('Back to basic child selection'),
+        child: const Text('Về danh sách bé'),
       ),
     ],
   );

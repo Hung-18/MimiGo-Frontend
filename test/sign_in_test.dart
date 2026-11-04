@@ -1,3 +1,5 @@
+import 'ui_test_support.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -159,9 +161,7 @@ void main() {
       await tester.tap(find.byKey(const Key('otpVerify')));
       await tester.pumpAndSettle();
       expect(
-        find.textContaining(
-          'We could not reach the service. Check your connection and retry.',
-        ),
+        find.textContaining('Chưa kết nối được với MimiGo.'),
         findsOneWidget,
       );
       await tester.ensureVisible(find.byKey(const Key('otpVerify')));
@@ -178,8 +178,8 @@ void main() {
       final api = AuthApi();
       await openSignIn(tester, api);
       await submitSignIn(tester);
-      expect(find.text('Enter a valid email address.'), findsOneWidget);
-      expect(find.text('Enter your password.'), findsOneWidget);
+      expect(find.text('Vui lòng nhập địa chỉ email hợp lệ.'), findsOneWidget);
+      expect(find.text('Ba mẹ nhập mật khẩu nhé.'), findsOneWidget);
       await tester.enterText(find.byKey(const Key('signInEmail')), 'invalid');
       await submitSignIn(tester);
       expect(api.calls, isEmpty);
@@ -197,8 +197,8 @@ void main() {
       await fillSignIn(tester);
       await submitSignIn(tester);
       expect(api.calls, ['login', 'me', 'workspace']);
-      expect(find.text('Parent Home'), findsOneWidget);
-      expect(find.text('No child profiles returned.'), findsOneWidget);
+      expect(find.text('Góc phụ huynh'), findsOneWidget);
+      expect(find.text('Chưa có hồ sơ bé.'), findsOneWidget);
       await tester.ensureVisible(find.byKey(const Key('addChild')));
       await tester.tap(find.byKey(const Key('addChild')));
       await tester.pumpAndSettle();
@@ -272,7 +272,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(api.calls, ['login', 'me']);
       expect(find.byType(ParentArea), findsNothing);
-      expect(find.textContaining('Session rejected.'), findsOneWidget);
+      expect(findErrorCode('UNAUTHENTICATED'), findsOneWidget);
     },
   );
 
@@ -290,10 +290,10 @@ void main() {
     await fillSignIn(tester);
     await submitSignIn(tester);
     expect(
-      find.textContaining('Email or password is incorrect.'),
+      find.textContaining('Email hoặc mật khẩu chưa đúng.'),
       findsOneWidget,
     );
-    expect(find.textContaining('test-request'), findsOneWidget);
+    expect(find.textContaining('test-request'), findsNothing);
     expect(api.calls, ['login']);
     api.loginFailure = null;
     await submitSignIn(tester);
@@ -330,7 +330,7 @@ void main() {
         await openSignIn(tester, api);
         await fillSignIn(tester);
         await submitSignIn(tester);
-        expect(find.textContaining(failure.message), findsOneWidget);
+        expect(findErrorCode(failure.code!), findsOneWidget);
         expect(find.byType(SignIn), findsOneWidget);
         expect(find.byType(ParentArea), findsNothing);
         expect(
@@ -358,8 +358,8 @@ void main() {
     await submitSignIn(tester);
     expect(api.calls, ['login', 'me', 'workspace']);
     expect(find.byType(SignIn), findsOneWidget);
-    expect(find.textContaining('Profiles unavailable.'), findsOneWidget);
-    expect(find.text('No child profiles returned.'), findsNothing);
+    expect(findErrorCode('DB_UNAVAILABLE'), findsOneWidget);
+    expect(find.text('Chưa có hồ sơ bé.'), findsNothing);
   });
 
   testWidgets(

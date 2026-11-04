@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api_failure.dart';
 import 'mobile_services.dart';
 import 'po_design.dart';
+import '../user_messages.dart';
 
 /// Embedded in the existing screen-protected Parent Area. Never a Child route.
 class PremiumPanel extends StatefulWidget {
@@ -121,20 +122,16 @@ class _PremiumPanelState extends State<PremiumPanel> {
       children: [
         const PoHeading(
           'Premium Core',
-          subtitle: 'SIMULATOR · KHÔNG THU TIỀN THẬT',
+          subtitle: 'Thanh toán thử nghiệm · không thu tiền',
         ),
         const Text(
-          'Giá do máy chủ trả về là giá mô phỏng, chưa phải giá thương mại được duyệt. Trả trước, không tự gia hạn. Quyền theo từng bé; chương trình đặc biệt không tự động bao gồm.',
+          'Giá hiển thị chỉ dành cho thử nghiệm. Gói trả trước, không tự gia hạn, áp dụng riêng cho từng bé và không tự bao gồm chương trình đặc biệt.',
         ),
         if (busy) const LinearProgressIndicator(),
-        if (error != null)
-          Text(
-            'Chưa xác nhận được: ${error!.code ?? 'INVALID_RESPONSE'}\nThử lại cùng yêu cầu; không có quyền nào được giả định.',
-            style: const TextStyle(color: Colors.red),
-          ),
+        if (error != null) UserError(error),
         if (entitlement != null)
           Text(
-            'Quyền máy chủ: ${entitlement!['status']}\nHạn quyền: ${entitlement!['expiresAt'] ?? 'Chưa có'}',
+            'Gói học: ${viState(entitlement!['status'] as String?)}\nCó hiệu lực đến: ${viInstant(entitlement!['expiresAt'])}',
           ),
         if (checkout == null) ...[
           for (final plan in plans)
@@ -149,20 +146,18 @@ class _PremiumPanelState extends State<PremiumPanel> {
               title: Text(
                 '${plan.months} tháng · ${plan.amount} ${plan.currency}',
               ),
-              subtitle: Text(
-                'Giá mô phỏng v${plan.priceVersion} · phạm vi v${plan.scopeVersion}',
-              ),
+              subtitle: const Text('Giá thử nghiệm, chưa áp dụng thương mại'),
             ),
           if (loaded && plans.isEmpty) const Text('Chưa có gói khả dụng.'),
           PoAction(
             key == null
-                ? 'Tạo báo giá simulator'
+                ? 'Xem báo giá thử nghiệm'
                 : 'Thử lại báo giá giữ nguyên',
             onPressed: !busy && available && selected != null ? create : null,
           ),
         ] else ...[
           Text(
-            'Báo giá: ${checkout!['totalMinor']} ${checkout!['currency']}\nTrạng thái: ${checkout!['status']}\nHạn báo giá: ${checkout!['expiresAt']}',
+            'Báo giá: ${checkout!['totalMinor']} ${checkout!['currency']}\nTình trạng: ${viState(checkout!['status'] as String?)}\nCó hiệu lực đến: ${viInstant(checkout!['expiresAt'])}',
           ),
           PoAction(
             'Kiểm tra trạng thái giao dịch',
@@ -172,19 +167,21 @@ class _PremiumPanelState extends State<PremiumPanel> {
           ),
           if (checkout!['status'] == 'PENDING_SETTLEMENT') ...[
             PoAction(
-              outcome == null ? 'Mô phỏng SETTLED' : 'Thử lại kết quả $outcome',
+              outcome == null
+                  ? 'Thử xác nhận thanh toán'
+                  : 'Thử lại: ${viState(outcome)}',
               onPressed: busy ? null : () => settle(outcome ?? 'SETTLED'),
             ),
             if (outcome == null)
               PoAction(
-                'Mô phỏng FAILED',
+                'Thử tình huống không thành công',
                 secondary: true,
                 onPressed: busy ? null : () => settle('FAILED'),
               ),
           ],
           if (checkout!['status'] == 'SETTLED')
             const Text(
-              'Máy chủ xác nhận thanh toán MÔ PHỎNG. Không phải biên lai thật; quyền học từng bài vẫn do Learning API quyết định.',
+              'Đã xác nhận kết quả thử nghiệm. Đây không phải biên lai thanh toán thật. Bài học được mở theo quyền do dịch vụ xác nhận.',
             ),
           if (checkout!['status'] != 'PENDING_SETTLEMENT')
             TextButton(

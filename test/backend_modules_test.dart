@@ -122,7 +122,7 @@ void main() {
     expect(result.children.single.child.id, 'A');
     expect(result.children.single.catalogStatus, 'AVAILABLE');
     // Even malformed protected data is not parsed, retained as a model or needed
-    // for a Parent Home catalog-only view.
+    // for a Góc phụ huynh catalog-only view.
     final ignored = workspaceJson();
     ignored['children'] = <Map<String, dynamic>>[
       {
@@ -139,7 +139,7 @@ void main() {
     'CHILD_NOT_ACTIVE',
   ]) {
     testWidgets(
-      'Parent Home uses $status availability without showing protected history',
+      'Góc phụ huynh uses $status availability without showing protected history',
       (tester) async {
         final api = WorkspaceApi()
           ..profiles = [profile('A')]

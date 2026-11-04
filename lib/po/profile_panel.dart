@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api_failure.dart';
 import 'mobile_services.dart';
 import 'po_design.dart';
+import '../user_messages.dart';
 
 class ProfilePanel extends StatefulWidget {
   const ProfilePanel({super.key, required this.service, required this.childId});
@@ -91,7 +92,7 @@ class _ProfilePanelState extends State<ProfilePanel> {
         version = value['profileVersion'];
         alias.text = value['childAlias'];
         avatar = value['stockAvatarKey'] as String? ?? 'bear-blue';
-        notice = 'Máy chủ xác nhận hồ sơ hiện tại. Phiên bản $version.';
+        notice = 'Đã lưu thông tin hồ sơ.';
       });
   });
   @override
@@ -104,7 +105,7 @@ class _ProfilePanelState extends State<ProfilePanel> {
         children: [
           const PoHeading(
             'Tên gọi & ảnh đại diện',
-            subtitle: 'Chỉ hồ sơ SYN- trên staging',
+            subtitle: 'Cập nhật thông tin của bé',
           ),
           const Text(
             'Ngày sinh không thể sửa tại đây. Khi gặp xung đột, tải lại hồ sơ và xem lại trước khi gửi yêu cầu mới.',
@@ -115,21 +116,25 @@ class _ProfilePanelState extends State<ProfilePanel> {
               controller: alias,
               enabled: !busy && key == null,
               maxLength: 40,
-              decoration: const InputDecoration(
-                labelText: 'Tên gọi tổng hợp SYN-',
-              ),
+              decoration: const InputDecoration(labelText: 'Tên gọi của bé'),
               validator: (v) =>
                   (v ?? '').trim().startsWith('SYN-') &&
                       (v ?? '').trim().length > 4
                   ? null
-                  : 'Tên mẫu phải bắt đầu bằng SYN-.',
+                  : 'Tên này chưa được phiên bản hiện tại hỗ trợ.',
             ),
             Wrap(
               spacing: 8,
               children: [
                 for (final a in {'bear-blue', 'bee-yellow', avatar})
                   ChoiceChip(
-                    label: Text(a),
+                    label: Text(
+                      a == 'bear-blue'
+                          ? 'Gấu xanh'
+                          : a == 'bee-yellow'
+                          ? 'Ong vàng'
+                          : 'Ảnh hiện tại',
+                    ),
                     selected: avatar == a,
                     onSelected: busy || key != null
                         ? null
@@ -138,15 +143,11 @@ class _ProfilePanelState extends State<ProfilePanel> {
               ],
             ),
             PoAction(
-              key == null ? 'Lưu thay đổi qua API' : 'Thử lại cùng thay đổi',
+              key == null ? 'Lưu thay đổi' : 'Thử lại cùng thay đổi',
               onPressed: busy ? null : save,
             ),
           ],
-          if (error != null)
-            Text(
-              'Không xác nhận thay đổi · ${error!.code ?? 'REQUEST_FAILED'}',
-              style: const TextStyle(color: Colors.red),
-            ),
+          if (error != null) UserError(error),
           if (notice != null) Text(notice!),
           TextButton(
             onPressed: busy ? null : load,

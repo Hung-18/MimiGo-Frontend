@@ -76,7 +76,7 @@ void main() {
     await tester.tap(decline);
     await tester.pumpAndSettle();
     expect(
-      find.textContaining('No child alias, date of birth or profile was sent'),
+      find.textContaining('Thông tin hồ sơ bé chưa được gửi'),
       findsOneWidget,
     );
   });

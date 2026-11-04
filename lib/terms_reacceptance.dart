@@ -2,9 +2,16 @@ import 'package:flutter/material.dart';
 
 import 'main.dart' show MimiGoApi, TermsReference, ParentSummary;
 import 'api_failure.dart';
+import 'account_availability.dart';
+import 'user_messages.dart';
 
 class TermsReacceptanceState extends ChangeNotifier {
-  TermsReacceptanceState(this.api, this.parentId);
+  TermsReacceptanceState(
+    this.api,
+    this.parentId, {
+    this.allowFixtureMetadata = false,
+  });
+  final bool allowFixtureMetadata;
   final MimiGoApi api;
   final String parentId;
   TermsReference? terms;
@@ -35,7 +42,11 @@ class TermsReacceptanceState extends ChangeNotifier {
           'The service did not supply the current Terms version metadata.',
         );
       terms = current;
-      disclaimer = reference.disclaimer;
+      if (!allowFixtureMetadata && !current.hasApprovedDocument)
+        throw const ApiFailure(
+          'Approved Terms unavailable.',
+          code: 'TERMS_DOCUMENT_UNAVAILABLE',
+        );
     } on ApiFailure catch (failure) {
       if (generation == _generation) error = failure;
     } finally {
@@ -47,13 +58,22 @@ class TermsReacceptanceState extends ChangeNotifier {
   }
 
   void choose(bool value) {
-    if (busy || denied || terms == null) return;
+    if (busy ||
+        denied ||
+        terms == null ||
+        (!allowFixtureMetadata && !terms!.hasApprovedDocument))
+      return;
     agreed = value;
     notifyListeners();
   }
 
   Future<ParentSummary?> accept() async {
-    if (busy || !agreed || terms == null || denied) return null;
+    if (busy ||
+        !agreed ||
+        terms == null ||
+        denied ||
+        (!allowFixtureMetadata && !terms!.hasApprovedDocument))
+      return null;
     final generation = _generation;
     final version = terms!;
     busy = true;
@@ -113,6 +133,7 @@ class TermsReacceptanceState extends ChangeNotifier {
 class TermsReacceptance extends StatefulWidget {
   const TermsReacceptance({
     super.key,
+    this.fixture = false,
     required this.api,
     required this.parentId,
     required this.accepted,
@@ -120,6 +141,7 @@ class TermsReacceptance extends StatefulWidget {
     required this.accountEntry,
   });
   final MimiGoApi api;
+  final bool fixture;
   final String parentId;
   final ValueChanged<ParentSummary> accepted;
   final VoidCallback cancel, accountEntry;
@@ -128,7 +150,11 @@ class TermsReacceptance extends StatefulWidget {
 }
 
 class _TermsReacceptanceState extends State<TermsReacceptance> {
-  late final model = TermsReacceptanceState(widget.api, widget.parentId);
+  late final model = TermsReacceptanceState(
+    widget.api,
+    widget.parentId,
+    allowFixtureMetadata: widget.fixture,
+  );
   bool leaving = false;
   @override
   void initState() {
@@ -160,33 +186,23 @@ class _TermsReacceptanceState extends State<TermsReacceptance> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
-            'DEVELOPMENT / DEMO · account Terms, separate from child consent.',
-          ),
-          const Text(
-            'The service requires current account Terms before continuing this parent operation. Acceptance will not create a child or grant child purposes.',
+            'Ba mẹ cần xem điều khoản hiện hành trước khi tiếp tục. Đồng ý điều khoản tài khoản không thay cho lựa chọn về thông tin của bé.',
           ),
           if (model.busy)
             const LinearProgressIndicator(
-              semanticsLabel: 'Checking current account Terms',
+              semanticsLabel: 'Đang tải điều khoản',
             ),
-          if (terms != null) ...[
+          if (terms != null &&
+              (terms.hasApprovedDocument || widget.fixture)) ...[
             Semantics(
               header: true,
               child: Text(
-                'Current Terms: ${terms.code}',
+                terms.document?.title ?? 'Điều khoản sử dụng',
                 key: const Key('currentTermsVersion'),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
-            Text('Version ID: ${terms.id}'),
-            Text(
-              'Effective: ${terms.effectiveFrom!.toUtc().toIso8601String()}',
-            ),
-            Text('Content hash: ${terms.contentHash}'),
-            const Text(
-              'This R0 API provides mock version metadata, not the full Terms document. No legal text is invented here; this flow is for synthetic development testing only.',
-            ),
-            if (model.disclaimer != null) Text(model.disclaimer!),
+            if (terms.document != null) Text(terms.document!.body),
             CheckboxListTile(
               key: const Key('reacceptTermsCheckbox'),
               contentPadding: EdgeInsets.zero,
@@ -194,15 +210,29 @@ class _TermsReacceptanceState extends State<TermsReacceptance> {
               onChanged: model.busy || model.denied || leaving
                   ? null
                   : (value) => model.choose(value ?? false),
-              title: Text(
-                'I explicitly accept account Terms ${terms.code} for this synthetic account.',
-              ),
+              title: Text('Tôi đã đọc và đồng ý với điều khoản sử dụng'),
             ),
           ],
-          if (model.error != null) _TermsError(model.error!),
+          if (!model.busy &&
+              !widget.fixture &&
+              terms?.hasApprovedDocument != true)
+            if (model.error?.code == 'TERMS_DOCUMENT_UNAVAILABLE')
+              UserError(
+                model.error,
+                message: AccountAvailability.termsUnavailable,
+                messageKey: const Key('termsDocumentUnavailable'),
+              )
+            else
+              const Text(
+                AccountAvailability.termsUnavailable,
+                key: Key('termsDocumentUnavailable'),
+              ),
+          if (model.error != null &&
+              model.error!.code != 'TERMS_DOCUMENT_UNAVAILABLE')
+            _TermsError(model.error!),
           if (model.error?.code == 'TERMS_VERSION_NOT_CURRENT')
             const Text(
-              'The version changed. Reload current Terms and make a new explicit choice.',
+              'Điều khoản đã thay đổi. Ba mẹ tải lại và xem xét trước khi lựa chọn.',
             ),
           ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 64),
@@ -213,13 +243,14 @@ class _TermsReacceptanceState extends State<TermsReacceptance> {
                       !model.agreed ||
                       model.denied ||
                       terms == null ||
+                      (!widget.fixture && !terms.hasApprovedDocument) ||
                       leaving
                   ? null
                   : accept,
               child: Text(
                 model.busy
-                    ? 'Waiting for service…'
-                    : 'Accept current account Terms',
+                    ? 'Đang chờ xác nhận…'
+                    : 'Đồng ý điều khoản hiện hành',
               ),
             ),
           ),
@@ -228,17 +259,17 @@ class _TermsReacceptanceState extends State<TermsReacceptance> {
             onPressed: model.busy || leaving || model.denied
                 ? null
                 : model.load,
-            child: const Text('Reload current Terms'),
+            child: const Text('Tải lại điều khoản'),
           ),
           TextButton(
             key: const Key('cancelTerms'),
             onPressed: model.busy || leaving ? null : widget.cancel,
-            child: const Text('Cancel and return to Parent Home'),
+            child: const Text('Hủy và về góc phụ huynh'),
           ),
           TextButton(
             key: const Key('termsAccountEntry'),
             onPressed: leaving ? null : widget.accountEntry,
-            child: const Text('Return to account entry'),
+            child: const Text('Về màn hình đăng nhập'),
           ),
         ],
       );
@@ -250,32 +281,7 @@ class _TermsError extends StatelessWidget {
   const _TermsError(this.failure);
   final ApiFailure failure;
 
-  String get message {
-    if (failure.status == 401)
-      return 'Your parent sign-in expired. Return to account entry and sign in again.';
-    if (failure.status == 403)
-      return 'This parent account cannot continue. Return to account entry.';
-    if (failure.code == 'TERMS_VERSION_NOT_CURRENT')
-      return 'The service requires a different Terms version. Reload current Terms.';
-    if (failure.code == 'CONNECTIVITY' || failure.code == 'TIMEOUT')
-      return 'We could not reach the account service. Check your connection and try again.';
-    if ((failure.status ?? 0) >= 500)
-      return 'The account service is temporarily unavailable. Please try again later.';
-    if (failure is ApiInvalidResponse) return failure.message;
-    return 'Account Terms acceptance could not be confirmed. Reload or try again.';
-  }
-
   @override
-  Widget build(BuildContext context) => Semantics(
-    liveRegion: true,
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Text(
-        '$message\n${failure.code ?? 'REQUEST_FAILED'}'
-        '${failure.requestId == null ? '' : '\nRequest: ${failure.requestId}'}',
-        key: const Key('termsError'),
-        style: TextStyle(color: Theme.of(context).colorScheme.error),
-      ),
-    ),
-  );
+  Widget build(BuildContext context) =>
+      UserError(failure, messageKey: const Key('termsError'));
 }

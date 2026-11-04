@@ -113,7 +113,7 @@ void main() {
             english
                 ? 'Chưa có bài học phù hợp được máy chủ trả về'
                 : category == LearningCategory.math
-                ? 'No eligible Free Math'
+                ? 'Chưa có bài toán học phù hợp'
                 : 'current live service',
           ),
           findsOneWidget,

@@ -1,3 +1,5 @@
+import 'user_messages.dart';
+
 import 'package:flutter/material.dart';
 
 import 'api_failure.dart';
@@ -10,53 +12,16 @@ import 'mimigo_design.dart';
 class LearningLabel extends StatelessWidget {
   const LearningLabel({super.key});
   @override
-  Widget build(BuildContext context) => const MimiNotice(
-    icon: Icons.science_outlined,
-    child: Text('Bài học và câu trả lời được xác nhận bởi dịch vụ MimiGo.'),
-  );
+  Widget build(BuildContext context) => const SizedBox.shrink();
 }
 
 class LearningError extends StatelessWidget {
   const LearningError(this.failure, {super.key});
   final ApiFailure failure;
-  String get message {
-    if (failure.status == 401)
-      return 'A parent needs to sign in again. Return to Child Mode and account entry to sign in again.';
-    if (failure.status == 403)
-      return 'Learning is not available for this account. Ask your parent for help.';
-    if (failure.status == 404)
-      return failure.code == 'CHILD_NOT_FOUND'
-          ? 'This child profile is unavailable. Ask your parent for help.'
-          : 'This lesson or session is unavailable. Go back to the lesson list.';
-    if (failure.code == 'SESSION_INCOMPLETE')
-      return 'Some questions still need a saved answer. Refresh the session before trying again.';
-    if (failure.code == 'SESSION_NOT_ACTIVE')
-      return 'This session is no longer active. Refresh to see its saved state.';
-    if (failure.status == 409)
-      return 'The answer could not be accepted. Refresh the session; your pending choice will be kept.';
-    if (failure.code == 'CONNECTIVITY' || failure.code == 'TIMEOUT')
-      return 'We could not reach the learning service. Check your connection and try again.';
-    if ((failure.status ?? 0) >= 500)
-      return 'The learning service is unavailable. Please try again later.';
-    // Only locally constructed validation messages are safe to display verbatim.
-    if (failure is ApiInvalidResponse) return failure.message;
-    return 'The request could not be confirmed. Please try again.';
-  }
-
+  String get message => friendlyError(failure);
   @override
-  Widget build(BuildContext context) => Semantics(
-    liveRegion: true,
-    child: MimiNotice(
-      icon: Icons.cloud_off_outlined,
-      color: MimiColors.rose,
-      child: Text(
-        '$message\n${failure.code ?? 'REQUEST_FAILED'}${failure.status == null ? '' : ' (HTTP ${failure.status})'}'
-        '${failure.requestId == null ? '' : '\nRequest: ${failure.requestId}'}',
-        key: const Key('learningError'),
-        style: TextStyle(color: Theme.of(context).colorScheme.error),
-      ),
-    ),
-  );
+  Widget build(BuildContext context) =>
+      UserError(failure, messageKey: const Key('learningError'));
 }
 
 class MathLessonCatalog extends StatefulWidget {
@@ -104,8 +69,8 @@ class _MathLessonCatalogState extends State<MathLessonCatalog> {
               padding: EdgeInsets.all(16),
               child: Column(
                 children: [
-                  CircularProgressIndicator(semanticsLabel: 'Loading lessons'),
-                  Text('Loading eligible lessons…'),
+                  CircularProgressIndicator(semanticsLabel: 'Đang tải bài học'),
+                  Text('Đang tìm bài học phù hợp…'),
                 ],
               ),
             );
@@ -121,7 +86,7 @@ class _MathLessonCatalogState extends State<MathLessonCatalog> {
                 OutlinedButton(
                   key: const Key('lessonsRetry'),
                   onPressed: reload,
-                  child: const Text('Try again'),
+                  child: const Text('Thử lại'),
                 ),
               ],
             );
@@ -136,22 +101,20 @@ class _MathLessonCatalogState extends State<MathLessonCatalog> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(response.disclaimer),
               if (math.isEmpty) ...[
                 const Text(
-                  'Content not available yet',
+                  'Chưa có nội dung phù hợp',
                   key: Key('categoryEmpty'),
                 ),
                 Text(
                   response.emptyReason == 'CHILD_OUTSIDE_PROGRAM_AGE'
-                      ? 'The service returned no eligible lessons for this child’s age.'
-                      : 'No eligible Free Math lessons were returned for this child.',
+                      ? 'Chưa có bài học phù hợp với độ tuổi của bé.'
+                      : 'Chưa có bài toán học phù hợp cho bé.',
                 ),
-                if (response.emptyReason != null) Text(response.emptyReason!),
                 OutlinedButton(
                   key: const Key('lessonsRefresh'),
                   onPressed: reload,
-                  child: const Text('Check for lessons again'),
+                  child: const Text('Tìm bài học lại'),
                 ),
               ] else
                 ...math.map(
@@ -174,7 +137,7 @@ class _MathLessonCatalogState extends State<MathLessonCatalog> {
                               lesson.title,
                               style: Theme.of(context).textTheme.titleLarge,
                             ),
-                            Text('${lesson.lessonCode} · ${lesson.access}'),
+                            Text(viState(lesson.access)),
                             Text(lesson.objective),
                           ],
                         ),
@@ -524,8 +487,8 @@ class _LearningLessonViewState extends State<LearningLessonView> {
       return const Column(
         children: [
           LearningLabel(),
-          CircularProgressIndicator(semanticsLabel: 'Loading lesson'),
-          Text('Loading lesson…'),
+          CircularProgressIndicator(semanticsLabel: 'Đang tải bài học'),
+          Text('Đang tải bài học…'),
         ],
       );
     if (detailError != null)
@@ -535,7 +498,7 @@ class _LearningLessonViewState extends State<LearningLessonView> {
           OutlinedButton(
             key: const Key('lessonRetry'),
             onPressed: loadDetail,
-            child: const Text('Try again'),
+            child: const Text('Thử lại'),
           ),
         ],
       );
@@ -565,19 +528,17 @@ class _LearningLessonViewState extends State<LearningLessonView> {
             style: Theme.of(context).textTheme.headlineSmall,
           ),
         ),
-        Text(lesson.summary.lessonCode),
         Text(lesson.summary.objective),
-        Text(lesson.disclaimer),
         if (lesson.assets.isNotEmpty && !playPrivateMedia)
           const Text(
-            'Video chưa khả dụng trên môi trường hiện tại. Không có video nào đang được phát. Các câu hỏi bên dưới dùng nội dung bài học do máy chủ trả về.',
+            'Video hiện chưa khả dụng. Bé vẫn có thể xem các câu hỏi của bài học bên dưới.',
           ),
         if (sessionError != null) LearningError(sessionError!),
         if (loadingSession)
           const Padding(
             padding: EdgeInsets.all(12),
             child: CircularProgressIndicator(
-              semanticsLabel: 'Loading session and saved answers',
+              semanticsLabel: 'Đang tải lượt học và câu trả lời',
             ),
           )
         else
@@ -590,8 +551,8 @@ class _LearningLessonViewState extends State<LearningLessonView> {
                   : null,
               child: Text(
                 session == null && viewedSessionId == null
-                    ? 'Start or revisit session'
-                    : 'Refresh session and recorded answers',
+                    ? 'Bắt đầu hoặc tiếp tục học'
+                    : 'Tải lại lượt học đã lưu',
               ),
             ),
           ),
@@ -614,21 +575,20 @@ class _LearningLessonViewState extends State<LearningLessonView> {
               },
             ),
           Text(
-            'Session: ${session!.state}',
+            'Lượt học: ${viState(session!.state)}',
             key: const Key('learningSessionState'),
           ),
           if (session!.state != 'IN_PROGRESS')
             Text(
               session!.state == 'COMPLETED'
-                  ? 'Your saved answers are read-only. Choose Replay lesson to try again.'
-                  : 'This session has ended and cannot accept answers. Go back to the lesson list.',
+                  ? 'Đây là câu trả lời đã lưu. Bé chọn Học lại để thử lượt mới nhé.'
+                  : 'Lượt học này đã kết thúc. Bé quay lại chọn bài nhé.',
             ),
           if (memory.answering(widget.childId, session!.sessionId))
             const LinearProgressIndicator(
-              semanticsLabel: 'Sending answer. Please wait.',
+              semanticsLabel: 'Đang lưu câu trả lời, bé chờ nhé.',
             ),
-          if (cues.isEmpty)
-            const Text('No interactive questions were returned.'),
+          if (cues.isEmpty) const Text('Bài này chưa có câu hỏi tương tác.'),
           ...cues
               .where(
                 (cue) =>
@@ -643,7 +603,7 @@ class _LearningLessonViewState extends State<LearningLessonView> {
             memory.completed(widget.childId, widget.lessonId).isNotEmpty) ...[
           const SizedBox(height: 16),
           const Text(
-            'Known completed sessions',
+            'Những lượt đã hoàn thành vừa xem',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           ...memory
@@ -656,12 +616,10 @@ class _LearningLessonViewState extends State<LearningLessonView> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          'Session: ${old.sessionId}',
+                          'Lượt học đã hoàn thành',
                           key: Key('history-${old.sessionId}'),
                         ),
-                        Text(
-                          'Ended: ${old.endedAt!.toUtc().toIso8601String()}',
-                        ),
+                        Text('Kết thúc: ${viTime(old.endedAt)}'),
                         OutlinedButton(
                           key: Key('readCompleted-${old.sessionId}'),
                           onPressed:
@@ -674,7 +632,7 @@ class _LearningLessonViewState extends State<LearningLessonView> {
                                   history: true,
                                 )
                               : null,
-                          child: const Text('View recorded session'),
+                          child: const Text('Xem lượt học đã lưu'),
                         ),
                       ],
                     ),
@@ -709,30 +667,30 @@ class _LearningLessonViewState extends State<LearningLessonView> {
                   Icons.check_circle_outline,
                   size: 48,
                   color: Color(0xFF246335),
-                  semanticLabel: 'Server-confirmed completion',
+                  semanticLabel: 'Đã xác nhận hoàn thành',
                 ),
               ),
               const SizedBox(height: 12),
               Semantics(
                 liveRegion: true,
                 child: Text(
-                  'Session completed',
+                  'Bé đã hoàn thành!',
                   key: Key('completionConfirmed'),
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
               ),
               Text(
-                'Session ID: ${current.sessionId}',
+                'Kết quả đã được lưu',
                 key: const Key('completedSessionIdentity'),
               ),
               Text(
-                'Ended: ${current.endedAt!.toUtc().toIso8601String()}',
+                'Kết thúc: ${viTime(current.endedAt)}',
                 key: const Key('completedEndedAt'),
               ),
               if (replayFailure != null) LearningError(replayFailure),
               if (replaying)
                 const LinearProgressIndicator(
-                  semanticsLabel: 'Starting replay',
+                  semanticsLabel: 'Đang mở lượt học mới',
                 ),
               ConstrainedBox(
                 constraints: const BoxConstraints(minHeight: 64),
@@ -741,10 +699,10 @@ class _LearningLessonViewState extends State<LearningLessonView> {
                   onPressed: operationBusy || loadingSession ? null : replay,
                   child: Text(
                     replaying
-                        ? 'Starting replay…'
+                        ? 'Đang mở lượt học mới…'
                         : continuing
-                        ? 'Continue replay session'
-                        : 'Replay lesson',
+                        ? 'Tiếp tục lượt học mới'
+                        : 'Học lại',
                   ),
                 ),
               ),
@@ -760,31 +718,25 @@ class _LearningLessonViewState extends State<LearningLessonView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'After reading the final explanation, choose Complete lesson.',
-            ),
+            const Text('Xem lời giải xong, bé chọn Hoàn thành bài học nhé.'),
             if (!allQuestionsRecorded)
-              const Text(
-                'Record an answer for each question before completing the lesson.',
-              ),
+              const Text('Bé trả lời từng câu hỏi trước khi hoàn thành nhé.'),
             if (error != null) LearningError(error),
             if (error?.code == 'SESSION_INCOMPLETE')
               const Text(
-                'The server still needs a recorded answer. Refresh the session, answer the missing question, then try Complete again.',
+                'Còn câu hỏi chưa lưu được câu trả lời. Bé tải lại và trả lời trước khi hoàn thành nhé.',
               ),
             if (error?.code == 'SESSION_NOT_ACTIVE')
-              const Text(
-                'Refresh this session to read its server state before continuing.',
-              ),
+              const Text('Bé tải lại lượt học trước khi tiếp tục nhé.'),
             if (error != null &&
                 error.code != 'SESSION_INCOMPLETE' &&
                 error.code != 'SESSION_NOT_ACTIVE')
               const Text(
-                'Completion has not been confirmed. Retry Complete or refresh the session before answering again.',
+                'Chưa xác nhận được kết quả. Bé thử hoàn thành lại hoặc tải lại lượt học nhé.',
               ),
             if (completing)
               const LinearProgressIndicator(
-                semanticsLabel: 'Confirming completion',
+                semanticsLabel: 'Đang xác nhận hoàn thành',
               ),
             ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 64),
@@ -800,10 +752,10 @@ class _LearningLessonViewState extends State<LearningLessonView> {
                     : null,
                 child: Text(
                   completing
-                      ? 'Completing…'
+                      ? 'Đang lưu kết quả…'
                       : error == null
-                      ? 'Complete lesson'
-                      : 'Retry Complete',
+                      ? 'Hoàn thành bài học'
+                      : 'Thử hoàn thành lại',
                 ),
               ),
             ),
@@ -844,7 +796,7 @@ class _LearningLessonViewState extends State<LearningLessonView> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Question ${cue.seq}',
+              'Câu hỏi ${cue.seq}',
               style: Theme.of(context).textTheme.labelLarge
                   ?.copyWith(color: MimiColors.action),
             ),
@@ -856,7 +808,7 @@ class _LearningLessonViewState extends State<LearningLessonView> {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
-            if (options.isEmpty) const Text('No answer options were returned.'),
+            if (options.isEmpty) const Text('Chưa có lựa chọn trả lời.'),
             const SizedBox(height: 12),
             MimiTileGrid(
               minimumWidth: 210,
@@ -891,7 +843,7 @@ class _LearningLessonViewState extends State<LearningLessonView> {
                                   )
                                 : null,
                             child: Text(
-                              '${chosen == option.optionId ? 'Selected: ' : ''}${option.labelText}',
+                              '${chosen == option.optionId ? 'Đã chọn: ' : ''}${option.labelText}',
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                           ),
@@ -903,12 +855,12 @@ class _LearningLessonViewState extends State<LearningLessonView> {
             ),
             if (pending != null && current.state == 'IN_PROGRESS')
               const Text(
-                'Your answer needs confirmation. Try the same choice again.',
+                'Câu trả lời chưa được xác nhận. Bé gửi lại lựa chọn vừa rồi nhé.',
               ),
             if (failure != null) LearningError(failure),
             if (blocked)
               const Text(
-                'The server rejected this event. Revisit recorded answers; the event ID will not be replaced automatically.',
+                'Chưa thể lưu lựa chọn này. Bé xem lại câu trả lời đã lưu trước khi tiếp tục nhé.',
               ),
             if (current.state == 'IN_PROGRESS')
               ConstrainedBox(
@@ -925,10 +877,10 @@ class _LearningLessonViewState extends State<LearningLessonView> {
                                   current.sessionId,
                                 )) ==
                             cue.cueId
-                        ? 'Sending answer…'
+                        ? 'Đang lưu câu trả lời…'
                         : pending != null
-                        ? 'Retry same answer'
-                        : 'Submit answer',
+                        ? 'Gửi lại lựa chọn này'
+                        : 'Gửi câu trả lời',
                   ),
                 ),
               ),
@@ -944,11 +896,11 @@ class _LearningLessonViewState extends State<LearningLessonView> {
                     children: [
                       Text(
                         value.isCorrect == true
-                            ? 'That is right. Let’s look at the explanation.'
-                            : 'Your answer is saved. Let’s look at the explanation.',
+                            ? 'Đúng rồi! Mình cùng xem lời giải nhé.'
+                            : 'Đã lưu câu trả lời. Mình cùng xem lời giải nhé.',
                       ),
                       Text(
-                        'Explanation (attempt ${value.attemptNo}): ${value.feedbackText}',
+                        'Lời giải (lần ${value.attemptNo}): ${value.feedbackText}',
                         key: Key('feedback-${cue.cueId}'),
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
@@ -958,12 +910,12 @@ class _LearningLessonViewState extends State<LearningLessonView> {
               ),
             ...recorded.map(
               (answer) => Text(
-                'Recorded attempt ${answer.attemptNo}: '
+                'Lần trả lời ${answer.attemptNo}: '
                 '${options.firstWhere((option) => option.optionId == answer.optionId).labelText} — '
                 '${switch (answer.isCorrect) {
-                  true => 'Correct',
-                  false => 'Incorrect',
-                  null => 'Feedback unavailable',
+                  true => 'Đúng',
+                  false => 'Chưa đúng',
+                  null => 'Chưa có nhận xét',
                 }}',
                 key: Key('recorded-${cue.cueId}-${answer.attemptNo}'),
               ),

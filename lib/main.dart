@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'child_content.dart';
 import 'child_media_access.dart';
@@ -27,8 +28,11 @@ import 'po/mobile_services.dart';
 import 'po/resend_button.dart';
 import 'po/po_boot.dart';
 import 'po/live_child_home.dart';
+import 'user_messages.dart';
+import 'account_availability.dart';
 
 export 'api_failure.dart';
+export 'account_availability.dart' show ApprovedLegalDocument;
 
 void main() {
   registerMimiFontLicenses();
@@ -44,7 +48,7 @@ abstract class MimiGoApi implements LearningApi {
   });
   Future<ParentWorkspace> learningWorkspace();
 
-  /// Discards the local bearer session only. No server logout/revocation exists.
+  /// Discards local credentials. Server logout uses the session coordinator.
   void clearSession();
   Future<OnboardingReference> onboardingReference();
   Future<RegistrationResult> register(Registration value);
@@ -221,10 +225,15 @@ class TermsReference {
     this.code, {
     this.contentHash,
     this.effectiveFrom,
+    this.document,
   });
   final String id, code;
   final String? contentHash;
   final DateTime? effectiveFrom;
+  final ApprovedLegalDocument? document;
+  bool get hasApprovedDocument =>
+      !AccountAvailability.isPlaceholder(code) &&
+      (document?.matches(id, contentHash) ?? false);
 }
 
 class TermsAcceptance {
@@ -253,11 +262,17 @@ class Notice {
     this.contentHash,
     this.effectiveFrom,
     this.isApprovedForRealUsers,
+    this.document,
   });
   final String purposeCode, versionId, label;
   final String? contentHash;
   final DateTime? effectiveFrom;
   final bool? isApprovedForRealUsers;
+  final ApprovedLegalDocument? document;
+  bool get hasApprovedDocument =>
+      isApprovedForRealUsers == true &&
+      !AccountAvailability.isPlaceholder(label) &&
+      (document?.matches(versionId, contentHash) ?? false);
 }
 
 class OnboardingReference {
@@ -1870,24 +1885,22 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
       confirmed = await showDialog<bool>(
         context: navigatorKey.currentState!.overlay!.context,
         builder: (context) => AlertDialog(
-          title: const Text('Return to account entry?'),
+          title: const Text('Về màn hình đăng nhập?'),
           content: const Text(
-            'A parent will need to sign in again to open the Parent Area. Saved profiles will stay available.',
+            'Ba mẹ cần đăng nhập lại để mở góc phụ huynh. Các hồ sơ đã lưu vẫn được giữ lại.',
           ),
           actions: [
             TextButton(
               key: const Key('cancelAccountEntry'),
               onPressed: () => Navigator.pop(context, false),
               child: Text(
-                page == Page.parent
-                    ? 'Stay in Parent Home'
-                    : 'Stay in Child Mode',
+                page == Page.parent ? 'Ở lại góc phụ huynh' : 'Ở lại cùng bé',
               ),
             ),
             FilledButton(
               key: const Key('confirmAccountEntry'),
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Return to account entry'),
+              child: const Text('Về màn hình đăng nhập'),
             ),
           ],
         ),
@@ -2177,6 +2190,9 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
   );
   @override
   Widget build(BuildContext context) => MaterialApp(
+    locale: const Locale('vi'),
+    supportedLocales: const [Locale('vi')],
+    localizationsDelegates: GlobalMaterialLocalizations.delegates,
     scaffoldMessengerKey: messengerKey,
     navigatorKey: navigatorKey,
     debugShowCheckedModeBanner: false,
@@ -2205,24 +2221,26 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
         body: SafeArea(
           child: switch (safePage) {
             Page.sessionRecovery => Frame(
-              title: 'Validate Parent session',
+              title: 'Xác nhận phiên đăng nhập',
               children: [
                 GateError(sessionRecoveryError),
                 FilledButton(
                   key: const Key('retryParentSession'),
                   onPressed: recoverGateParent,
-                  child: const Text('Retry session validation'),
+                  child: const Text('Thử xác nhận lại'),
                 ),
                 TextButton(
                   onPressed: returnToAccountEntry,
-                  child: const Text('Sign out and return to account entry'),
+                  child: const Text('Đăng xuất và về màn hình đăng nhập'),
                 ),
               ],
             ),
             Page.restoringSession => const Frame(
-              title: 'Checking device session',
+              title: 'Đang kiểm tra đăng nhập',
               children: [
-                LinearProgressIndicator(semanticsLabel: 'Validating session'),
+                LinearProgressIndicator(
+                  semanticsLabel: 'Đang xác nhận đăng nhập',
+                ),
               ],
             ),
             Page.gatePin => GatePinScreen(
@@ -2303,6 +2321,7 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
               done: signedIn,
             ),
             Page.privacy => Privacy(
+              fixture: config.mode == ApiMode.fixture,
               attempt: attempt,
               begin: attemptStart,
               parentHome: goParentHome,
@@ -2381,7 +2400,7 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
               ],
             ),
             Page.attemptResume => Frame(
-              title: 'Check pending child onboarding',
+              title: 'Kiểm tra hồ sơ đang tạo',
               children: [
                 OnboardingAttemptResume(
                   api: api,
@@ -2448,7 +2467,7 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
                   child: OutlinedButton(
                     key: const Key('categoryBack'),
                     onPressed: () => setState(() => page = Page.child),
-                    child: const Text('Back to Child Mode'),
+                    child: const Text('Về không gian của bé'),
                   ),
                 ),
               ],
@@ -2459,7 +2478,7 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
                 if (config.mode == ApiMode.fixture)
                   const CircleDemo()
                 else
-                  const Text('Content not available yet'),
+                  const Text('Chưa có nội dung phù hợp'),
                 const SizedBox(height: 16),
                 OutlinedButton(
                   key: const Key('demoBack'),
@@ -2469,14 +2488,14 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
                 OutlinedButton(
                   key: const Key('demoHome'),
                   onPressed: () => setState(() => page = Page.child),
-                  child: const Text('Back to Child Mode'),
+                  child: const Text('Về không gian của bé'),
                 ),
               ],
             ),
             Page.explorer => Frame(
               childMode: true,
               wide: true,
-              title: 'Curriculum Explorer',
+              title: 'Khám phá bài học',
               children: [
                 CurriculumExplorer(
                   model: curriculum!,
@@ -2501,10 +2520,10 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
                       onPressed: childBack,
                       child: Text(
                         curriculum!.topic != null
-                            ? 'Back to topics'
+                            ? 'Về danh sách chủ đề'
                             : curriculum!.domain != null
-                            ? 'Back to domains'
-                            : 'Back to Child Mode',
+                            ? 'Về các lĩnh vực'
+                            : 'Về không gian của bé',
                       ),
                     ),
                   ),
@@ -2512,7 +2531,7 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
                 TextButton(
                   key: const Key('explorerHome'),
                   onPressed: () => setState(() => page = Page.child),
-                  child: const Text('Back to Child Mode'),
+                  child: const Text('Về không gian của bé'),
                 ),
               ],
             ),
@@ -2538,8 +2557,8 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
                     onPressed: childBack,
                     child: Text(
                       learningFromExplorer
-                          ? 'Back to curriculum'
-                          : 'Back to Math',
+                          ? 'Về danh sách bài học'
+                          : 'Về góc toán học',
                     ),
                   ),
                 ),
@@ -2548,15 +2567,16 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
                   child: OutlinedButton(
                     key: const Key('lessonHome'),
                     onPressed: () => setState(() => page = Page.child),
-                    child: const Text('Back to Child Mode'),
+                    child: const Text('Về không gian của bé'),
                   ),
                 ),
               ],
             ),
             Page.terms => Frame(
-              title: 'Review current account Terms',
+              title: 'Xem điều khoản hiện hành',
               children: [
                 TermsReacceptance(
+                  fixture: config.mode == ApiMode.fixture,
                   api: api,
                   parentId: authenticatedParent!.parentId,
                   accepted: (parent) {
@@ -2757,16 +2777,8 @@ class ErrorText extends StatelessWidget {
   const ErrorText(this.value, {super.key});
   final ApiFailure? value;
   @override
-  Widget build(BuildContext c) => value == null
-      ? const SizedBox.shrink()
-      : Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Text(
-            errorText(value!),
-            key: const Key('safeError'),
-            style: TextStyle(color: Theme.of(c).colorScheme.error),
-          ),
-        );
+  Widget build(BuildContext c) =>
+      UserError(value, messageKey: const Key('safeError'));
 }
 
 class Welcome extends StatelessWidget {
@@ -2793,11 +2805,9 @@ class Welcome extends StatelessWidget {
         subtitle: 'Học qua những điều bé yêu thích.',
       ),
       if (live)
-        const PoCard(
-          color: PoPalette.peach,
-          child: Text(
-            'Đang kết nối môi trường staging. Đăng ký có thể giới hạn theo email được mời. Chỉ dùng hồ sơ thử nghiệm được cho phép trên môi trường này.',
-          ),
+        const Text(
+          'Đăng ký có thể đang giới hạn theo thư mời.',
+          style: TextStyle(fontSize: 13),
         ),
       const Text(
         'Một gia đình, nhiều hành trình riêng. Ba mẹ quản lý, bé tự do khám phá trong không gian học của mình.',
@@ -2839,7 +2849,7 @@ class Welcome extends StatelessWidget {
       const SizedBox(height: 12),
       if (busy)
         const LinearProgressIndicator(
-          semanticsLabel: 'Loading account reference',
+          semanticsLabel: 'Đang tải thông tin đăng ký',
         ),
       OnboardingError(error),
       const Divider(height: 32),
@@ -2856,7 +2866,7 @@ class Welcome extends StatelessWidget {
         children: [
           Chip(label: Text('Toán học')),
           Chip(label: Text('Ngôn ngữ')),
-          Chip(label: Text('English Companion')),
+          Chip(label: Text('Tiếng Anh đồng hành')),
           Chip(label: Text('Kỹ năng sống')),
           Chip(label: Text('Logic')),
           Chip(label: Text('Khám phá')),
@@ -2949,9 +2959,7 @@ class _SignInState extends State<SignIn> {
     title: 'Đăng nhập dành cho ba mẹ',
     back: busy ? null : widget.back,
     children: [
-      const Text(
-        'Dùng tài khoản đã xác minh. Staging có thể giới hạn email đăng ký; OTP được gửi qua email khi dịch vụ hỗ trợ.',
-      ),
+      const Text('Ba mẹ đăng nhập bằng tài khoản đã xác minh email nhé.'),
       const SizedBox(height: 16),
       Form(
         key: formKey,
@@ -2970,7 +2978,7 @@ class _SignInState extends State<SignIn> {
                   RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
                       .hasMatch(value?.trim() ?? '')
                   ? null
-                  : 'Enter a valid email address.',
+                  : 'Vui lòng nhập địa chỉ email hợp lệ.',
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -2983,7 +2991,7 @@ class _SignInState extends State<SignIn> {
               textInputAction: TextInputAction.done,
               decoration: const InputDecoration(labelText: 'Mật khẩu'),
               validator: (value) => value == null || value.isEmpty
-                  ? 'Enter your password.'
+                  ? 'Ba mẹ nhập mật khẩu nhé.'
                   : null,
               onFieldSubmitted: (_) => submit(),
             ),
@@ -2993,7 +3001,7 @@ class _SignInState extends State<SignIn> {
               ErrorText(error),
             if (retrySeconds > 0)
               Text(
-                'Try again in $retrySeconds seconds.',
+                'Vui lòng thử lại sau $retrySeconds giây.',
                 key: const Key('loginRetryAfter'),
               ),
             if (error?.code == 'EMAIL_NOT_VERIFIED' && widget.verify != null)
@@ -3020,7 +3028,7 @@ class _SignInState extends State<SignIn> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                           SizedBox(width: 12),
-                          Text('Signing in…'),
+                          Text('Đang đăng nhập…'),
                         ],
                       )
                     : const Text('Đăng nhập'),
@@ -3034,9 +3042,7 @@ class _SignInState extends State<SignIn> {
           context: context,
           builder: (c) => AlertDialog(
             title: const Text('Quên mật khẩu?'),
-            content: const Text(
-              'Dịch vụ khôi phục mật khẩu chưa được mở trên staging. Không có email khôi phục nào được gửi. Vui lòng liên hệ người vận hành thử nghiệm.',
-            ),
+            content: const Text(AccountAvailability.passwordRecoveryMessage),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(c),
@@ -3101,7 +3107,17 @@ class _RegisterState extends State<Register> {
   }
 
   Future<void> submit() async {
-    if (busy || !formKey.currentState!.validate() || versionChanged) return;
+    if (busy || versionChanged) return;
+    if (!widget.fixture && current.terms?.hasApprovedDocument != true) {
+      setState(
+        () => error = const ApiFailure(
+          'Approved legal document unavailable.',
+          code: 'TERMS_DOCUMENT_UNAVAILABLE',
+        ),
+      );
+      return;
+    }
+    if (formKey.currentState?.validate() != true) return;
     final id = current.terms?.id;
     if (id == null || !terms) {
       setState(
@@ -3166,133 +3182,153 @@ class _RegisterState extends State<Register> {
     title: 'Tạo tài khoản phụ huynh',
     back: busy ? null : widget.back,
     children: [
-      Text(
-        'Terms: ${current.terms?.code ?? 'unavailable'}. Terms are separate from child consent.',
-      ),
-      Text(current.disclaimer),
-      Text(
-        widget.live
-            ? 'Staging thử nghiệm: chỉ email được cho phép có thể đăng ký. Mã xác minh sẽ được gửi qua dịch vụ email khi khả dụng. Thông tin điều khoản chỉ là metadata tổng hợp, không phải văn bản pháp lý đầy đủ hay chứng minh giám hộ.'
-            : 'R0 synthetic accounts only. The API supplies mock Terms version metadata, not a full legal document. No email is sent and this does not prove guardian authority.',
-      ),
-      if (current.terms?.effectiveFrom != null)
+      if (!widget.fixture && current.terms?.hasApprovedDocument != true)
+        const Text(
+          AccountAvailability.termsUnavailable,
+          key: Key('registrationTermsUnavailable'),
+        ),
+      if (current.terms?.hasApprovedDocument == true) ...[
         Text(
-          'Effective: ${current.terms!.effectiveFrom!.toUtc().toIso8601String()}',
+          current.terms!.document!.title,
+          style: Theme.of(c).textTheme.titleLarge,
         ),
+        Text(current.terms!.document!.body),
+      ],
       if (busy)
-        const LinearProgressIndicator(
-          semanticsLabel: 'Creating parent account',
-        ),
+        const LinearProgressIndicator(semanticsLabel: 'Đang tạo tài khoản'),
       const SizedBox(height: 12),
-      Form(
-        key: formKey,
-        child: Column(
-          children: [
-            TextFormField(
-              key: const Key('registerEmail'),
-              controller: email,
-              enabled: !busy,
-              keyboardType: TextInputType.emailAddress,
-              autocorrect: false,
-              validator: (value) =>
-                  RegExp(
-                    widget.live
-                        ? r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
-                        : r'^[^\s@]+@example\.test$',
-                  ).hasMatch(value?.trim() ?? '')
-                  ? null
-                  : widget.live
-                  ? 'Kiểm tra định dạng email.'
-                  : 'Use a synthetic email ending in @example.test.',
-              decoration: InputDecoration(
-                labelText: widget.live
-                    ? 'Email phụ huynh'
-                    : 'Parent email (@example.test in R0)',
-                prefixIcon: Icon(Icons.mail_outline),
+      if (widget.fixture || current.terms?.hasApprovedDocument == true)
+        Form(
+          key: formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                key: const Key('registerEmail'),
+                controller: email,
+                enabled:
+                    !busy &&
+                    (widget.fixture ||
+                        current.terms?.hasApprovedDocument == true),
+                keyboardType: TextInputType.emailAddress,
+                autocorrect: false,
+                validator: (value) =>
+                    RegExp(
+                      widget.live
+                          ? r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+                          : r'^[^\s@]+@example\.test$',
+                    ).hasMatch(value?.trim() ?? '')
+                    ? null
+                    : widget.live
+                    ? 'Kiểm tra định dạng email.'
+                    : 'Use a synthetic email ending in @example.test.',
+                decoration: InputDecoration(
+                  labelText: widget.live
+                      ? 'Email phụ huynh'
+                      : 'Parent email (@example.test in R0)',
+                  prefixIcon: Icon(Icons.mail_outline),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              key: const Key('registerDisplayName'),
-              controller: displayName,
-              enabled: !busy,
-              validator: (value) =>
-                  (value?.trim().isEmpty ?? true) || value!.trim().length > 80
-                  ? 'Enter a display name of 1–80 characters.'
-                  : null,
-              decoration: const InputDecoration(
-                labelText: 'Parent display name',
-                prefixIcon: Icon(Icons.person_outline),
+              const SizedBox(height: 12),
+              TextFormField(
+                key: const Key('registerDisplayName'),
+                controller: displayName,
+                enabled:
+                    !busy &&
+                    (widget.fixture ||
+                        current.terms?.hasApprovedDocument == true),
+                validator: (value) =>
+                    (value?.trim().isEmpty ?? true) || value!.trim().length > 80
+                    ? 'Tên hiển thị cần có từ 1 đến 80 ký tự.'
+                    : null,
+                decoration: const InputDecoration(
+                  labelText: 'Tên hiển thị của ba mẹ',
+                  prefixIcon: Icon(Icons.person_outline),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              key: const Key('registerPassword'),
-              controller: password,
-              enabled: !busy,
-              obscureText: true,
-              textInputAction: TextInputAction.done,
-              onFieldSubmitted: (_) => FocusScope.of(c).unfocus(),
-              enableSuggestions: false,
-              autocorrect: false,
-              validator: (value) =>
-                  (value?.length ?? 0) < 10 || (value?.length ?? 0) > 128
-                  ? 'Use 10–128 characters.'
-                  : null,
-              decoration: const InputDecoration(
-                labelText: 'Password (10–128 characters)',
-                prefixIcon: Icon(Icons.lock_outline),
+              const SizedBox(height: 12),
+              TextFormField(
+                key: const Key('registerPassword'),
+                controller: password,
+                enabled:
+                    !busy &&
+                    (widget.fixture ||
+                        current.terms?.hasApprovedDocument == true),
+                obscureText: true,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => FocusScope.of(c).unfocus(),
+                enableSuggestions: false,
+                autocorrect: false,
+                validator: (value) =>
+                    (value?.length ?? 0) < 10 || (value?.length ?? 0) > 128
+                    ? 'Mật khẩu cần có từ 10 đến 128 ký tự.'
+                    : null,
+                decoration: const InputDecoration(
+                  labelText: 'Mật khẩu (10–128 ký tự)',
+                  prefixIcon: Icon(Icons.lock_outline),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              key: const Key('registerPasswordConfirmation'),
-              controller: confirmation,
-              enabled: !busy,
-              obscureText: true,
-              enableSuggestions: false,
-              autocorrect: false,
-              validator: (value) =>
-                  value != password.text || (value?.isEmpty ?? true)
-                  ? 'Enter the same password again.'
-                  : null,
-              decoration: const InputDecoration(
-                labelText: 'Confirm password',
-                prefixIcon: Icon(Icons.lock_outline),
+              const SizedBox(height: 12),
+              TextFormField(
+                key: const Key('registerPasswordConfirmation'),
+                controller: confirmation,
+                enabled:
+                    !busy &&
+                    (widget.fixture ||
+                        current.terms?.hasApprovedDocument == true),
+                obscureText: true,
+                enableSuggestions: false,
+                autocorrect: false,
+                validator: (value) =>
+                    value != password.text || (value?.isEmpty ?? true)
+                    ? 'Ba mẹ nhập lại đúng mật khẩu nhé.'
+                    : null,
+                decoration: const InputDecoration(
+                  labelText: 'Nhập lại mật khẩu',
+                  prefixIcon: Icon(Icons.lock_outline),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       CheckboxListTile(
         key: const Key('termsCheckbox'),
         contentPadding: EdgeInsets.zero,
         value: terms,
-        onChanged: busy || versionChanged || current.terms == null
+        onChanged:
+            busy ||
+                versionChanged ||
+                current.terms == null ||
+                (!widget.fixture && !current.terms!.hasApprovedDocument)
             ? null
             : (v) => setState(() => terms = v ?? false),
-        title: const Text('I accept the current R0 Terms'),
+        title: const Text('Tôi đã đọc và đồng ý với điều khoản sử dụng'),
       ),
       OnboardingError(error),
       if (widget.reloadReference != null)
         OutlinedButton(
           key: const Key('reloadRegistrationTerms'),
           onPressed: busy ? null : reload,
-          child: const Text('Reload current account Terms'),
+          child: const Text('Tải lại điều khoản'),
         ),
       ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 64),
         child: FilledButton(
           key: const Key('registerSubmit'),
-          onPressed: busy || versionChanged ? null : submit,
-          child: Text(busy ? 'Creating…' : 'Continue to email verification'),
+          onPressed:
+              busy ||
+                  versionChanged ||
+                  (!widget.fixture &&
+                      current.terms?.hasApprovedDocument != true)
+              ? null
+              : submit,
+          child: Text(busy ? 'Đang lưu…' : 'Tiếp tục xác minh email'),
         ),
       ),
       if (widget.signIn != null)
         TextButton(
           key: const Key('registrationSignIn'),
           onPressed: busy ? null : widget.signIn,
-          child: const Text('Already registered? Return to sign-in'),
+          child: const Text('Đã có tài khoản? Đăng nhập'),
         ),
     ],
   );
@@ -3339,16 +3375,13 @@ class _OtpState extends State<Otp> {
       title: model.verified ? 'Email đã được xác minh' : 'Nhập mã xác nhận',
       back: model.busy ? null : widget.back,
       children: [
-        Text(
-          widget.mockOtp == null
-              ? 'Kiểm tra email để lấy mã 6 chữ số. Nếu dịch vụ chưa gửi được, hãy thử gửi lại hoặc liên hệ người vận hành. Không có mã mặc định.'
-              : 'Development mock OTP returned by Backend: ${widget.mockOtp}. No email was sent.',
+        const Text(
+          'Ba mẹ kiểm tra email và nhập mã xác nhận gồm 6 chữ số nhé.',
         ),
-        Text('Synthetic account: ${widget.email}'),
+        Text('Email: ${widget.email}'),
         if (widget.registration != null) ...[
-          Text(widget.registration!.notice),
           Text(
-            'Code expiry returned by service: ${widget.registration!.otpExpiresAt.toUtc().toIso8601String()}',
+            'Mã có hiệu lực đến ${viTime(widget.registration!.otpExpiresAt)}',
           ),
         ],
         const Text(
@@ -3361,11 +3394,11 @@ class _OtpState extends State<Otp> {
           ),
         if (model.busy)
           const LinearProgressIndicator(
-            semanticsLabel: 'Verifying and signing in',
+            semanticsLabel: 'Đang xác minh và đăng nhập',
           ),
         if (model.verified)
           const Text(
-            'Email is verified. Retry sign-in without submitting the code again.',
+            'Email đã được xác minh. Ba mẹ có thể thử đăng nhập lại mà không cần nhập mã nữa.',
           ),
         TextField(
           key: const Key('otpCode'),
@@ -3383,7 +3416,7 @@ class _OtpState extends State<Otp> {
         ),
         OnboardingError(model.error),
         if (model.retrySeconds > 0)
-          Text('Try again in ${model.retrySeconds} seconds.'),
+          Text('Vui lòng thử lại sau ${model.retrySeconds} giây.'),
         ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 64),
           child: FilledButton(
@@ -3391,9 +3424,9 @@ class _OtpState extends State<Otp> {
             onPressed: model.busy || model.retrySeconds > 0 ? null : submit,
             child: Text(
               model.busy
-                  ? 'Checking…'
+                  ? 'Đang kiểm tra…'
                   : model.verified
-                  ? 'Retry parent sign-in'
+                  ? 'Thử đăng nhập lại'
                   : 'Xác nhận và đăng nhập',
             ),
           ),
@@ -3412,12 +3445,14 @@ class Privacy extends StatefulWidget {
     required this.next,
     this.parentHome,
     this.checkAttempt,
+    this.fixture = false,
   });
   final OnboardingAttempt? attempt;
   final Future<void> Function() begin;
   final VoidCallback declined, next;
   final VoidCallback? parentHome;
   final VoidCallback? checkAttempt;
+  final bool fixture;
   @override
   State<Privacy> createState() => _PrivacyState();
 }
@@ -3465,19 +3500,25 @@ class _PrivacyState extends State<Privacy> {
         guardian &&
         notices.isNotEmpty &&
         !busy &&
-        notices.every((n) => choices[n.purposeCode] == true);
+        notices.every(
+          (n) =>
+              choices[n.purposeCode] == true &&
+              (widget.fixture || n.hasApprovedDocument),
+        );
     return Frame(
-      title: 'Protect your child’s information',
+      title: 'Bảo vệ thông tin của bé',
       children: [
         const Text(
-          'No child alias or date of birth is sent before an authenticated Parent starts a PII-free attempt and actively affirms each displayed core purpose.',
+          'Ba mẹ xem thông tin và lựa chọn từng mục đích trước khi nhập hồ sơ bé.',
         ),
-        const Text(
-          'R0 SYNTHETIC NOTICE · These are mock purpose/version records, not a production legal consent flow. Self-declaration and email verification do not establish guardian authority. No full legal notice text is supplied by this API.',
-        ),
+        if (!widget.fixture && notices.any((n) => !n.hasApprovedDocument))
+          const Text(
+            'Thông báo về việc sử dụng thông tin của bé chưa có nội dung được phê duyệt. Ba mẹ chưa thể đồng ý hoặc nhập hồ sơ lúc này.',
+            key: Key('noticeDocumentUnavailable'),
+          ),
         if (busy)
           const LinearProgressIndicator(
-            semanticsLabel: 'Loading independent privacy notices',
+            semanticsLabel: 'Đang tải thông báo về thông tin của bé',
           ),
         if (widget.attempt == null)
           ConstrainedBox(
@@ -3486,28 +3527,31 @@ class _PrivacyState extends State<Privacy> {
               key: const Key('loadAttempt'),
               onPressed: busy ? null : load,
               child: Text(
-                busy
-                    ? 'Loading consent notices…'
-                    : 'Load current consent notices',
+                busy ? 'Đang tải thông báo…' : 'Xem thông báo hiện hành',
               ),
             ),
           )
         else ...[
-          Text('Attempt expires: ${widget.attempt!.expiresAt.toLocal()}'),
+          Text(
+            'Lượt xem xét có hiệu lực đến ${viTime(widget.attempt!.expiresAt)}',
+          ),
           if (notices.isEmpty)
             const Text(
-              'No required mock purpose notices were returned. Child profile input is locked. Reload notices or return to Parent Home.',
+              'Chưa có thông báo hợp lệ để xem xét. Ba mẹ vui lòng tải lại hoặc quay về góc phụ huynh.',
               key: Key('privacyNoticesEmpty'),
             ),
           CheckboxListTile(
             key: const Key('guardianAssertion'),
             contentPadding: EdgeInsets.zero,
             value: guardian,
-            onChanged: busy
+            onChanged:
+                busy ||
+                    (!widget.fixture &&
+                        notices.any((n) => !n.hasApprovedDocument))
                 ? null
                 : (v) => setState(() => guardian = v ?? false),
             title: const Text(
-              'I state I am a parent or authorised representative.',
+              'Tôi là phụ huynh hoặc người đại diện được ủy quyền.',
             ),
           ),
           ...notices.map(
@@ -3524,24 +3568,22 @@ class _PrivacyState extends State<Privacy> {
                           _purposeDescription(n.purposeCode),
                           style: Theme.of(c).textTheme.titleMedium,
                         ),
-                        const Text(
-                          'Synthetic development only · not approved for real children.',
-                        ),
+                        if (n.hasApprovedDocument) Text(n.document!.body),
                         ExpansionTile(
                           tilePadding: EdgeInsets.zero,
-                          title: const Text(
-                            'Thông tin phiên bản / Technical details',
-                          ),
+                          title: const Text('Chi tiết kỹ thuật'),
                           children: [
                             SelectableText(
-                              'Purpose: ${n.purposeCode}\nNotice version: ${n.label} · ${n.versionId}',
+                              'Mã mục đích: ${n.purposeCode}\nPhiên bản: ${n.label} · ${n.versionId}',
                             ),
                             if (n.effectiveFrom != null)
                               SelectableText(
-                                'Effective: ${n.effectiveFrom!.toUtc().toIso8601String()}',
+                                'Hiệu lực: ${viTime(n.effectiveFrom)}',
                               ),
                             if (n.contentHash != null)
-                              SelectableText('Content hash: ${n.contentHash}'),
+                              SelectableText(
+                                'Mã kiểm tra nội dung: ${n.contentHash}',
+                              ),
                           ],
                         ),
                       ],
@@ -3551,7 +3593,8 @@ class _PrivacyState extends State<Privacy> {
                     key: Key('consent-${n.purposeCode}'),
                     contentPadding: EdgeInsets.zero,
                     value: choices[n.purposeCode] ?? false,
-                    onChanged: busy
+                    onChanged:
+                        busy || (!widget.fixture && !n.hasApprovedDocument)
                         ? null
                         : (v) => setState(
                             () => choices[n.purposeCode] = v ?? false,
@@ -3564,9 +3607,7 @@ class _PrivacyState extends State<Privacy> {
               ),
             ),
           ),
-          const Text(
-            'Choices are unchecked by default and apply only to this new child.',
-          ),
+          const Text('Mỗi bé cần được ba mẹ xem xét và lựa chọn riêng.'),
           ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 64),
             child: FilledButton(
@@ -3588,7 +3629,7 @@ class _PrivacyState extends State<Privacy> {
                       }
                     }
                   : null,
-              child: const Text('Continue to child profile'),
+              child: const Text('Tiếp tục nhập hồ sơ bé'),
             ),
           ),
         ],
@@ -3596,25 +3637,25 @@ class _PrivacyState extends State<Privacy> {
           OutlinedButton(
             key: const Key('reloadPrivacyNotices'),
             onPressed: busy ? null : load,
-            child: const Text('Restart with fresh privacy notices'),
+            child: const Text('Tải lại và xem xét từ đầu'),
           ),
         if (widget.attempt != null && widget.checkAttempt != null)
           OutlinedButton(
             key: const Key('checkPrivacyAttempt'),
             onPressed: busy ? null : widget.checkAttempt,
-            child: const Text('Check or resume this attempt'),
+            child: const Text('Kiểm tra lượt tạo hồ sơ'),
           ),
         OnboardingError(error),
         TextButton(
           key: const Key('privacyDecline'),
           onPressed: busy ? null : widget.declined,
-          child: const Text('I do not agree'),
+          child: const Text('Tôi không đồng ý'),
         ),
         if (widget.parentHome != null)
           TextButton(
             key: const Key('privacyParentHome'),
             onPressed: busy ? null : widget.parentHome,
-            child: const Text('Cancel onboarding and return to Parent Home'),
+            child: const Text('Hủy và về góc phụ huynh'),
           ),
       ],
     );
@@ -3678,19 +3719,17 @@ class _ChildInputState extends State<ChildInput> {
 
   @override
   Widget build(BuildContext c) => Frame(
-    title: 'Create child profile',
+    title: 'Tạo hồ sơ bé',
     back: widget.back,
     children: [
-      const Text('Available only after per-attempt consent.'),
       const Text(
-        'Use synthetic information only. A profile may be outside program age; the service determines eligibility after creation. This does not grant lesson access.',
+        'Chỉ tiếp tục sau khi ba mẹ đã xem và lựa chọn các mục đích sử dụng thông tin.',
       ),
+      const Text('Độ tuổi và quyền học sẽ được xác nhận sau khi lưu hồ sơ.'),
       TextField(
         key: const Key('childName'),
         controller: alias,
-        decoration: const InputDecoration(
-          labelText: 'Synthetic child alias (SYN-…)',
-        ),
+        decoration: const InputDecoration(labelText: 'Tên gọi của bé'),
       ),
       const SizedBox(height: 12),
       TextField(
@@ -3700,21 +3739,18 @@ class _ChildInputState extends State<ChildInput> {
         textInputAction: TextInputAction.done,
         onSubmitted: (_) => FocusScope.of(c).unfocus(),
         decoration: const InputDecoration(
-          labelText: 'Date of birth * (YYYY-MM-DD)',
+          labelText: 'Ngày sinh (năm-tháng-ngày)',
         ),
       ),
       const SizedBox(height: 12),
-      Text(
-        'Choose a predefined avatar',
-        style: Theme.of(c).textTheme.titleMedium,
-      ),
+      Text('Chọn ảnh đại diện', style: Theme.of(c).textTheme.titleMedium),
       Wrap(
         spacing: 12,
         runSpacing: 12,
         children: [
           for (final option in const [
-            ('bear-blue', 'Blue bear', Icons.pets_outlined),
-            ('bee-yellow', 'Sunny bee', Icons.emoji_nature_outlined),
+            ('bear-blue', 'Gấu xanh', Icons.pets_outlined),
+            ('bee-yellow', 'Ong vàng', Icons.emoji_nature_outlined),
           ])
             ChoiceChip(
               key: Key('avatar-${option.$1}'),
@@ -3729,15 +3765,13 @@ class _ChildInputState extends State<ChildInput> {
         ],
       ),
       ErrorText(error),
-      const Text(
-        'Only the selected predefined avatar key is sent. No photo upload or external media is used.',
-      ),
+      const Text('Chọn một ảnh có sẵn cho bé.'),
       ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 64),
         child: FilledButton(
           key: const Key('childContinue'),
           onPressed: submit,
-          child: const Text('Review profile'),
+          child: const Text('Xem lại hồ sơ'),
         ),
       ),
     ],
@@ -3790,34 +3824,32 @@ class _ReviewState extends State<Review> {
   Widget build(BuildContext c) => AnimatedBuilder(
     animation: widget.model,
     builder: (c, _) => Frame(
-      title: 'Review profile',
+      title: 'Xem lại hồ sơ',
       back: widget.model.canEdit && !leaving ? widget.back : null,
       children: [
         ListTile(
-          title: const Text('Synthetic alias'),
+          title: const Text('Tên gọi'),
           subtitle: Text(widget.draft.alias),
         ),
         ListTile(
-          title: const Text('Date of birth'),
+          title: const Text('Ngày sinh'),
           subtitle: Text(
-            '${dateText(widget.draft.dob)} · the service will return age and eligibility',
+            '${viDate(widget.draft.dob)} · độ tuổi và quyền học sẽ được xác nhận khi lưu',
           ),
         ),
-        Text('Predefined avatar: ${widget.draft.avatar}'),
-        const Text('Reviewed independently for this new child:'),
+        const Text('Ảnh đại diện đã chọn'),
+        const Text('Lựa chọn riêng cho hồ sơ này:'),
         for (final notice in widget.attempt.notices)
-          Text('${notice.purposeCode} · ${notice.label} · ${notice.versionId}'),
+          Text(viPurpose(notice.purposeCode)),
         if (widget.model.busy)
-          const LinearProgressIndicator(
-            semanticsLabel: 'Creating synthetic child profile',
-          ),
+          const LinearProgressIndicator(semanticsLabel: 'Đang tạo hồ sơ bé'),
         const Text(
-          'The same idempotency key and exact payload are retained for a safe retry after a connectivity failure.',
+          'Nếu mất kết nối, ba mẹ có thể gửi lại thông tin đã xem xét.',
         ),
         OnboardingError(widget.model.error),
         if (widget.model.sent && widget.model.result == null)
           const Text(
-            'The request is locked after submission. Retry the identical request if its outcome is unknown; do not change the profile or create it again. Returning to account entry discards this in-memory request; check Parent Home after signing in before adding another child.',
+            'Yêu cầu đã được gửi. Nếu chưa rõ kết quả, hãy kiểm tra hồ sơ hoặc gửi lại cùng thông tin để tránh tạo trùng.',
           ),
         ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 64),
@@ -3826,10 +3858,10 @@ class _ReviewState extends State<Review> {
             onPressed: widget.model.canSubmit && !leaving ? submit : null,
             child: Text(
               widget.model.busy
-                  ? 'Creating…'
+                  ? 'Đang lưu…'
                   : widget.model.sent
-                  ? 'Retry identical request'
-                  : 'Create synthetic profile',
+                  ? 'Gửi lại cùng thông tin'
+                  : 'Tạo hồ sơ bé',
             ),
           ),
         ),
@@ -3837,13 +3869,13 @@ class _ReviewState extends State<Review> {
           OutlinedButton(
             key: const Key('restartChildPrivacy'),
             onPressed: widget.model.busy || leaving ? null : widget.restart,
-            child: const Text('Restart privacy review'),
+            child: const Text('Xem lại lựa chọn về thông tin'),
           ),
         if (widget.model.conflict)
           OutlinedButton(
             key: const Key('creationParentHome'),
             onPressed: widget.model.busy || leaving ? null : widget.parentHome,
-            child: const Text('Check profiles in Parent Home'),
+            child: const Text('Kiểm tra hồ sơ của bé'),
           ),
         if (widget.model.sent && widget.checkAttempt != null)
           OutlinedButton(
@@ -3851,12 +3883,12 @@ class _ReviewState extends State<Review> {
             onPressed: widget.model.busy || leaving
                 ? null
                 : widget.checkAttempt,
-            child: const Text('Check whether this attempt created a profile'),
+            child: const Text('Kiểm tra kết quả tạo hồ sơ'),
           ),
         TextButton(
           key: const Key('creationAccountEntry'),
           onPressed: leaving ? null : widget.accountEntry,
-          child: const Text('Return to account entry'),
+          child: const Text('Về màn hình đăng nhập'),
         ),
       ],
     ),
@@ -3972,7 +4004,7 @@ class ChildHome extends StatelessWidget {
       Text(
         gateAvailable
             ? 'Parent controls require PIN verification. Forgotten PIN: sign out and sign in again for password-authorized reset.'
-            : 'Parent verification is not available inside Child Mode yet. Return to account entry for a parent to sign in again.',
+            : 'Parent verification is not available inside Child Mode yet. Về màn hình đăng nhập for a parent to sign in again.',
       ),
       Semantics(
         header: true,
@@ -4008,7 +4040,7 @@ class ChildHome extends StatelessWidget {
       TextButton(
         key: const Key('returnAccountEntry'),
         onPressed: accountEntry,
-        child: const Text('Return to account entry'),
+        child: const Text('Về màn hình đăng nhập'),
       ),
     ],
   );
@@ -4055,7 +4087,7 @@ class _ParentAreaState extends State<ParentArea> {
 
   @override
   Widget build(BuildContext c) => Frame(
-    title: widget.home == null ? 'Authenticated Parent Area' : 'Parent Home',
+    title: widget.home == null ? 'Góc phụ huynh' : 'Góc phụ huynh',
     children: widget.home != null
         ? [widget.home!]
         : [
@@ -4074,10 +4106,10 @@ class _ParentAreaState extends State<ParentArea> {
             ErrorText(error),
             if (!widget.currentTermsAccepted)
               const Text(
-                'Adding a child requires the current account Terms. Parent Home handles any server-required re-acceptance.',
+                'Adding a child requires the current account Terms. Góc phụ huynh handles any server-required re-acceptance.',
               ),
             if (widget.children.isEmpty)
-              const Text('No child profiles returned.')
+              const Text('Chưa có hồ sơ bé.')
             else
               ...widget.children.map(
                 (x) => ListTile(
@@ -4109,32 +4141,31 @@ class ParentOnly extends StatelessWidget {
   final VoidCallback? parentHome;
   @override
   Widget build(BuildContext c) => Frame(
-    title: 'Parent account ready',
+    title: 'Tài khoản đã sẵn sàng',
     back: back,
     children: [
       const Text(
-        'You did not affirm all required child purposes. No child alias, date of birth or profile was sent or stored.',
+        'Ba mẹ chưa đồng ý tất cả mục đích bắt buộc. Thông tin hồ sơ bé chưa được gửi.',
       ),
       ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 64),
         child: FilledButton(
           key: const Key('reviewPrivacyAgain'),
           onPressed: back,
-          child: const Text('Review privacy choices'),
+          child: const Text('Xem lại lựa chọn'),
         ),
       ),
       if (parentHome != null)
         OutlinedButton(
           key: const Key('refusalParentHome'),
           onPressed: parentHome,
-          child: const Text('Continue with Parent Home without adding a child'),
+          child: const Text('Về góc phụ huynh, chưa thêm bé'),
         ),
     ],
   );
 }
 
-String errorText(ApiFailure x) =>
-    '${x.code ?? 'REQUEST_FAILED'}${x.requestId == null ? '' : ' · request ${x.requestId}'}: ${x.message}';
+String errorText(ApiFailure x) => friendlyError(x);
 String dateText(DateTime x) =>
     '${x.year.toString().padLeft(4, '0')}-${x.month.toString().padLeft(2, '0')}-${x.day.toString().padLeft(2, '0')}';
 DateTime? parseDate(String x) {

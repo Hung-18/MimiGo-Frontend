@@ -1,5 +1,7 @@
 # Real API continuation
 
+Latest prerequisite: approved full Terms/notices must be supplied through the forthcoming verified contract adapter before normal registration/re-acceptance/child consent can proceed. Current metadata placeholders are blocked. Password recovery remains unavailable pending its exact contract. See [Vietnamese cleanup](UI_VIETNAMESE_CLEANUP.md); do not restore metadata-only consent to bypass this gate.
+
 Feature branch: `feature/po-flutter-ui`, correction baseline `9155da3`. The top of [the implementation report](PO_FLUTTER_MVP.md) supersedes its historical preview instructions. `flutter run` and `flutter build apk --debug` now use the real staging API and Parent Gate. No fixture menu/mode is available in the normal entry.
 
 - Provide an existing authorized OTP-capable account and approved `SYN-` child/content through the secure runtime process. None was provided during this task. Do not discover real child identities or create cloud fixtures to manufacture acceptance.

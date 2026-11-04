@@ -1,3 +1,5 @@
+import 'ui_test_support.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -186,7 +188,7 @@ void main() {
       api.answerGate = null;
       await tapVisible(tester, 'lesson-$lessonId');
       await tapVisible(tester, 'startLearning');
-      expect(find.text('Retry same answer'), findsOneWidget);
+      expect(find.text('Gửi lại lựa chọn này'), findsOneWidget);
       await tapVisible(tester, 'submit-$cueId');
       expect(api.submitted.last.toJson(), original.toJson());
       expect(api.saved, hasLength(1));
@@ -199,13 +201,13 @@ void main() {
       final api = LearningTestApi();
       await rootMath(tester, api);
       expect(api.calls, contains('catalog:$childId'));
-      expect(find.textContaining('SYN-MATH-001'), findsOneWidget);
+      expect(find.text('Synthetic Math'), findsOneWidget);
       await tapVisible(tester, 'lesson-$lessonId');
       expect(api.calls, contains('lesson:$childId:$lessonId'));
       expect(find.text('Synthetic Math'), findsOneWidget);
       expect(find.textContaining('Server feedback'), findsNothing);
       expect(find.byKey(const Key('option-$optionId')), findsNothing);
-      expect(find.textContaining('Video chưa khả dụng'), findsOneWidget);
+      expect(find.textContaining('Video hiện chưa khả dụng'), findsOneWidget);
       expect(find.textContaining('not-playable.invalid'), findsNothing);
       expect(find.byType(Image), findsNothing);
       await tester.binding.handlePopRoute();
@@ -223,7 +225,8 @@ void main() {
       final api = LearningTestApi()..emptyReason = reason;
       await rootMath(tester, api);
       expect(find.byKey(const Key('categoryEmpty')), findsOneWidget);
-      expect(find.text(reason), findsOneWidget);
+      expect(find.text(reason), findsNothing);
+      expect(find.byKey(const Key('categoryEmpty')), findsOneWidget);
       expect(find.byKey(const Key('lesson-$lessonId')), findsNothing);
     });
   }
@@ -247,11 +250,11 @@ void main() {
       const ApiFailure('Unavailable', code: 'DB_UNAVAILABLE', status: 503),
     );
     await tester.pumpAndSettle();
-    expect(find.textContaining('DB_UNAVAILABLE'), findsOneWidget);
+    expect(findErrorCode('DB_UNAVAILABLE'), findsOneWidget);
     expect(find.textContaining('Find the circle'), findsNothing);
     api.catalogGate = null;
     await tapVisible(tester, 'lessonsRetry');
-    expect(find.textContaining('SYN-MATH-001'), findsOneWidget);
+    expect(find.text('Synthetic Math'), findsOneWidget);
   });
   for (final status in [401, 403, 404]) {
     testWidgets(
@@ -265,8 +268,8 @@ void main() {
             requestId: 'request-id',
           );
         await lessonScreen(tester, api);
-        expect(find.textContaining('DENIED_$status'), findsOneWidget);
-        expect(find.textContaining('request-id'), findsOneWidget);
+        expect(findErrorCode('DENIED_$status'), findsOneWidget);
+        expect(find.textContaining('request-id'), findsNothing);
         expect(find.byKey(const Key('startLearning')), findsNothing);
         expect(api.starts, 0);
       },
@@ -283,7 +286,7 @@ void main() {
         );
       await lessonScreen(tester, api);
       await tapVisible(tester, 'startLearning');
-      expect(find.textContaining('PERMISSION_NOT_GRANTED'), findsOneWidget);
+      expect(findErrorCode('PERMISSION_NOT_GRANTED'), findsOneWidget);
       expect(find.byKey(const Key('option-$optionId')), findsNothing);
       api.startFailure = null;
       api.readFailure = const ApiFailure(
@@ -292,7 +295,7 @@ void main() {
         status: 404,
       );
       await tapVisible(tester, 'startLearning');
-      expect(find.textContaining('SESSION_NOT_FOUND'), findsOneWidget);
+      expect(findErrorCode('SESSION_NOT_FOUND'), findsOneWidget);
       api.readFailure = null;
       await tapVisible(tester, 'startLearning');
       expect(find.byKey(const Key('option-$optionId')), findsOneWidget);
@@ -304,7 +307,7 @@ void main() {
       final api = LearningTestApi()..mismatchedRevision = true;
       await lessonScreen(tester, api);
       await tapVisible(tester, 'startLearning');
-      expect(find.textContaining('revision do not match'), findsOneWidget);
+      expect(findErrorCode('INVALID_RESPONSE'), findsOneWidget);
       expect(find.byKey(const Key('option-$optionId')), findsNothing);
     },
   );
@@ -316,12 +319,12 @@ void main() {
       await tapVisible(tester, 'startLearning');
       expect(api.starts, 1);
       expect(api.reads, 1);
-      expect(find.textContaining('Correct'), findsNothing);
+      expect(find.textContaining('Đúng'), findsNothing);
       await tapVisible(tester, 'option-$optionId');
       await tester.ensureVisible(find.byKey(const Key('submit-$cueId')));
       await tester.tap(find.byKey(const Key('submit-$cueId')));
       await tester.pump();
-      expect(find.text('Sending answer…'), findsOneWidget);
+      expect(find.text('Đang lưu câu trả lời…'), findsOneWidget);
       expect(
         tester
             .widget<FilledButton>(find.byKey(const Key('submit-$cueId')))
@@ -347,7 +350,7 @@ void main() {
       await tapVisible(tester, 'option-$optionId');
       await tapVisible(tester, 'submit-$cueId');
       final original = api.submitted.single;
-      expect(find.text('Retry same answer'), findsOneWidget);
+      expect(find.text('Gửi lại lựa chọn này'), findsOneWidget);
       expect(
         tester
             .widget<OutlinedButton>(
@@ -399,7 +402,7 @@ void main() {
       await tapVisible(tester, 'startLearning');
       await tapVisible(tester, 'option-$optionId');
       await tapVisible(tester, 'submit-$cueId');
-      expect(find.textContaining('CLIENT_EVENT_CONFLICT'), findsOneWidget);
+      expect(findErrorCode('CLIENT_EVENT_CONFLICT'), findsOneWidget);
       expect(
         tester
             .widget<FilledButton>(find.byKey(const Key('submit-$cueId')))
@@ -428,7 +431,7 @@ void main() {
         await tapVisible(tester, 'startLearning');
         await tapVisible(tester, 'option-$optionId');
         await tapVisible(tester, 'submit-$cueId');
-        expect(find.textContaining('DENIED_$status'), findsOneWidget);
+        expect(findErrorCode('DENIED_$status'), findsOneWidget);
         expect(find.byKey(const Key('submit-$cueId')), findsNothing);
         expect(pending.find(childId, sessionId, cueId), isNotNull);
       },

@@ -1,7 +1,8 @@
+import 'user_messages.dart';
+
 import 'package:flutter/material.dart';
 
-import 'main.dart'
-    show ChildDetail, ChildSummary, MimiGoApi, ParentSummary, ParentWorkspace;
+import 'main.dart' show ChildSummary, MimiGoApi, ParentSummary, ParentWorkspace;
 import 'parent_gate_api.dart';
 import 'mimigo_design.dart';
 import 'api_failure.dart';
@@ -172,23 +173,22 @@ class _ParentHomeState extends State<ParentHome> {
   }
 
   String availability(String? status) => switch (status) {
-    'AVAILABLE' => 'Eligible Free lessons available',
-    'NO_ELIGIBLE_CONTENT' => 'No eligible lessons returned',
-    'CHILD_OUTSIDE_PROGRAM_AGE' => 'Outside program age range',
-    'PERMISSION_NOT_GRANTED' => 'Catalog permission is not granted',
-    'CHILD_NOT_ACTIVE' => 'Child profile is not active',
-    _ => 'Refresh to check catalog availability',
+    'AVAILABLE' => 'Có bài học miễn phí phù hợp',
+    'NO_ELIGIBLE_CONTENT' => 'Chưa có bài học phù hợp',
+    'CHILD_OUTSIDE_PROGRAM_AGE' => 'Ngoài độ tuổi của chương trình',
+    'PERMISSION_NOT_GRANTED' => 'Chưa được phép xem bài học',
+    'CHILD_NOT_ACTIVE' => 'Hồ sơ bé chưa hoạt động',
+    _ => 'Tải lại để kiểm tra bài học',
   };
   String entryAvailability(String? status) => switch (status) {
-    'READY' => 'Learning entry ready · service eligibility checked',
-    'PERMISSION_NOT_GRANTED' =>
-      'Learning entry is not permitted by the service',
-    'CHILD_NOT_ACTIVE' => 'Learning entry unavailable · child is not active',
+    'READY' => 'Có thể vào không gian của bé',
+    'PERMISSION_NOT_GRANTED' => 'Bé hiện chưa được phép vào học',
+    'CHILD_NOT_ACTIVE' => 'Hồ sơ bé chưa hoạt động nên chưa thể vào học',
     'CHILD_OUTSIDE_PROGRAM_AGE' =>
-      'Learning entry unavailable · outside program age',
+      'Bài học sẽ được kiểm tra theo độ tuổi và quyền của bé',
     'NO_ELIGIBLE_CONTENT' =>
-      'No eligible learning content · Child Mode can show empty discovery',
-    _ => 'Learning entry unknown · refresh before entering',
+      'Chưa có bài phù hợp; bé vẫn có thể mở góc khám phá',
+    _ => 'Tải lại để kiểm tra quyền học trước khi tiếp tục',
   };
   @override
   void dispose() {
@@ -210,51 +210,35 @@ class _ParentHomeState extends State<ParentHome> {
             compact: true,
           ),
           Text(
-            'Welcome, ${widget.parent.displayName}',
+            'Chào ${widget.parent.displayName}',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
-          MimiNotice(
-            icon: Icons.science_outlined,
-            child: Text(
-              widget.fixture
-                  ? 'DEMO / FIXTURE · Tài khoản mẫu, dữ liệu chỉ ở ứng dụng. Không lưu kết quả lên máy chủ.'
-                  : 'Đã đăng nhập. Hồ sơ và quyền học được tải từ dịch vụ; không có kết quả học tập được tạo cục bộ.',
+          if (widget.fixture)
+            const Text(
+              'Dữ liệu mẫu · Không lưu kết quả lên máy chủ.',
+              style: TextStyle(fontSize: 13),
             ),
-          ),
-          Text(
-            widget.openParentArea == null
-                ? 'Choose a child before entering Child Mode. Returning from Child Mode requires a fresh parent sign-in; Parent Gate is not available.'
-                : 'Basic child roster only. Entering Child Mode needs a child-bound PIN verification. Protected Parent details require a Parent Area proof.',
+          const Text(
+            'Ba mẹ chọn một hồ sơ để bé bắt đầu nhé. Thông tin riêng tư và lịch sử học được bảo vệ bằng PIN.',
           ),
           const SizedBox(height: 16),
           if (model.busy)
-            const LinearProgressIndicator(
-              semanticsLabel: 'Loading child profile',
-            ),
+            const LinearProgressIndicator(semanticsLabel: 'Đang tải hồ sơ bé'),
           if (model.error != null) OnboardingError(model.error!),
-          if (model.disclaimer != null) Text(model.disclaimer!),
-          Text(
-            widget.openParentArea == null
-                ? 'Learning activity is unavailable until Parent Gate is approved. No session history or progress is shown here.'
-                : 'No protected profile details or learning activity are displayed in this basic roster.',
-          ),
           if (child == null) ...[
             Semantics(
               header: true,
               child: Text(
-                'Your children',
+                'Các bé của ba mẹ',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
             if (model.children.isEmpty && !model.busy && model.error == null)
               const Text(
-                'Your parent account is ready. Add your first synthetic child after independent privacy review.',
+                'Ba mẹ có thể thêm hồ sơ đầu tiên sau khi xem thông tin về quyền riêng tư.',
               ),
             if (model.children.isEmpty && !model.busy && model.error == null)
-              const Text(
-                'No child profiles returned.',
-                key: Key('parentChildrenEmpty'),
-              ),
+              const Text('Chưa có hồ sơ bé.', key: Key('parentChildrenEmpty')),
             ...model.children.map(
               (profile) => Card(
                 child: ListTile(
@@ -263,8 +247,8 @@ class _ParentHomeState extends State<ParentHome> {
                   title: Text(profile.alias),
                   leading: MimiAvatar(stockKey: profile.stockAvatarKey),
                   subtitle: Text(
-                    '${widget.openParentArea == null ? 'Profile: ${profile.state} · Age returned by service: ${profile.ageYears}' : 'Profile: ${profile.state}'}\n'
-                    '${profile.withinProgramAgeRange ? 'Within program age range' : 'Outside program age range · profile only'}\n'
+                    '${viState(profile.state)}\n'
+                    '${profile.withinProgramAgeRange ? '' : 'Ngoài độ tuổi của chương trình\n'}'
                     '${availability(model.catalogStatuses[profile.id])}',
                   ),
                   isThreeLine: true,
@@ -282,24 +266,18 @@ class _ParentHomeState extends State<ParentHome> {
               child: Semantics(
                 header: true,
                 child: Text(
-                  'Selected child: ${child.alias}',
+                  'Đã chọn: ${child.alias}',
                   key: const Key('parentSelectedChild'),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
               ),
             ),
-            Text(
-              widget.openParentArea == null
-                  ? 'Profile: ${child.state} · Age returned by service: ${child.ageYears}'
-                  : 'Profile: ${child.state}',
-            ),
+            Text(viState(child.state)),
             Text(
               child.withinProgramAgeRange
-                  ? 'Lesson eligibility is checked by the service when you explore.'
-                  : 'The service reports this child outside the program age range. No learning access is granted here.',
+                  ? 'Bài học sẽ được kiểm tra theo tuổi và quyền của bé.'
+                  : 'Bé đang ngoài độ tuổi thông thường của chương trình. Nội dung theo gói đã mua, nếu có, sẽ được kiểm tra khi vào học.',
             ),
-            if (child is ChildDetail && widget.openParentArea == null)
-              Text(child.disclaimer),
             Text(
               availability(model.catalogStatuses[child.id]),
               key: const Key('parentCatalogAvailability'),
@@ -328,26 +306,24 @@ class _ParentHomeState extends State<ParentHome> {
               child: const Text('Chọn bé khác'),
             ),
             const Text(
-              'Profile editing and sensitive account changes are not available. No PIN or step-up authorization is simulated.',
+              'Ba mẹ có thể quản lý thông tin được hỗ trợ trong phần cài đặt có PIN.',
             ),
           ],
           const SizedBox(height: 16),
           if (widget.openParentArea != null) ...[
-            Text(
-              'Parent PIN status: ${widget.parent.parentGate?.status ?? 'UNAVAILABLE'}',
-            ),
+            Text('Mã PIN: ${viState(widget.parent.parentGate?.status)}'),
             OutlinedButton(
               key: const Key('openParentArea'),
               onPressed: model.busy || leaving ? null : widget.openParentArea,
-              child: const Text('Open Parent Area with PIN'),
+              child: const Text('Cài đặt và thông tin riêng tư'),
             ),
             OutlinedButton(
               key: const Key('manageParentPin'),
               onPressed: model.busy || leaving ? null : widget.setupPin,
               child: Text(
                 widget.parent.parentGate?.status == 'NOT_ENROLLED'
-                    ? 'Set up Parent PIN with password'
-                    : 'Reset PIN with password',
+                    ? 'Thiết lập mã PIN'
+                    : 'Đặt lại mã PIN',
               ),
             ),
           ],
@@ -358,7 +334,7 @@ class _ParentHomeState extends State<ParentHome> {
           ),
           if (!widget.parent.currentTermsAccepted)
             const Text(
-              'Adding a child checks the current account Terms. Explicit acceptance will be requested only if the service requires it.',
+              'Nếu điều khoản đã thay đổi, ba mẹ sẽ cần xem lại trước khi thêm hồ sơ.',
             ),
           FilledButton(
             key: const Key('addChild'),
@@ -373,9 +349,7 @@ class _ParentHomeState extends State<ParentHome> {
             OutlinedButton(
               key: const Key('parentResumeOnboarding'),
               onPressed: model.busy || leaving ? null : widget.resumeOnboarding,
-              child: const Text(
-                'Check pending child onboarding · this app session',
-              ),
+              child: const Text('Kiểm tra hồ sơ đang tạo'),
             ),
           TextButton(
             key: const Key('parentAccountEntry'),

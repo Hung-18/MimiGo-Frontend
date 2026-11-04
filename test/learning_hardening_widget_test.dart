@@ -1,3 +1,5 @@
+import 'ui_test_support.dart';
+
 import 'dart:async';
 import 'dart:ui' show Tristate;
 
@@ -25,10 +27,10 @@ void main() {
       await lessonScreen(tester, api);
       await tapVisible(tester, 'startLearning');
       expect(
-        find.textContaining('Option A — Feedback unavailable'),
+        find.textContaining('Option A — Chưa có nhận xét'),
         findsOneWidget,
       );
-      expect(find.textContaining('Option A — Incorrect'), findsNothing);
+      expect(find.textContaining('Option A — Chưa đúng'), findsNothing);
       expect(find.byKey(const Key('feedback-$cueId')), findsNothing);
       expect(find.byKey(const Key('completeLearning')), findsOneWidget);
     },
@@ -135,10 +137,10 @@ void main() {
               api.replayGate!.completeError(failure);
           }
           await tester.pumpAndSettle();
-          expect(find.textContaining('DENIED_$status'), findsOneWidget);
+          expect(findErrorCode('DENIED_$status'), findsOneWidget);
           expect(find.textContaining('Internal details'), findsNothing);
           expect(find.byKey(const Key('option-$optionId')), findsNothing);
-          expect(find.text('Known completed sessions'), findsNothing);
+          expect(find.text('Những lượt đã hoàn thành vừa xem'), findsNothing);
           expect(find.byKey(const Key('replayLearning')), findsNothing);
           expect(find.byKey(const Key('completeLearning')), findsNothing);
           expect(find.byKey(const Key('lessonBack')), findsOneWidget);
@@ -163,7 +165,7 @@ void main() {
       };
       await tapVisible(tester, 'replayLearning');
       expect(tester.takeException(), isNull);
-      expect(find.textContaining('INVALID_RESPONSE'), findsOneWidget);
+      expect(findErrorCode('INVALID_RESPONSE'), findsOneWidget);
       expect(find.byKey(const Key('completionConfirmed')), findsOneWidget);
       expect(find.byKey(const Key('history-$replaySessionId')), findsNothing);
       expect(api.snapshot(sessionId).endedAt, DateTime.parse(completedTime));
@@ -187,7 +189,7 @@ void main() {
         const ApiFailure('Ended', code: 'SESSION_NOT_ACTIVE', status: 409),
       );
       await tester.pumpAndSettle();
-      expect(find.textContaining('SESSION_NOT_ACTIVE'), findsOneWidget);
+      expect(findErrorCode('SESSION_NOT_ACTIVE'), findsOneWidget);
       expect(find.byKey(const Key('option-$optionId')), findsNothing);
       expect(find.byKey(const Key('completionConfirmed')), findsNothing);
       api.seedWrongAnswers(sessionId);
@@ -279,10 +281,7 @@ void main() {
         ..lessonOverride = {...detailJson(), 'cues': []};
       await lessonScreen(tester, api);
       await tapVisible(tester, 'startLearning');
-      expect(
-        find.text('No interactive questions were returned.'),
-        findsOneWidget,
-      );
+      expect(find.text('Bài này chưa có câu hỏi tương tác.'), findsOneWidget);
       expect(
         tester
             .widget<FilledButton>(find.byKey(const Key('completeLearning')))
@@ -295,7 +294,7 @@ void main() {
       ((api.lessonOverride!['cues'] as List).first as Map)['options'] = [];
       await lessonScreen(tester, api);
       await tapVisible(tester, 'startLearning');
-      expect(find.text('No answer options were returned.'), findsOneWidget);
+      expect(find.text('Chưa có lựa chọn trả lời.'), findsOneWidget);
       expect(
         tester
             .widget<FilledButton>(find.byKey(const Key('submit-$cueId')))
@@ -363,7 +362,7 @@ void main() {
         expect(selected.flagsCollection.isInMutuallyExclusiveGroup, isTrue);
         expect(tester.takeException(), isNull);
         await tapVisible(tester, 'submit-$cueId');
-        expect(find.textContaining('Your answer is saved.'), findsOneWidget);
+        expect(find.textContaining('Đã lưu câu trả lời.'), findsOneWidget);
         final feedback = tester.getSemantics(
           find.byKey(const Key('feedback-announcement-$cueId')),
         );

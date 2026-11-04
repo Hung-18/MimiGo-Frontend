@@ -1,3 +1,5 @@
+import 'ui_test_support.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -187,14 +189,14 @@ void main() {
     (tester) async {
       final api = ParentApi()..profiles = [profile('A'), profile('B')];
       await signInHome(tester, api);
-      expect(find.text('Parent Home'), findsOneWidget);
+      expect(find.text('Góc phụ huynh'), findsOneWidget);
       await tapVisible(tester, 'parent-child-A');
-      expect(find.text('Selected child: SYN-A'), findsOneWidget);
+      expect(find.text('Đã chọn: SYN-A'), findsOneWidget);
       expect(find.byType(ChildHome), findsNothing);
       await tapVisible(tester, 'parentChooseAnother');
       await tapVisible(tester, 'parent-child-B');
-      expect(find.text('Selected child: SYN-B'), findsOneWidget);
-      expect(find.text('Selected child: SYN-A'), findsNothing);
+      expect(find.text('Đã chọn: SYN-B'), findsOneWidget);
+      expect(find.text('Đã chọn: SYN-A'), findsNothing);
       await tapVisible(tester, 'parentEnterLearning');
       expect(find.text('Hi, SYN-B!'), findsOneWidget);
       expect(find.byType(ParentHome), findsNothing);
@@ -224,7 +226,7 @@ void main() {
           );
         await signInHome(tester, api);
         await tapVisible(tester, 'parent-child-A');
-        expect(find.textContaining('DENIED_$status'), findsOneWidget);
+        expect(findErrorCode('DENIED_$status'), findsOneWidget);
         expect(find.textContaining('Internal detail'), findsNothing);
         expect(find.byType(ChildHome), findsNothing);
         expect(find.byKey(const Key('parentEnterLearning')), findsNothing);

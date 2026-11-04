@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../api_failure.dart';
 import 'mobile_services.dart';
+import '../user_messages.dart';
 
 class ResendButton extends StatefulWidget {
   const ResendButton({super.key, required this.api, required this.email});
@@ -18,6 +19,7 @@ class _ResendButtonState extends State<ResendButton> {
   Timer? timer;
   bool busy = false;
   String? notice;
+  ApiFailure? failure;
   int get seconds => next == null
       ? 0
       : (next!.difference(DateTime.now()).inMilliseconds / 1000).ceil().clamp(
@@ -48,19 +50,19 @@ class _ResendButtonState extends State<ResendButton> {
     setState(() {
       busy = true;
       notice = null;
+      failure = null;
     });
     try {
       final result = await widget.api.resendVerification(widget.email);
       if (mounted)
         setState(() {
           wait(result.cooldown);
-          notice = 'Yêu cầu đã được tiếp nhận. Nếu đủ điều kiện, mã mới sẽ được gửi. Kiểm tra cả thư rác. Không xác nhận tài khoản có tồn tại.';
+          notice = 'Nếu email đủ điều kiện, mã mới sẽ được gửi. Ba mẹ kiểm tra cả thư rác nhé.';
         });
     } on ApiFailure catch (e) {
       if (mounted)
         setState(() {
-          notice =
-              'Chưa gửi lại được · ${e.code ?? 'REQUEST_FAILED'}. Dịch vụ có thể chưa được mở.';
+          failure = e;
           if (e.retryAfterSeconds != null) wait(e.retryAfterSeconds!);
         });
     } finally {
@@ -84,6 +86,7 @@ class _ResendButtonState extends State<ResendButton> {
       ),
       if (notice != null)
         Text(notice!, style: Theme.of(context).textTheme.bodySmall),
+      if (failure != null) UserError(failure),
     ],
   );
 }

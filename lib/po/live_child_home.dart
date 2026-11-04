@@ -117,7 +117,7 @@ class _LiveChildHomeState extends State<LiveChildHome> {
                         children: [
                           PoDomainMark(domain.index),
                           Text(
-                            model.metadata(domain)?.name ?? _name(domain),
+                            model.domainName(domain),
                             style: const TextStyle(fontWeight: FontWeight.w800),
                           ),
                           const SizedBox(height: 8),
@@ -149,7 +149,7 @@ class _LiveChildHomeState extends State<LiveChildHome> {
           const PoCard(
             color: PoPalette.sky,
             child: Text(
-              'English Companion là các biểu đạt tiếng Anh trong bài học tiếng Việt phù hợp. Nội dung và quyền học được dịch vụ kiểm tra cho từng bé.',
+              'Bé làm quen tiếng Anh qua các bài học tiếng Việt phù hợp.',
             ),
           ),
         ],
@@ -160,20 +160,7 @@ class _LiveChildHomeState extends State<LiveChildHome> {
           icon: Icons.refresh,
           onPressed: model.loading ? null : model.load,
         ),
-        if (model.emptyReason != null)
-          Text(
-            model.emptyReason!,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
       ],
     ),
   );
-  String _name(CurriculumDomain d) => [
-    'Toán học',
-    'Ngôn ngữ',
-    'Tiếng Anh',
-    'Kỹ năng sống',
-    'Logic',
-    'Khám phá',
-  ][d.index];
 }

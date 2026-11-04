@@ -1,4 +1,10 @@
-# Real Backend integration correction — 2026-11-04
+# Vietnamese UI cleanup — 2026-11-04
+
+Clean baseline `de096fb` on `feature/po-flutter-ui`. Localized normal authentication, Parent/PIN/profile/consent, discovery/learning/feedback/completion and billing presentation; Vietnamese Material controls enabled. Raw error codes and request IDs are collapsed in optional technical details; friendly messages do not expose Backend text. Removed prominent engineering warnings and internal state/version/session identifiers from primary UI. PO visual identity and real API/security/session/learning behavior retained.
+
+**Legal unavailable:** current mock/metadata-only Terms cannot authorize normal registration or re-acceptance; unapproved child notices cannot enable consent/DOB entry. Added a version/hash-bound approved-document presentation seam for the forthcoming verified adapter, with no invented wire fields/endpoints. Password recovery remains honestly unavailable. Full suite **383 PASS / 2 opt-in staging tests SKIPPED**, focused **31 PASS**, analyzer clean, normal Android debug APK PASS. [Focused report](UI_VIETNAMESE_CLEANUP.md). Public synthetic registration render reviewed; no protected capture or fresh live/device acceptance claimed. FE-only commit/push explicitly authorized by the PO; no Backend/Database/Web CMS/cloud edits or deployment.
+
+# Real Backend integration correction — 2026-11-04 (historical integration evidence)
 
 Continues clean `feature/po-flutter-ui` / `9155da3`. Normal entry now uses live staging and mandatory client Parent Gate; no preview menu, local activities or local progress substitute. Preserved PO art/design and native security, real Learning write/readback contracts, stable retries and server-confirmed completion. Added server-backed Child home, Free/Core support, paid age-out Child-catalog check, protected account display, owned-checkout status readback and transport cancellation/late-response guards. Fixture code is isolated to the explicit regression entry, not a normal mode flag. No Backend/Database/cloud/`.mimigo` writes.
 

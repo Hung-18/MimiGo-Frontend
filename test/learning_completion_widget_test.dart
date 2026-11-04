@@ -1,3 +1,5 @@
+import 'ui_test_support.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -40,7 +42,7 @@ void main() {
       await lessonScreen(tester, api);
       await tapVisible(tester, 'startLearning');
       expect(completeButton(tester).onPressed, isNull);
-      expect(find.textContaining('Incorrect'), findsNothing);
+      expect(find.textContaining('Chưa đúng'), findsNothing);
       await answer(tester, cueId, optionId);
       expect(completeButton(tester).onPressed, isNull);
       await answer(tester, secondCueId, secondOptionId);
@@ -50,7 +52,7 @@ void main() {
       await press(tester, 'completeLearning');
       expect(api.completionCalls, [sessionId]);
       expect(find.byType(LinearProgressIndicator), findsOneWidget);
-      expect(find.text('Session: IN_PROGRESS'), findsOneWidget);
+      expect(find.text('Lượt học: Đang học'), findsOneWidget);
       expect(find.byKey(const Key('completionConfirmed')), findsNothing);
       expect(completeButton(tester).onPressed, isNull);
       expect(
@@ -63,17 +65,17 @@ void main() {
       expect(api.completionCalls, [sessionId]);
       api.completeGate!.complete(api.completeReply(sessionId));
       await tester.pumpAndSettle();
-      expect(find.text('Session: COMPLETED'), findsOneWidget);
+      expect(find.text('Lượt học: Đã hoàn thành'), findsOneWidget);
       expect(find.byKey(const Key('completionConfirmed')), findsOneWidget);
       expect(
         tester
             .widget<Text>(find.byKey(const Key('completedSessionIdentity')))
             .data,
-        contains(sessionId),
+        equals('Kết quả đã được lưu'),
       );
       expect(
         tester.widget<Text>(find.byKey(const Key('completedEndedAt'))).data,
-        contains('2026-10-23T12:05:00.000Z'),
+        contains('23/10/2026'),
       );
       expect(find.byKey(const Key('submit-$cueId')), findsNothing);
       expect(find.byKey(const Key('completeLearning')), findsNothing);
@@ -98,7 +100,7 @@ void main() {
       expect(api.startBodies, [lessonId, lessonId]);
       api.replayGate!.complete(api.prepareReplay());
       await tester.pumpAndSettle();
-      expect(find.text('Session: IN_PROGRESS'), findsOneWidget);
+      expect(find.text('Lượt học: Đang học'), findsOneWidget);
       expect(find.byKey(const Key('recorded-$cueId-1')), findsNothing);
       expect(find.byKey(const Key('feedback-$cueId')), findsNothing);
       expect(completeButton(tester).onPressed, isNull);
@@ -108,8 +110,8 @@ void main() {
       expect(api.events[sessionId], hasLength(1));
       await tapVisible(tester, 'readCompleted-$sessionId');
       expect(api.readIds.last, sessionId);
-      expect(find.text('Session: COMPLETED'), findsOneWidget);
-      expect(find.text('Continue replay session'), findsOneWidget);
+      expect(find.text('Lượt học: Đã hoàn thành'), findsOneWidget);
+      expect(find.text('Tiếp tục lượt học mới'), findsOneWidget);
       expect(
         tester
             .widget<OutlinedButton>(find.byKey(const Key('option-$optionId')))
@@ -119,7 +121,7 @@ void main() {
       api.replayGate = null;
       await tapVisible(tester, 'replayLearning');
       expect(api.readIds.last, replaySessionId);
-      expect(find.text('Session: IN_PROGRESS'), findsOneWidget);
+      expect(find.text('Lượt học: Đang học'), findsOneWidget);
       expect(find.byKey(const Key('recorded-$cueId-1')), findsOneWidget);
       expect(api.snapshot(sessionId).endedAt, DateTime.parse(completedTime));
     },
@@ -186,8 +188,8 @@ void main() {
           );
         await answeredScreen(tester, api);
         await tapVisible(tester, 'completeLearning');
-        expect(find.textContaining(code), findsOneWidget);
-        expect(find.text('Session: IN_PROGRESS'), findsOneWidget);
+        expect(findErrorCode(code), findsOneWidget);
+        expect(find.text('Lượt học: Đang học'), findsOneWidget);
         expect(find.byKey(const Key('completionConfirmed')), findsNothing);
         expect(
           completeButton(tester).onPressed,
@@ -224,10 +226,10 @@ void main() {
           );
         await answeredScreen(tester, api);
         await tapVisible(tester, 'completeLearning');
-        expect(find.textContaining('DENIED_$status'), findsOneWidget);
+        expect(findErrorCode('DENIED_$status'), findsOneWidget);
         expect(find.byKey(const Key('completionConfirmed')), findsNothing);
         expect(find.byKey(const Key('option-$optionId')), findsNothing);
-        expect(find.text('Known completed sessions'), findsNothing);
+        expect(find.text('Những lượt đã hoàn thành vừa xem'), findsNothing);
         expect(find.byKey(const Key('startLearning')), findsOneWidget);
       },
     );
@@ -239,9 +241,9 @@ void main() {
       final api = CompletionApi()..loseCompletionAck = true;
       await answeredScreen(tester, api);
       await tapVisible(tester, 'completeLearning');
-      expect(find.textContaining('CONNECTIVITY'), findsOneWidget);
+      expect(findErrorCode('CONNECTIVITY'), findsOneWidget);
       expect(find.byKey(const Key('completionConfirmed')), findsNothing);
-      expect(find.text('Session: IN_PROGRESS'), findsOneWidget);
+      expect(find.text('Lượt học: Đang học'), findsOneWidget);
       expect(
         tester
             .widget<OutlinedButton>(find.byKey(const Key('option-$optionId')))
@@ -267,7 +269,7 @@ void main() {
         );
       await answeredScreen(tester, api);
       await tapVisible(tester, 'completeLearning');
-      expect(find.textContaining('DB_UNAVAILABLE'), findsOneWidget);
+      expect(findErrorCode('DB_UNAVAILABLE'), findsOneWidget);
       expect(find.byKey(const Key('completedEndedAt')), findsNothing);
       api.completeFailure = null;
       api.completionOverride = {
@@ -275,7 +277,7 @@ void main() {
         'sessionId': replaySessionId,
       };
       await tapVisible(tester, 'completeLearning');
-      expect(find.textContaining('INVALID_RESPONSE'), findsOneWidget);
+      expect(findErrorCode('INVALID_RESPONSE'), findsOneWidget);
       expect(find.byKey(const Key('completionConfirmed')), findsNothing);
       api.completionOverride = null;
       await tapVisible(tester, 'completeLearning');
@@ -290,11 +292,11 @@ void main() {
       await answeredScreen(tester, api);
       await tapVisible(tester, 'completeLearning');
       await tapVisible(tester, 'replayLearning');
-      expect(find.textContaining('CONNECTIVITY'), findsOneWidget);
+      expect(findErrorCode('CONNECTIVITY'), findsOneWidget);
       expect(find.byKey(const Key('completionConfirmed')), findsOneWidget);
       expect(find.byKey(const Key('history-$sessionId')), findsOneWidget);
       await tapVisible(tester, 'replayLearning');
-      expect(find.text('Session: IN_PROGRESS'), findsOneWidget);
+      expect(find.text('Lượt học: Đang học'), findsOneWidget);
       expect(api.activeId, replaySessionId);
       expect(api.data, hasLength(2));
       expect(api.snapshot(sessionId).endedAt, DateTime.parse(completedTime));

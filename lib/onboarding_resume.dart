@@ -1,3 +1,5 @@
+import 'user_messages.dart';
+
 import 'package:flutter/material.dart';
 
 import 'main.dart' show MimiGoApi, OnboardingAttempt, OnboardingAttemptStatus;
@@ -95,13 +97,14 @@ class _OnboardingAttemptResumeState extends State<OnboardingAttemptResume> {
   String explanation(String status) => switch (status) {
     'OPEN' =>
       widget.hasPendingCreation
-          ? 'The service reports this attempt open. Your original submitted request stays locked. Return to review and retry that identical request; this read does not prove a delayed request cannot finish.'
-          : 'This attempt is open. Review its notice snapshot again and make fresh, independent choices before entering synthetic profile information.',
-    'ATTEMPT_ALREADY_CONSUMED' => 'This attempt already created a child profile. Check your authorized roster in Parent Home. No second child will be created from this attempt.',
-    'TERMS_ACCEPTANCE_REQUIRED' => 'The service requires current account Terms. Accept them explicitly, then start a new privacy review. Child purposes remain separate.',
+          ? 'Lượt tạo hồ sơ còn mở. Nếu đã gửi thông tin, ba mẹ chỉ gửi lại đúng yêu cầu cũ để tránh trùng hồ sơ.'
+          : 'Ba mẹ xem lại thông báo và lựa chọn từng mục đích trước khi nhập hồ sơ.',
+    'ATTEMPT_ALREADY_CONSUMED' =>
+      'Lượt này đã tạo hồ sơ. Ba mẹ kiểm tra danh sách bé, không cần tạo lại.',
+    'TERMS_ACCEPTANCE_REQUIRED' => 'Ba mẹ cần xem điều khoản hiện hành trước khi tiếp tục. Lựa chọn về thông tin của bé vẫn được xem xét riêng.',
     'PARENT_NOT_ACTIVE' =>
-      'This parent account cannot continue. Return to account entry.',
-    _ => 'This attempt cannot continue. Start a new attempt and review fresh notices; no old choices or profile draft will be reused.',
+      'Tài khoản hiện chưa thể tiếp tục. Ba mẹ vui lòng đăng nhập lại.',
+    _ => 'Lượt này chưa thể tiếp tục. Ba mẹ bắt đầu xem xét lại thông báo trước khi nhập hồ sơ.',
   };
 
   @override
@@ -115,34 +118,30 @@ class _OnboardingAttemptResumeState extends State<OnboardingAttemptResume> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
-            'R0 SYNTHETIC ONLY · read-only attempt check. It does not consume the attempt, extend its expiry, grant consent or create a child.',
+            'Kiểm tra để biết yêu cầu tạo hồ sơ đã có kết quả hay chưa.',
           ),
           const Text(
-            'Only an attempt known during this signed-in app session can be checked. No child draft or attempt identifier is persisted on this device.',
+            'Ba mẹ có thể kiểm tra lượt tạo hồ sơ đang thực hiện ở đây.',
           ),
           if (model.busy)
             const LinearProgressIndicator(
-              semanticsLabel: 'Checking onboarding attempt',
+              semanticsLabel: 'Đang kiểm tra hồ sơ đang tạo',
             ),
           OnboardingError(model.error),
           if (snapshot != null) ...[
             Semantics(
               liveRegion: true,
               child: Text(
-                'Attempt status: $status',
+                'Tình trạng: ${viState(status)}',
                 key: const Key('attemptResumeStatus'),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
             Text(explanation(status!)),
-            Text(
-              'Original expiry: ${snapshot.attempt.expiresAt.toUtc().toIso8601String()}',
-            ),
+            Text('Có hiệu lực đến ${viTime(snapshot.attempt.expiresAt)}'),
             if (status == 'OPEN') ...[
               for (final notice in snapshot.attempt.notices)
-                Text(
-                  '${notice.purposeCode} · ${notice.label} · ${notice.versionId}',
-                ),
+                Text(viPurpose(notice.purposeCode)),
               ConstrainedBox(
                 constraints: const BoxConstraints(minHeight: 64),
                 child: FilledButton(
@@ -152,8 +151,8 @@ class _OnboardingAttemptResumeState extends State<OnboardingAttemptResume> {
                       : () => leave(() => widget.resume(snapshot.attempt)),
                   child: Text(
                     widget.hasPendingCreation
-                        ? 'Return to identical creation request'
-                        : 'Review these notices again',
+                        ? 'Về yêu cầu đã gửi'
+                        : 'Xem lại thông báo',
                   ),
                 ),
               ),
@@ -162,13 +161,13 @@ class _OnboardingAttemptResumeState extends State<OnboardingAttemptResume> {
               FilledButton(
                 key: const Key('resumeConsumedHome'),
                 onPressed: locked ? null : () => leave(widget.consumed),
-                child: const Text('Check created profile in Parent Home'),
+                child: const Text('Kiểm tra hồ sơ đã tạo'),
               ),
             if (status == 'TERMS_ACCEPTANCE_REQUIRED')
               FilledButton(
                 key: const Key('resumeTerms'),
                 onPressed: locked ? null : () => leave(widget.termsRequired),
-                child: const Text('Review current account Terms'),
+                child: const Text('Xem điều khoản hiện hành'),
               ),
           ],
           if (!model.denied &&
@@ -181,26 +180,26 @@ class _OnboardingAttemptResumeState extends State<OnboardingAttemptResume> {
             OutlinedButton(
               key: const Key('resumeNewAttempt'),
               onPressed: locked ? null : () => leave(widget.restart),
-              child: const Text('Start fresh privacy review'),
+              child: const Text('Xem xét thông tin lại từ đầu'),
             ),
           OutlinedButton(
             key: const Key('reloadAttemptStatus'),
             onPressed: locked || model.denied ? null : model.load,
-            child: const Text('Check status again'),
+            child: const Text('Kiểm tra lại'),
           ),
           TextButton(
             key: const Key('resumeBack'),
             onPressed: locked ? null : () => leave(widget.parentHome),
             child: Text(
               widget.hasPendingCreation
-                  ? 'Back to original creation request'
-                  : 'Back to Parent Home',
+                  ? 'Về yêu cầu đã gửi'
+                  : 'Về góc phụ huynh',
             ),
           ),
           TextButton(
             key: const Key('resumeAccountEntry'),
             onPressed: leaving ? null : widget.accountEntry,
-            child: const Text('Return to account entry'),
+            child: const Text('Về màn hình đăng nhập'),
           ),
         ],
       );

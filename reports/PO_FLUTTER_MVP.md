@@ -1,5 +1,7 @@
 # PO-owned Flutter mobile MVP — 2026-11-04
 
+Latest presentation/legal disposition: [Vietnamese cleanup](UI_VIETNAMESE_CLEANUP.md), from `de096fb`. Normal registration/Terms acceptance now fail closed for placeholder/metadata-only legal content; unapproved child notices cannot collect consent. Earlier API integration remains, but its availability statements do not override this new legal-content guard. No new authenticated live acceptance is implied.
+
 ## Current: real Backend integration correction
 
 This section supersedes the preview-first delivery below. Baseline `9155da3`, branch `feature/po-flutter-ui`. **The app is not claimed complete or authenticated-live-accepted.** Normal `lib/main.dart` always selects `LiveMimiGoApi`, staging URL and the secure Parent Gate session coordinator. Environment fixture/Gate-off switches cannot turn the normal entry into the demonstration or legacy bearer-only app. This client-only correction follows the new PO instruction; it does not activate Backend flags, migrations or cloud services.

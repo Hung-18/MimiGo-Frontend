@@ -218,10 +218,10 @@ void main() {
         isNot(api.requests[1].idempotencyKey),
       );
       await tapVisible(tester, 'parent-child-child-1');
-      expect(find.text('Selected child: SYN-First'), findsOneWidget);
+      expect(find.text('Đã chọn: SYN-First'), findsOneWidget);
       await tapVisible(tester, 'parentChooseAnother');
       await tapVisible(tester, 'parent-child-child-2');
-      expect(find.text('Selected child: SYN-Second'), findsOneWidget);
+      expect(find.text('Đã chọn: SYN-Second'), findsOneWidget);
       await tapVisible(tester, 'parentEnterLearning');
       expect(find.text('Hi, SYN-Second!'), findsOneWidget);
       await tapVisible(tester, 'openCurriculum');
@@ -239,7 +239,7 @@ void main() {
       await fillSignIn(tester);
       await submitSignIn(tester);
       expect(
-        find.textContaining('Outside program age range · profile only'),
+        find.textContaining('Ngoài độ tuổi của chương trình'),
         findsOneWidget,
       );
       await tapVisible(tester, 'parent-child-Outside');

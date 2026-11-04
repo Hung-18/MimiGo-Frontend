@@ -20,7 +20,28 @@ class RegistrationApi extends AuthApi {
   Future<OnboardingReference> onboardingReference() async {
     referenceCalls++;
     if (referenceFailure != null) throw referenceFailure!;
-    return referenceWait?.future ?? super.onboardingReference();
+    if (referenceWait != null) return referenceWait!.future;
+    final ref = await super.onboardingReference();
+    // Explicit test-only legal content exercises the future adapter seam;
+    // the real metadata parser never supplies this object.
+    return OnboardingReference(
+      TermsReference(
+        ref.terms!.id,
+        'ACCOUNT_TERMS_V1',
+        contentHash: ref.terms!.contentHash,
+        effectiveFrom: ref.terms!.effectiveFrom,
+        document: ApprovedLegalDocument(
+          versionId: ref.terms!.id,
+          contentHash: ref.terms!.contentHash!,
+          title: 'Điều khoản kiểm thử',
+          body: 'Nội dung đầy đủ chỉ dùng để kiểm thử giao diện.',
+          approved: true,
+        ),
+      ),
+      ref.purposes,
+      ref.notices,
+      ref.disclaimer,
+    );
   }
 
   @override
@@ -115,7 +136,7 @@ void main() {
       );
       await tapVisible(tester, 'registerSubmit');
       expect(api.registrations, isEmpty);
-      expect(find.text('Use 10–128 characters.'), findsOneWidget);
+      expect(find.text('Mật khẩu cần có từ 10 đến 128 ký tự.'), findsOneWidget);
       await fillRegistration(tester);
       await tapVisible(tester, 'registerSubmit');
       expect(api.registrations, isEmpty);
@@ -123,7 +144,7 @@ void main() {
       await tapVisible(tester, 'registerSubmit');
       expect(api.registrations.single.termsAccepted, isTrue);
       expect(find.byType(Otp), findsOneWidget);
-      expect(find.textContaining('2026-01-01T00:00:00.000Z'), findsOneWidget);
+      expect(find.textContaining('01/01/2026'), findsOneWidget);
       expect(
         api.calls,
         isEmpty,
@@ -242,7 +263,7 @@ void main() {
   );
 
   testWidgets(
-    'existing unverified parent can recover verification and reach Parent Home',
+    'existing unverified parent can recover verification and reach Góc phụ huynh',
     (tester) async {
       final api = RegistrationApi()
         ..loginFailure = const ApiFailure(
@@ -257,7 +278,7 @@ void main() {
       await tapVisible(tester, 'resumeEmailVerification');
       expect(find.byType(Otp), findsOneWidget);
       expect(
-        find.textContaining('Kiểm tra email để lấy mã 6 chữ số'),
+        find.textContaining('Ba mẹ kiểm tra email và nhập mã xác nhận'),
         findsOneWidget,
       );
       await tester.enterText(find.byKey(const Key('otpCode')), '123456');

@@ -54,7 +54,7 @@ void main() {
         expect(find.byKey(const Key('demoAnswer-0')), findsNothing);
         await demoTap(tester, 'demoPauseCue');
         expect(find.byKey(const Key('demoContinueStory')), findsNothing);
-        // Incorrect answers are valid demo evidence and do not block completion.
+        // Chưa đúng answers are valid demo evidence and do not block completion.
         await demoTap(tester, 'demoAnswer-${i == 0 ? 1 : i}');
         expect(
           find.textContaining(i == 0 ? 'Cùng nhìn lại nhé' : 'Đúng rồi!'),
@@ -150,8 +150,11 @@ void main() {
       await tester.ensureVisible(expansion);
       await tester.tap(expansion);
       await tester.pumpAndSettle();
-      expect(find.textContaining('Purpose: CHILD_PROFILE_AGE'), findsOneWidget);
-      expect(find.textContaining('Content hash:'), findsOneWidget);
+      expect(
+        find.textContaining('Mã mục đích: CHILD_PROFILE_AGE'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Mã kiểm tra nội dung:'), findsOneWidget);
     },
   );
 

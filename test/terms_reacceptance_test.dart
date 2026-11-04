@@ -1,3 +1,5 @@
+import 'ui_test_support.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -22,7 +24,7 @@ class TermsApi extends AuthApi {
       staleParentReadback = false,
       rejectCreate = false;
   bool missingReference = false;
-  String currentId = termsVersion, currentCode = 'R0_TEST_TERMS_V2';
+  String currentId = termsVersion, currentCode = 'ACCOUNT_TERMS_V2';
   ApiFailure? termsFailure, referenceFailure;
   Completer<TermsAcceptance>? gate;
   Completer<OnboardingReference>? referenceGate;
@@ -41,6 +43,13 @@ class TermsApi extends AuthApi {
               currentCode,
               contentHash: List.filled(64, '0').join(),
               effectiveFrom: DateTime.utc(2026, 10, 24),
+              document: ApprovedLegalDocument(
+                versionId: currentId,
+                contentHash: List.filled(64, '0').join(),
+                title: 'Điều khoản kiểm thử',
+                body: 'Nội dung kiểm thử $currentCode',
+                approved: true,
+              ),
             ),
       const [],
       const [],
@@ -57,9 +66,25 @@ class TermsApi extends AuthApi {
         code: 'TERMS_ACCEPTANCE_REQUIRED',
         status: 422,
       );
-    return OnboardingAttempt('test-attempt', DateTime(2030), const [
-      Notice('CHILD_PROFILE_AGE', 'age-v1', 'test'),
-      Notice('LEARNING_PROGRESS', 'learning-v1', 'test'),
+    return OnboardingAttempt('test-attempt', DateTime(2030), [
+      for (final item in [
+        ('CHILD_PROFILE_AGE', 'age-v1'),
+        ('LEARNING_PROGRESS', 'learning-v1'),
+      ])
+        Notice(
+          item.$1,
+          item.$2,
+          'NOTICE_V1',
+          contentHash: 'test-hash',
+          isApprovedForRealUsers: true,
+          document: ApprovedLegalDocument(
+            versionId: item.$2,
+            contentHash: 'test-hash',
+            title: 'Thông báo kiểm thử',
+            body: 'Nội dung đầy đủ để kiểm thử.',
+            approved: true,
+          ),
+        ),
     ]);
   }
 
@@ -142,7 +167,7 @@ void main() {
     await requiredScreen(tester, api);
     await tapVisible(tester, 'reacceptTermsCheckbox');
     await tapVisible(tester, 'reacceptTermsSubmit');
-    expect(find.textContaining('Your parent sign-in expired'), findsOneWidget);
+    expect(find.textContaining('Phiên đăng nhập đã hết hạn'), findsOneWidget);
     expect(find.textContaining('PRIVATE SERVER DETAIL'), findsNothing);
     expect(find.textContaining('Return to Child Mode'), findsNothing);
     expect(
@@ -245,7 +270,7 @@ void main() {
     (tester) async {
       final api = TermsApi();
       await requiredScreen(tester, api);
-      expect(find.textContaining('R0_TEST_TERMS_V2'), findsNWidgets(2));
+      expect(find.textContaining('ACCOUNT_TERMS_V2'), findsOneWidget);
       expect(
         tester
             .widget<CheckboxListTile>(
@@ -286,9 +311,9 @@ void main() {
       await requiredScreen(tester, api);
       await tapVisible(tester, 'reacceptTermsCheckbox');
       await tapVisible(tester, 'reacceptTermsSubmit');
-      expect(find.textContaining('TERMS_VERSION_NOT_CURRENT'), findsOneWidget);
+      expect(findErrorCode('TERMS_VERSION_NOT_CURRENT'), findsOneWidget);
       expect(find.byKey(const Key('reacceptTermsCheckbox')), findsNothing);
-      api.currentCode = 'R0_TEST_TERMS_V3';
+      api.currentCode = 'ACCOUNT_TERMS_V3';
       api.currentId = 'new-version';
       await tapVisible(tester, 'reloadCurrentTerms');
       expect(
@@ -346,7 +371,7 @@ void main() {
           ..replies.add(
             Reply({
               'termsVersionId': termsVersion,
-              'code': 'R0_TEST_TERMS_V2',
+              'code': 'ACCOUNT_TERMS_V2',
               'currentTermsAccepted': true,
             }, statusCode: status),
           );

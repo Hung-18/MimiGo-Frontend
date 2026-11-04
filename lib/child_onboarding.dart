@@ -1,3 +1,5 @@
+import 'user_messages.dart';
+
 import 'package:flutter/material.dart';
 
 import 'main.dart' show MimiGoApi, CreateChildRequest, ChildSummary, dateText;
@@ -101,40 +103,39 @@ class ChildCreated extends StatelessWidget {
       Semantics(
         header: true,
         child: Text(
-          'Profile created: ${child.alias}',
+          'Đã tạo hồ sơ: ${child.alias}',
           key: const Key('createdChildAlias'),
           style: Theme.of(context).textTheme.headlineSmall,
         ),
       ),
       const Text(
-        'R0 SYNTHETIC ONLY · The service confirmed profile creation with mock purpose decisions. This is not production legal consent or guardian verification.',
+        'Hồ sơ đã được lưu. Ba mẹ chọn hồ sơ trước khi bé vào học nhé.',
       ),
-      Text('Age returned by service: ${child.ageYears}'),
-      Text('Profile state: ${child.state}'),
+      Text('${child.ageYears} tuổi'),
+      Text(viState(child.state)),
       Text(
         child.withinProgramAgeRange
-            ? 'The service reports this profile within the program age range. Lesson access still requires service authorization.'
-            : 'The service reports this profile outside the program age range. The profile can stay in Parent Home; learning entry is unavailable.',
+            ? 'Bé đang trong độ tuổi của chương trình. Bài học phù hợp sẽ được kiểm tra khi vào học.'
+            : 'Bé đang ngoài độ tuổi thông thường của chương trình. Ba mẹ có thể xem thông tin hồ sơ ở góc phụ huynh.',
         key: const Key('createdChildEligibility'),
       ),
-      if (child.stockAvatarKey != null)
-        Text('Predefined avatar: ${child.stockAvatarKey}'),
+      if (child.stockAvatarKey != null) const Text('Đã lưu ảnh đại diện'),
       const SizedBox(height: 16),
       ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 64),
         child: FilledButton(
           key: const Key('createdParentHome'),
           onPressed: parentHome,
-          child: const Text('Choose a child in Parent Home'),
+          child: const Text('Chọn hồ sơ trong góc phụ huynh'),
         ),
       ),
       OutlinedButton(
         key: const Key('createdAddAnother'),
         onPressed: addAnother,
-        child: const Text('Add another child with fresh privacy choices'),
+        child: const Text('Thêm hồ sơ bé khác'),
       ),
       const Text(
-        'No child is automatically selected or entered. Each additional child needs independent privacy review.',
+        'Ba mẹ chọn hồ sơ trước khi bé vào học. Mỗi bé cần được xem xét thông tin riêng.',
       ),
     ],
   );

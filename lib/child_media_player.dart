@@ -203,17 +203,15 @@ class ChildMediaPlayerState extends State<ChildMediaPlayer>
     return Column(
       children: [
         if (loading)
-          const CircularProgressIndicator(
-            semanticsLabel: 'Loading private video',
-          ),
+          const CircularProgressIndicator(semanticsLabel: 'Đang tải video'),
         if (failed) ...[
           const Text(
-            'Video is unavailable. Ask your parent for help or try again.',
+            'Chưa mở được video. Bé nhờ ba mẹ kiểm tra hoặc thử lại nhé.',
           ),
           OutlinedButton(
             key: const Key('mediaRetry'),
             onPressed: loading ? null : load,
-            child: const Text('Retry video'),
+            child: const Text('Thử mở lại video'),
           ),
         ],
         if (player != null && player.value.isInitialized) ...[
@@ -222,14 +220,14 @@ class ChildMediaPlayerState extends State<ChildMediaPlayer>
             child: VideoPlayer(player),
           ),
           if (player.value.isBuffering)
-            const LinearProgressIndicator(semanticsLabel: 'Buffering video'),
+            const LinearProgressIndicator(semanticsLabel: 'Đang tải video'),
           Wrap(
             alignment: WrapAlignment.center,
             children: [
               IconButton(
                 key: const Key('mediaRewind'),
                 icon: const Icon(Icons.replay_10),
-                tooltip: 'Rewind 10 seconds',
+                tooltip: 'Lùi 10 giây',
                 onPressed: () => seek(const Duration(seconds: -10)),
               ),
               IconButton(
@@ -237,7 +235,9 @@ class ChildMediaPlayerState extends State<ChildMediaPlayer>
                 icon: Icon(
                   player.value.isPlaying ? Icons.pause : Icons.play_arrow,
                 ),
-                tooltip: player.value.isPlaying ? 'Pause video' : 'Play video',
+                tooltip: player.value.isPlaying
+                    ? 'Tạm dừng video'
+                    : 'Phát video',
                 onPressed: reachedCue != null
                     ? null
                     : () => player.value.isPlaying
@@ -247,7 +247,7 @@ class ChildMediaPlayerState extends State<ChildMediaPlayer>
               IconButton(
                 key: const Key('mediaForward'),
                 icon: const Icon(Icons.forward_10),
-                tooltip: 'Forward 10 seconds',
+                tooltip: 'Tiến 10 giây',
                 onPressed: () => seek(const Duration(seconds: 10)),
               ),
             ],

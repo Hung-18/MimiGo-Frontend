@@ -1,3 +1,5 @@
+import 'user_messages.dart';
+
 import 'package:flutter/material.dart';
 
 import 'mimigo_design.dart';
@@ -9,12 +11,12 @@ import 'learning_screens.dart' show LearningError, LearningLabel;
 // SRS FR-CUR-01 and the canonical R0 domain seed. Availability and topics
 // come only from the child's returned Free catalog, not from this framework.
 enum CurriculumDomain {
-  math('MATH', 'Math', Icons.calculate_outlined),
-  language('LANGUAGE', 'Language', Icons.menu_book_outlined),
-  english('ENGLISH', 'English', Icons.translate),
-  lifeSkills('LIFE_SKILLS', 'Life skills', Icons.self_improvement),
-  logic('LOGIC', 'Logic', Icons.extension_outlined),
-  discovery('DISCOVERY', 'Discovery', Icons.explore_outlined);
+  math('MATH', 'Toán học', Icons.calculate_outlined),
+  language('LANGUAGE', 'Ngôn ngữ', Icons.menu_book_outlined),
+  english('ENGLISH', 'Tiếng Anh', Icons.translate),
+  lifeSkills('LIFE_SKILLS', 'Kỹ năng sống', Icons.self_improvement),
+  logic('LOGIC', 'Tư duy logic', Icons.extension_outlined),
+  discovery('DISCOVERY', 'Khám phá', Icons.explore_outlined);
 
   const CurriculumDomain(this.code, this.label, this.icon);
   final String code, label;
@@ -43,8 +45,21 @@ class CurriculumExplorerState extends ChangeNotifier {
     return null;
   }
 
-  String domainName(CurriculumDomain value) =>
-      metadata(value)?.name ?? value.label;
+  String domainName(CurriculumDomain value) {
+    final name = metadata(value)?.name;
+    return name == null ||
+            {
+              'Math',
+              'Language',
+              'English',
+              'Life skills',
+              'Logic',
+              'Discovery',
+            }.contains(name)
+        ? value.label
+        : name;
+  }
+
   String topicName(String code) {
     for (final item in metadata(domain!)?.topics ?? <CurriculumTopicData>[]) {
       if (item.code == code) return item.name;
@@ -217,15 +232,15 @@ class _CurriculumExplorerState extends State<CurriculumExplorer> {
               'DEMO / FIXTURE · no published fixture curriculum catalog. The local Logic demo remains separate.',
             ),
           Text(
-            'Learning for ${widget.childAlias}',
+            'Bài học của ${widget.childAlias}',
             key: const Key('explorerChildContext'),
             style: Theme.of(context).textTheme.titleLarge,
           ),
           Text(
             domain == null
-                ? 'Choose a domain'
+                ? 'Chọn lĩnh vực'
                 : topic == null
-                ? '${model.domainName(domain)} / Topics'
+                ? '${model.domainName(domain)} / Chủ đề'
                 : '${model.domainName(domain)} / ${model.topicName(topic)}',
             key: const Key('explorerBreadcrumb'),
           ),
@@ -238,18 +253,17 @@ class _CurriculumExplorerState extends State<CurriculumExplorer> {
               child: Column(
                 children: [
                   CircularProgressIndicator(
-                    semanticsLabel: 'Loading eligible curriculum',
+                    semanticsLabel: 'Đang tải bài học phù hợp',
                   ),
-                  Text('Loading eligible lessons…'),
+                  Text('Đang tìm bài học phù hợp…'),
                 ],
               ),
             )
           else if (model.error != null)
             LearningError(model.error!)
           else ...[
-            if (model.disclaimer != null) Text(model.disclaimer!),
             if (domain == null) ...[
-              heading(context, 'Curriculum domains'),
+              heading(context, 'Các lĩnh vực khám phá'),
               const SizedBox(height: 12),
               MimiTileGrid(
                 minimumWidth: 180,
@@ -260,7 +274,7 @@ class _CurriculumExplorerState extends State<CurriculumExplorer> {
                       label: model.domainName(value),
                       code: value.code,
                       description: model.inDomain(value).isEmpty
-                          ? 'Content not available yet'
+                          ? 'Chưa có nội dung phù hợp'
                           : 'Có bài học được dịch vụ cho phép',
                       onPressed: opening
                           ? null
@@ -269,7 +283,7 @@ class _CurriculumExplorerState extends State<CurriculumExplorer> {
                 ],
               ),
             ] else if (topic == null) ...[
-              heading(context, 'Topics in ${model.domainName(domain)}'),
+              heading(context, 'Chủ đề: ${model.domainName(domain)}'),
               ...model.topics.map(
                 (code) => action(
                   'topic-$code',
@@ -278,7 +292,7 @@ class _CurriculumExplorerState extends State<CurriculumExplorer> {
                 ),
               ),
             ] else ...[
-              heading(context, 'Lessons in ${model.topicName(topic)}'),
+              heading(context, 'Bài học: ${model.topicName(topic)}'),
               ...model.inTopic.map(
                 (lesson) => Card(
                   child: Padding(
@@ -290,10 +304,15 @@ class _CurriculumExplorerState extends State<CurriculumExplorer> {
                           lesson.title,
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
-                        Text('${lesson.lessonCode} · ${lesson.access}'),
+                        Text(viState(lesson.access)),
                         Text(lesson.objective),
-                        Text('Primary skill: ${lesson.primarySkill}'),
-                        Text('Revision: ${lesson.revisionNo}'),
+                        TechnicalDetails(
+                          children: [
+                            Text('Mã bài: ${lesson.lessonCode}'),
+                            Text('Kỹ năng: ${lesson.primarySkill}'),
+                            Text('Phiên bản: ${lesson.revisionNo}'),
+                          ],
+                        ),
                         action(
                           'explorer-lesson-${lesson.lessonId}',
                           'Mở bài học',
@@ -314,16 +333,12 @@ class _CurriculumExplorerState extends State<CurriculumExplorer> {
             if ((domain == null && model.lessons.isEmpty) ||
                 (domain != null && topic == null && model.topics.isEmpty) ||
                 (topic != null && model.inTopic.isEmpty)) ...[
-              const Text(
-                'Content not available yet',
-                key: Key('explorerEmpty'),
-              ),
+              const Text('Chưa có nội dung phù hợp', key: Key('explorerEmpty')),
               Text(
                 model.emptyReason == 'CHILD_OUTSIDE_PROGRAM_AGE'
-                    ? 'The service returned no eligible lessons for this child’s age.'
+                    ? 'Chưa có bài học phù hợp với độ tuổi của bé.'
                     : 'Chưa có bài học phù hợp được máy chủ trả về cho lựa chọn này.',
               ),
-              if (model.emptyReason != null) Text(model.emptyReason!),
             ],
           ],
           action(

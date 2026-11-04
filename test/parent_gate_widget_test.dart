@@ -1,3 +1,5 @@
+import 'ui_test_support.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -117,7 +119,7 @@ void main() {
       };
       await tapVisible(tester, 'loadParentActivity');
       expect(find.text('Chưa có phiên học được máy chủ trả về.'), findsNothing);
-      expect(find.textContaining('SERVICE_UNAVAILABLE'), findsOneWidget);
+      expect(findErrorCode('SERVICE_UNAVAILABLE'), findsOneWidget);
       app.backend.forcedActivityError = null;
       await tapVisible(tester, 'loadParentActivity');
       expect(
@@ -139,7 +141,7 @@ void main() {
       await tapVisible(tester, 'openParentArea');
       await fillGatePin(tester);
       expect(find.byType(GatedParentArea), findsOneWidget);
-      expect(find.text('No child profiles returned.'), findsNothing);
+      expect(find.text('Chưa có hồ sơ bé.'), findsNothing);
       expect(find.byKey(const Key('gated-child-child-A')), findsNothing);
       expect(find.textContaining('PRIVATE_SERVER_DETAIL'), findsNothing);
       expect(app.api.gateSession!.hasParentProof, isTrue);
@@ -174,7 +176,7 @@ void main() {
           ..forcedLoginError = {'code': 'ACCOUNT_LOGIN_LOCKED', 'status': 423}
           ..forcedLoginRetry = 8,
       );
-      expect(find.textContaining('ACCOUNT_LOGIN_LOCKED'), findsOneWidget);
+      expect(findErrorCode('ACCOUNT_LOGIN_LOCKED'), findsOneWidget);
       expect(find.byKey(const Key('loginRetryAfter')), findsOneWidget);
       expect(find.textContaining('PRIVATE_SERVER_DETAIL'), findsNothing);
       expect(find.textContaining('remaining'), findsNothing);
@@ -319,10 +321,7 @@ void main() {
       shield.wait!.completeError(PlatformException(code: 'blocked'));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('gatePin')), findsNothing);
-      expect(
-        find.textContaining('SCREEN_PROTECTION_UNAVAILABLE'),
-        findsOneWidget,
-      );
+      expect(findErrorCode('SCREEN_PROTECTION_UNAVAILABLE'), findsOneWidget);
     },
   );
 
@@ -361,7 +360,7 @@ void main() {
         '395184',
       );
       await tapVisible(tester, 'gateSubmit');
-      expect(find.textContaining('PIN_CONFIRMATION_MISMATCH'), findsOneWidget);
+      expect(findErrorCode('PIN_CONFIRMATION_MISMATCH'), findsOneWidget);
       expect(
         backend.requests.where((r) => r.uri.path.endsWith('/step-up')),
         isEmpty,
@@ -372,7 +371,7 @@ void main() {
         '123456',
       );
       await tapVisible(tester, 'gateSubmit');
-      expect(find.textContaining('PIN_TOO_WEAK'), findsOneWidget);
+      expect(findErrorCode('PIN_TOO_WEAK'), findsOneWidget);
       expect(find.textContaining('PRIVATE_SERVER_DETAIL'), findsNothing);
       expect(done, 0);
       for (final key in ['gatePassword', 'gatePin', 'gatePinConfirmation']) {
@@ -434,7 +433,10 @@ void main() {
         isNull,
       );
       expect(find.textContaining('remaining'), findsNothing);
-      expect(find.textContaining('Try again in 3 seconds'), findsOneWidget);
+      expect(
+        find.textContaining('Vui lòng thử lại sau 3 giây'),
+        findsOneWidget,
+      );
       now = now.add(const Duration(seconds: 3));
       await tester.pump(const Duration(seconds: 3));
       expect(done, 0);
@@ -486,7 +488,7 @@ void main() {
       );
       expect(find.byKey(const Key('gatePassword')), findsNothing);
       expect(
-        find.textContaining('Forgot PIN? Sign out and sign in'),
+        find.textContaining('Quên PIN? Đăng xuất để đặt lại'),
         findsOneWidget,
       );
       await tapVisible(tester, 'gateRecover');
@@ -499,12 +501,12 @@ void main() {
   );
 
   gateWidgets(
-    'Parent Home uses public roster without protected requests, DOB, age or null placeholders',
+    'Góc phụ huynh uses public roster without protected requests, DOB, age or null placeholders',
     (tester) async {
       final app = await openGateApp(tester, enrolled: true);
-      expect(find.text('Parent Home'), findsOneWidget);
+      expect(find.text('Góc phụ huynh'), findsOneWidget);
       expect(find.textContaining('Age returned'), findsNothing);
-      expect(find.textContaining('Date of birth'), findsNothing);
+      expect(find.textContaining('Ngày sinh'), findsNothing);
       expect(find.textContaining('null'), findsNothing);
       await tapVisible(tester, 'parent-child-child-A');
       expect(
@@ -534,7 +536,7 @@ void main() {
         syntheticPin,
       );
       await tapVisible(tester, 'gateSubmit');
-      expect(find.text('Parent Home'), findsOneWidget);
+      expect(find.text('Góc phụ huynh'), findsOneWidget);
       expect(app.api.gateSession!.hasParentProof, isFalse);
       await tapVisible(tester, 'openParentArea');
       await fillGatePin(tester);

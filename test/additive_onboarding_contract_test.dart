@@ -185,14 +185,14 @@ void main() {
   }
 
   testWidgets(
-    'Parent Home resumes a known OPEN attempt with original notices and fresh unchecked choices',
+    'Góc phụ huynh resumes a known OPEN attempt with original notices and fresh unchecked choices',
     (tester) async {
       final api = ResumeApi();
       await openChildOnboarding(tester, api);
       await tapVisible(tester, 'guardianAssertion');
       await tapVisible(tester, 'privacyParentHome');
       await tapVisible(tester, 'parentResumeOnboarding');
-      expect(find.text('Attempt status: OPEN'), findsOneWidget);
+      expect(find.text('Tình trạng: Đang xem xét'), findsOneWidget);
       expect(api.attempts, 1);
       await tapVisible(tester, 'resumeOpenAttempt');
       for (final tile in tester.widgetList<CheckboxListTile>(
@@ -201,10 +201,17 @@ void main() {
         expect(tile.value, isFalse);
       }
       expect(find.byKey(const Key('childDob')), findsNothing);
-      await affirmNotices(tester);
-      await reviewChild(tester);
-      await tapVisible(tester, 'createChild');
-      expect(api.requests.single.attemptId, 'attempt-1');
+      expect(
+        find.byKey(const Key('noticeDocumentUnavailable')),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<FilledButton>(find.byKey(const Key('privacyContinue')))
+            .onPressed,
+        isNull,
+      );
+      expect(api.requests, isEmpty);
       expect(api.attempts, 1, reason: 'A resume never creates a new attempt.');
     },
   );
@@ -220,10 +227,7 @@ void main() {
       await reviewChild(tester);
       await tapVisible(tester, 'createChild');
       await tapVisible(tester, 'checkCreationAttempt');
-      expect(
-        find.text('Attempt status: ATTEMPT_ALREADY_CONSUMED'),
-        findsOneWidget,
-      );
+      expect(find.text('Tình trạng: Đã tạo hồ sơ'), findsOneWidget);
       expect(find.byKey(const Key('resumeOpenAttempt')), findsNothing);
       await tapVisible(tester, 'resumeConsumedHome');
       expect(find.byType(ParentArea), findsOneWidget);
@@ -296,13 +300,12 @@ void main() {
       expect(find.byKey(const Key('resumeOpenAttempt')), findsNothing);
       await tapVisible(tester, 'resumeTerms');
       expect(find.byType(TermsReacceptance), findsOneWidget);
+      expect(find.byKey(const Key('termsDocumentUnavailable')), findsOneWidget);
       expect(
         tester
-            .widget<CheckboxListTile>(
-              find.byKey(const Key('reacceptTermsCheckbox')),
-            )
-            .value,
-        isFalse,
+            .widget<FilledButton>(find.byKey(const Key('reacceptTermsSubmit')))
+            .onPressed,
+        isNull,
       );
       expect(api.requests, isEmpty);
     },

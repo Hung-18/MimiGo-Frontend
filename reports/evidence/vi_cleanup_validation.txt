@@ -1,0 +1,11 @@
+2026-11-04 — Vietnamese UI cleanup, baseline de096fb.
+dart format: PASS.
+flutter analyze --no-pub: PASS, no issues.
+Full flutter test --no-pub: 383 PASS, 2 opt-in staging tests SKIPPED.
+Focused Vietnamese/live/PIN suite: 31 PASS.
+flutter build apk --debug --no-pub: PASS, normal live entry.
+Public registration-unavailable widget render inspected; no protected screen capture.
+No new live API acceptance, device install, iOS or complete-product claim.
+Registration/Terms/child consent blocked where approved full legal content is absent.
+Backend/Database/Web CMS/cloud remain unchanged.
+Final onboarding copy verification: 50 targeted tests PASS; analysis clean.

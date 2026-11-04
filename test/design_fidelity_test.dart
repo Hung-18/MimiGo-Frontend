@@ -151,7 +151,7 @@ void main() {
       );
       await tapVisible(tester, 'registerSubmit');
       expect(request, isNull);
-      expect(find.text('Enter the same password again.'), findsOneWidget);
+      expect(find.text('Ba mẹ nhập lại đúng mật khẩu nhé.'), findsOneWidget);
       await tester.enterText(
         find.byKey(const Key('registerPasswordConfirmation')),
         'synthetic-pass',
@@ -251,7 +251,7 @@ void main() {
       expect(find.byKey(const Key('completionConfirmed')), findsOneWidget);
       await tapVisible(tester, 'replayLearning');
       expect(find.byKey(const Key('completionConfirmed')), findsNothing);
-      expect(find.text('Session: IN_PROGRESS'), findsOneWidget);
+      expect(find.text('Lượt học: Đang học'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump();

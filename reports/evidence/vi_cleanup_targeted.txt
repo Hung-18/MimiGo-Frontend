@@ -1,0 +1,34 @@
+00:00 +0: loading D:/Projects/MimiGo/MimiGo-Frontend/test/vietnamese_ui_test.dart
+00:00 +0: D:/Projects/MimiGo/MimiGo-Frontend/test/vietnamese_ui_test.dart: (setUpAll)
+00:00 +0: D:/Projects/MimiGo/MimiGo-Frontend/test/vietnamese_ui_test.dart: metadata, mock code, empty content and mismatched versions never authorize Terms
+00:00 +1: D:/Projects/MimiGo/MimiGo-Frontend/test/vietnamese_ui_test.dart: registration with actual metadata shape is unavailable and cannot submit consent
+00:00 +2: D:/Projects/MimiGo/MimiGo-Frontend/test/vietnamese_ui_test.dart: registration with actual metadata shape is unavailable and cannot submit consent
+00:00 +3: D:/Projects/MimiGo/MimiGo-Frontend/test/vietnamese_ui_test.dart: registration with actual metadata shape is unavailable and cannot submit consent
+00:00 +4: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:00 +5: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:00 +6: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:00 +7: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:00 +8: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:01 +9: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:01 +10: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:01 +11: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:01 +12: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:01 +13: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:01 +14: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:01 +15: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:01 +16: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: protected roster failure retries without an empty-account claim or PIN bypass
+00:01 +17: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: account login lock uses Retry-After without private messages or another attempt
+00:02 +18: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: rapid verification taps cannot submit twice or expose the PIN in feedback
+00:02 +19: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: PIN proof expiry hides protected data without requiring another API call
+00:02 +20: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: six-digit form remains usable on a narrow large-text screen
+00:02 +21: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: PIN inputs wait for native protection and stay unavailable if it fails
+00:02 +22: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: enrollment requires password and matching six digits, clears fields and does not issue Parent proof
+00:02 +23: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: temporary lock honors Retry-After, has no remaining-attempt count and never auto-submits
+00:02 +24: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: recovery-required in Child Mode offers logout, never password step-up or PIN reset
+00:03 +25: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: Góc phụ huynh uses public roster without protected requests, DOB, age or null placeholders
+00:03 +26: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: complete PIN enrollment and Parent Area access reveal detail only after proof; background hides it
+00:04 +27: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: permission denial removes previously visible protected details
+00:04 +28: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: Child Mode, switch and exit require actual token transitions; no Parent data appears before PIN
+00:05 +29: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: revoked Child session refresh failure removes all protected app state and returns to login
+00:06 +30: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: restored Child session uses only child token and a generic label without persisted profile data
+00:06 +31: All tests passed!
