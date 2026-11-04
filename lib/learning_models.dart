@@ -24,7 +24,9 @@ class CurriculumTopicData {
       lessons = _items(json, 'lessons', LessonSummary.fromJson) {
     if (lessons.isEmpty ||
         lessons.any(
-          (lesson) => lesson.topicCode != code || lesson.access != 'FREE',
+          (lesson) =>
+              lesson.topicCode != code ||
+              !{'FREE', 'CORE'}.contains(lesson.access),
         ) ||
         lessons.map((lesson) => lesson.lessonId).toSet().length !=
             lessons.length)

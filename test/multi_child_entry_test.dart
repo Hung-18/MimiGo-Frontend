@@ -32,6 +32,14 @@ void main() {
           ),
         ),
       );
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('childName')))
+            .controller!
+            .text,
+        isEmpty,
+      );
+      await tester.enterText(find.byKey(const Key('childName')), 'SYN-Entered');
       for (final value in [
         '2023-02-29',
         '2024-2-29',
@@ -70,6 +78,7 @@ void main() {
           ),
         ),
       );
+      await tester.enterText(find.byKey(const Key('childName')), 'SYN-Entered');
       await tester.enterText(find.byKey(const Key('childDob')), '2024-02-29');
       await tapVisible(tester, 'avatar-bee-yellow');
       expect(

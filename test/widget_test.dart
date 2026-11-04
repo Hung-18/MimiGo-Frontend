@@ -50,7 +50,11 @@ void main() {
   testWidgets('terms and consent are unchecked and gate child input', (
     tester,
   ) async {
-    await tester.pumpWidget(const MimiGoApp());
+    await tester.pumpWidget(
+      const MimiGoApp(
+        configuration: ApiConfiguration(ApiMode.fixture, 'unused'),
+      ),
+    );
     await tapVisible(tester, 'welcomeStart');
     expect(tester.widget<Checkbox>(find.byType(Checkbox).first).value, isFalse);
     await tapVisible(tester, 'termsCheckbox');

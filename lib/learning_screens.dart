@@ -12,9 +12,7 @@ class LearningLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const MimiNotice(
     icon: Icons.science_outlined,
-    child: Text(
-      'DEVELOPMENT / DEMO · synthetic Free learning content. Not production approved.',
-    ),
+    child: Text('Bài học và câu trả lời được xác nhận bởi dịch vụ MimiGo.'),
   );
 }
 
@@ -131,7 +129,9 @@ class _MathLessonCatalogState extends State<MathLessonCatalog> {
           // Eligibility and age are authoritative on the server. Only select the
           // requested Math domain from its returned Free results; no local ages.
           final math = response.items.where(
-            (lesson) => lesson.domainCode == 'MATH' && lesson.access == 'FREE',
+            (lesson) =>
+                lesson.domainCode == 'MATH' &&
+                {'FREE', 'CORE'}.contains(lesson.access),
           );
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -174,9 +174,7 @@ class _MathLessonCatalogState extends State<MathLessonCatalog> {
                               lesson.title,
                               style: Theme.of(context).textTheme.titleLarge,
                             ),
-                            Text(
-                              '${lesson.lessonCode} · Free · development/demo',
-                            ),
+                            Text('${lesson.lessonCode} · ${lesson.access}'),
                             Text(lesson.objective),
                           ],
                         ),
@@ -325,9 +323,9 @@ class _LearningLessonViewState extends State<LearningLessonView> {
       final value = await widget.api.lesson(widget.childId, widget.lessonId);
       if (value.summary.lessonId != widget.lessonId ||
           value.summary.domainCode != widget.domainCode ||
-          value.summary.access != 'FREE') {
+          !{'FREE', 'CORE'}.contains(value.summary.access)) {
         throw const ApiInvalidResponse(
-          'The service returned an unexpected Free lesson.',
+          'The service returned an unexpected lesson.',
         );
       }
       if (mounted) {
@@ -572,7 +570,7 @@ class _LearningLessonViewState extends State<LearningLessonView> {
         Text(lesson.disclaimer),
         if (lesson.assets.isNotEmpty && !playPrivateMedia)
           const Text(
-            'Media references are metadata only. Playback is not available in this development slice.',
+            'Video chưa khả dụng trên môi trường hiện tại. Không có video nào đang được phát. Các câu hỏi bên dưới dùng nội dung bài học do máy chủ trả về.',
           ),
         if (sessionError != null) LearningError(sessionError!),
         if (loadingSession)

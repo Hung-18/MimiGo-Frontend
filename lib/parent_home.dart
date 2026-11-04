@@ -23,18 +23,27 @@ class ParentHomeState extends ChangeNotifier {
   int _generation = 0;
   bool get canEnter {
     final child = selected;
+    final childContextAvailable =
+        api is ParentGateApi && (api as ParentGateApi).parentGateEnabled;
+    // Parent workspace counts Free only. Paid age-out Core is checked only
+    // by the Child-context catalog; entering a context grants no lesson.
+    final checkCoreInChildContext =
+        childContextAvailable &&
+        catalogStatuses[child?.id] == 'CHILD_OUTSIDE_PROGRAM_AGE' &&
+        learningEntryStatuses[child?.id] == 'CHILD_OUTSIDE_PROGRAM_AGE';
     return !busy &&
         child != null &&
         child.state == 'ACTIVE' &&
-        child.withinProgramAgeRange &&
-        {
-          'AVAILABLE',
-          'NO_ELIGIBLE_CONTENT',
-        }.contains(catalogStatuses[child.id]) &&
-        {
-          'READY',
-          'NO_ELIGIBLE_CONTENT',
-        }.contains(learningEntryStatuses[child.id]);
+        (checkCoreInChildContext ||
+            (child.withinProgramAgeRange &&
+                {
+                  'AVAILABLE',
+                  'NO_ELIGIBLE_CONTENT',
+                }.contains(catalogStatuses[child.id]) &&
+                {
+                  'READY',
+                  'NO_ELIGIBLE_CONTENT',
+                }.contains(learningEntryStatuses[child.id])));
   }
 
   void seed(List<ChildSummary> profiles) {
@@ -209,7 +218,7 @@ class _ParentHomeState extends State<ParentHome> {
             child: Text(
               widget.fixture
                   ? 'DEMO / FIXTURE · Tài khoản mẫu, dữ liệu chỉ ở ứng dụng. Không lưu kết quả lên máy chủ.'
-                  : 'R0 / API · Tài khoản đã đăng nhập. Chỉ dùng dữ liệu tổng hợp; quyền truy cập do máy chủ kiểm tra.',
+                  : 'Đã đăng nhập. Hồ sơ và quyền học được tải từ dịch vụ; không có kết quả học tập được tạo cục bộ.',
             ),
           ),
           Text(

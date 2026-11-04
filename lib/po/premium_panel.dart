@@ -99,6 +99,20 @@ class _PremiumPanelState extends State<PremiumPanel> {
     final rights = await widget.service.entitlement(widget.childId);
     if (mounted) setState(() => entitlement = rights);
   });
+  Future<void> readCheckout() => run(() async {
+    final current = await widget.service.checkoutStatus(
+      checkout!['checkoutId'],
+      widget.childId,
+      selected!.id,
+    );
+    if (mounted)
+      setState(() {
+        checkout = current;
+        entitlement = null;
+      });
+    final rights = await widget.service.entitlement(widget.childId);
+    if (mounted) setState(() => entitlement = rights);
+  });
   @override
   Widget build(BuildContext context) => PoCard(
     color: PoPalette.cream,
@@ -150,6 +164,12 @@ class _PremiumPanelState extends State<PremiumPanel> {
           Text(
             'Báo giá: ${checkout!['totalMinor']} ${checkout!['currency']}\nTrạng thái: ${checkout!['status']}\nHạn báo giá: ${checkout!['expiresAt']}',
           ),
+          PoAction(
+            'Kiểm tra trạng thái giao dịch',
+            secondary: true,
+            icon: Icons.refresh,
+            onPressed: busy ? null : readCheckout,
+          ),
           if (checkout!['status'] == 'PENDING_SETTLEMENT') ...[
             PoAction(
               outcome == null ? 'Mô phỏng SETTLED' : 'Thử lại kết quả $outcome',
@@ -165,6 +185,21 @@ class _PremiumPanelState extends State<PremiumPanel> {
           if (checkout!['status'] == 'SETTLED')
             const Text(
               'Máy chủ xác nhận thanh toán MÔ PHỎNG. Không phải biên lai thật; quyền học từng bài vẫn do Learning API quyết định.',
+            ),
+          if (checkout!['status'] != 'PENDING_SETTLEMENT')
+            TextButton(
+              onPressed: busy
+                  ? null
+                  : () {
+                      setState(() {
+                        checkout = null;
+                        selected = null;
+                        key = null;
+                        outcome = null;
+                      });
+                      load();
+                    },
+              child: const Text('Chọn gói và tạo báo giá mới'),
             ),
         ],
         if (key == null ||

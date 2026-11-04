@@ -1,5 +1,66 @@
 # PO-owned Flutter mobile MVP — 2026-11-04
 
+## Current: real Backend integration correction
+
+This section supersedes the preview-first delivery below. Baseline `9155da3`, branch `feature/po-flutter-ui`. **The app is not claimed complete or authenticated-live-accepted.** Normal `lib/main.dart` always selects `LiveMimiGoApi`, staging URL and the secure Parent Gate session coordinator. Environment fixture/Gate-off switches cannot turn the normal entry into the demonstration or legacy bearer-only app. This client-only correction follows the new PO instruction; it does not activate Backend flags, migrations or cloud services.
+
+### Local/synthetic path audit
+
+| Source | Current disposition |
+|---|---|
+| `FixtureMimiGoApi` in `main.dart` | Retained regression adapter, never selected by `fromEnvironment()` or a network failure |
+| `preview_app.dart`, `preview_state.dart`, `preview_learning.dart` | Historical source/tests only, no normal import or route. Sample children, generated local OTP/PIN and local `completed` list are not account/progress data |
+| `mobile_demo.dart`, fixture content sources, CircleDemo | Original regression fixture only; no normal Gate-enabled navigation into these activities |
+| `fixture_main.dart` | Explicit separate regression entry, not a user menu or normal mode define |
+| `LearningSessionMemory` / `PendingLearningAnswers` | Real acknowledgment/readback coordination only; stable event/payload retries, child/account-scoped memory. Not durable or complete history |
+| Native credential vault | Existing API-bound refresh bundle only; proofs/access/Child tokens in memory, no persisted password/PIN |
+| Screenshots and preview evidence below | Historical public synthetic UI evidence; never proof of live persistence |
+
+### Implemented correction
+
+The PO garden/bee/cards/fonts remain shared. The welcome no longer links to new preview or registration walkthroughs. Normal registration name and child alias start blank. Generic engineering/demo banners and development/demo lesson labels are absent from normal screens; genuine server/legal staging notices remain truthful.
+
+`LiveChildHome` loads the authenticated Child-context curriculum, uses returned domain names and availability, and routes into Domain → Topic → Lesson discovery. Missing content shows a real empty state, unavailable framework areas are locked, and errors clear stale catalog data. It has no sample profiles, featured local lessons or local progress state.
+
+Current candidates support server-authorized `FREE` and `CORE`; removed the old Free-only catalog/detail rejection. No local Premium unlock was added. The current Core contract says the Parent workspace counts Free only: an active child's **known** outside-program-age workspace status may enter a PIN-authorized Child context to check previously purchased Core scope there. This grants no lesson or new purchase; unknown/denied/inactive remains closed. Learning APIs remain authoritative for age, consent, publication and purchased scope.
+
+Real lesson/revision/cue/option/session IDs feed the existing start, answer, recorded-answer readback, bodyless complete and fresh-session replay APIs. Complete/endedAt require the server acknowledgment. Generic interactive choices render actual returned cue/options; no local story or answer key is inserted. Parent progress is the Gate-protected recent server session list with returned timestamps, never aggregate scores or preview memory. Answer-level session readback remains Child-only according to the current contract.
+
+Protected settings display the authenticated Parent account. Versioned alias/avatar management keeps fresh profileVersion, strong If-Match, UUID idempotency key and locked unknown-outcome retry; existing nullable avatars are supported, DOB is never sent. Premium uses server prices/scope/eligibility/rights and explicit simulator receipts. Added owned-checkout GET readback for pending/expired/unknown outcomes and a fresh quote only after confirmed terminal status. Real payments remain unavailable.
+
+Logout cancels outstanding native requests before serialized server logout. Transport generation guards reject late responses; cancellation never claims a server write was rolled back. Parent recovery/login also reject stale account/session results. Timeouts accommodate Render cold starts. Native storage, serialized refresh, proof expiry/background cleanup, Child tokens, stable answer retries and FLAG_SECURE remain intact.
+
+### Per-feature status
+
+| Feature | Status | Evidence / remaining prerequisite |
+|---|---|---|
+| Public current-Terms/notices read through Flutter client | LIVE_E2E_PASS | Actual staging GET; metadata only, not registration or learning acceptance |
+| Invited Parent register and OTP verify/resend | API_INTEGRATED_NOT_VERIFIED | Exact candidate, real form/resend APIs; authorized OTP-capable mailbox still needed |
+| General registration | BLOCKED_BACKEND | Current staging handoff reports invitation/provider restrictions; returned codes shown accurately |
+| Login, refresh, restore, logout | API_INTEGRATED_NOT_VERIFIED | Normal secure session path and cancellation regressions; no approved runtime account supplied |
+| Parent account/protected information read | API_INTEGRATED_NOT_VERIFIED | Actual `parents/me` data; no sample account |
+| Parent account/email/password editing | BLOCKED_BACKEND | No supported available mutation contract; password-reset route locked |
+| PIN enroll/verify/change/reset and Child transitions | API_INTEGRATED_NOT_VERIFIED | Existing exact candidate/proof/native security path; no real PIN attempt or flag activation here |
+| Child notice/creation/recovery, roster/detail, alias/avatar edit | API_INTEGRATED_NOT_VERIFIED | Real ids, notice choices, versions and idempotency; no child created or edited here |
+| Eligible Free/Core discovery and lesson detail | API_INTEGRATED_NOT_VERIFIED | Live home, current Core decoding and private-read/navigation tests; not authenticated staging evidence |
+| Published eligible staging content | BLOCKED_CONTENT | Handoff has no confirmed published inventory; account/content scope needed to establish current availability. No lesson manufactured |
+| Session start/answer/complete/replay/readback | API_INTEGRATED_NOT_VERIFIED | Real endpoints and acknowledgment checks; no authorized staging learning write run |
+| Durable Parent history/progress | API_INTEGRATED_NOT_VERIFIED | Protected server list; cross-login persistence harness implemented, not run without approved identity/content |
+| Plans, entitlement, simulator quote/settlement/status | API_INTEGRATED_NOT_VERIFIED | Real protected transport/quotes/receipts; no transaction created here |
+| Cloud video/audio | BLOCKED_BACKEND | Handoff has Media OFF/R2 delivery dependencies. Existing local authorized native player preserved; storageRef never treated as URL |
+| Content-specific matching/counting beyond returned cue/options | BLOCKED_CONTENT | No approved typed activity/media supplied; generic real cue choices work without inventing content |
+| Privacy/DOB rights, real payment | BLOCKED_BACKEND | Staging/policy restrictions remain; no bypass or false success |
+
+None of the private features can be called LIVE_E2E_PASS from mocks, compilation, old local acceptance or 400/401 probes. No complete-product acceptance is claimed.
+
+### Acceptance harness / current evidence
+
+`test/live_staging_acceptance_test.dart` separates public metadata verification from an opt-in existing-account journey. Credentials use only the operator runtime environment, never source/defines/logs. It checks ownership of an existing `SYN-` child and the actual Child catalog. Explicitly authorized learning writes require a returned approved lesson ID, submit actual cues/options, complete, logout/login, then verify the identical completed session/endedAt from protected server history. It uses no local learning cache as persistence evidence and creates no accounts/children/billing transactions.
+
+Real public client check: **1 PASS** (29 seconds). Authenticated acceptance: **1 SKIPPED**, no authorized runtime identity supplied. Final full suite: **376 PASS / 2 opt-in staging tests SKIPPED**. `flutter analyze --no-pub`: clean. `flutter build apk --debug --no-pub`: **PASS**, exit 0, 23.3s Gradle, normal live-only entry with no API mode or Gate define. Contract/navigation evidence is in `live_integration_regression.txt`; public evidence in `live_staging_readonly.txt`. These do not replace Android device, iOS, mailbox/OTP or authenticated Backend acceptance. All preview-build evidence below is historical.
+
+## Historical delivery at 9155da3
+
 Branch `feature/po-flutter-ui`, clean starting checkpoint `bbbf461`. The PO explicitly authorized this implementation, commit and feature-branch push. No main checkout, merge, reset, deployment, sibling repository or `.mimigo` write. The prior API implementation, secure native storage, tests, fixture demonstration, Android/iOS projects and shared Baloo 2/Nunito design tokens remain intact.
 
 ## Delivered presentation

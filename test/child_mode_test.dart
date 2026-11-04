@@ -111,7 +111,7 @@ void main() {
         expect(
           find.textContaining(
             english
-                ? 'No eligible Free lessons'
+                ? 'Chưa có bài học phù hợp được máy chủ trả về'
                 : category == LearningCategory.math
                 ? 'No eligible Free Math'
                 : 'current live service',

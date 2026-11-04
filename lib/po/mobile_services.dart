@@ -69,7 +69,8 @@ class ProfileService {
   Map<String, dynamic> _validate(Map<String, dynamic> value, String childId) {
     if (value['childId'] != childId ||
         value['childAlias'] is! String ||
-        value['stockAvatarKey'] is! String ||
+        (value['stockAvatarKey'] != null &&
+            value['stockAvatarKey'] is! String) ||
         value['profileVersion'] is! int ||
         value['profileVersion'] < 1)
       throw const ApiInvalidResponse('Invalid protected profile version.');
@@ -174,6 +175,25 @@ class PremiumService {
     childId,
     planId,
   );
+  Future<Map<String, dynamic>> checkoutStatus(
+    String checkoutId,
+    String childId,
+    String planId,
+  ) async {
+    final value = _checkout(
+      await request(
+        'GET',
+        'billing/premium-checkouts/$checkoutId',
+        protected: true,
+      ),
+      childId,
+      planId,
+    );
+    if (value['checkoutId'] != checkoutId)
+      throw const ApiInvalidResponse('Checkout identity changed.');
+    return value;
+  }
+
   Future<Map<String, dynamic>> settle(
     String checkoutId,
     String childId,

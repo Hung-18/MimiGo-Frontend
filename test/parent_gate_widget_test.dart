@@ -107,17 +107,23 @@ void main() {
       await fillGatePin(tester);
       await tapVisible(tester, 'gated-child-child-A');
       await tapVisible(tester, 'loadParentActivity');
-      expect(find.text('No sessions returned.'), findsOneWidget);
+      expect(
+        find.text('Chưa có phiên học được máy chủ trả về.'),
+        findsOneWidget,
+      );
       app.backend.forcedActivityError = {
         'code': 'SERVICE_UNAVAILABLE',
         'status': 503,
       };
       await tapVisible(tester, 'loadParentActivity');
-      expect(find.text('No sessions returned.'), findsNothing);
+      expect(find.text('Chưa có phiên học được máy chủ trả về.'), findsNothing);
       expect(find.textContaining('SERVICE_UNAVAILABLE'), findsOneWidget);
       app.backend.forcedActivityError = null;
       await tapVisible(tester, 'loadParentActivity');
-      expect(find.text('No sessions returned.'), findsOneWidget);
+      expect(
+        find.text('Chưa có phiên học được máy chủ trả về.'),
+        findsOneWidget,
+      );
       expect(app.api.gateSession!.hasParentProof, isTrue);
     },
   );
@@ -536,7 +542,10 @@ void main() {
       await tapVisible(tester, 'gated-child-child-A');
       expect(find.byKey(const Key('protectedChildDob')), findsOneWidget);
       await tapVisible(tester, 'loadParentActivity');
-      expect(find.text('No sessions returned.'), findsOneWidget);
+      expect(
+        find.text('Chưa có phiên học được máy chủ trả về.'),
+        findsOneWidget,
+      );
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
       await tester.pumpAndSettle();
       expect(app.api.gateSession!.hasParentProof, isFalse);
@@ -574,11 +583,11 @@ void main() {
       await tapVisible(tester, 'parent-child-child-A');
       await tapVisible(tester, 'parentEnterLearning');
       await fillGatePin(tester);
-      expect(find.text('Hi, SYN-child-A!'), findsOneWidget);
+      expect(find.text('Chào SYN-child-A!'), findsOneWidget);
       expect(app.api.gateSession!.current!.mode, SessionMode.child);
       expect(find.byKey(const Key('protectedChildDob')), findsNothing);
       expect(find.text('SYN-child-B'), findsNothing);
-      await tapVisible(tester, 'childSwitchGate');
+      await tapVisible(tester, 'liveParentGate');
       expect(find.byType(GatePinScreen), findsOneWidget);
       expect(find.text('SYN-child-B'), findsNothing);
       await fillGatePin(tester);
@@ -588,9 +597,9 @@ void main() {
       await tapVisible(tester, 'parent-child-child-B');
       await tapVisible(tester, 'parentEnterLearning');
       await fillGatePin(tester);
-      expect(find.text('Hi, SYN-child-B!'), findsOneWidget);
+      expect(find.text('Chào SYN-child-B!'), findsOneWidget);
       expect(app.api.gateSession!.current!.childId, 'child-B');
-      await tapVisible(tester, 'childParentGate');
+      await tapVisible(tester, 'liveParentGate');
       await fillGatePin(tester);
       expect(find.byType(GatedParentArea), findsOneWidget);
       expect(app.api.gateSession!.current!.childId, isNull);
@@ -631,10 +640,11 @@ void main() {
       final before = backend.requests.length;
       await tester.pumpWidget(MimiGoApp(api: api));
       await tester.pumpAndSettle();
-      expect(find.text('Welcome back to Child Mode!'), findsOneWidget);
+      expect(find.text('Cùng Mimi khám phá!'), findsOneWidget);
       expect(find.text('SYN-child-B'), findsNothing);
       expect(backend.requests.skip(before).map((r) => r.uri.path), [
         '/api/v1/auth/sessions/refresh',
+        '/api/v1/children/child-B/curriculum',
       ]);
       await tapVisible(tester, 'openCurriculum');
       expect(

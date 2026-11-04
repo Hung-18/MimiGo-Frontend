@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'main.dart' show MimiGoApi, ChildSummary, ChildDetail, Frame, dateText;
+import 'main.dart'
+    show MimiGoApi, ChildSummary, ChildDetail, ParentSummary, Frame, dateText;
+import 'po/po_design.dart';
 import 'api_failure.dart';
 import 'parent_gate_api.dart';
 import 'parent_gate_session.dart';
@@ -401,6 +403,7 @@ class _GatePinScreenState extends State<GatePinScreen>
 class GatedParentArea extends StatefulWidget {
   const GatedParentArea({
     super.key,
+    this.parent,
     required this.api,
     required this.gate,
     required this.home,
@@ -409,6 +412,7 @@ class GatedParentArea extends StatefulWidget {
     required this.resetPin,
   });
   final MimiGoApi api;
+  final ParentSummary? parent;
   final ParentGateApi gate;
   final VoidCallback home, reverify, changePin, resetPin;
   @override
@@ -502,7 +506,7 @@ class _GatedParentAreaState extends State<GatedParentArea> {
     back: busy ? null : widget.home,
     children: [
       const Text(
-        'R0 SYNTHETIC ONLY · Protected reads require the current session’s Parent Area proof. No sensitive profile edits or consent withdrawal are available.',
+        'Thông tin phụ huynh cần xác minh PIN. Tên gọi và ảnh đại diện có thể chỉnh sửa khi dịch vụ cho phép. Đổi ngày sinh và các yêu cầu quyền riêng tư chưa được mở trên môi trường này.',
       ),
       if (busy)
         const LinearProgressIndicator(
@@ -516,6 +520,22 @@ class _GatedParentAreaState extends State<GatedParentArea> {
         ),
       if (protected && children.isEmpty && !busy && error == null)
         const Text('No child profiles returned.'),
+      if (protected)
+        if (widget.parent != null)
+          PoCard(
+            color: PoPalette.mint,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const PoHeading('Tài khoản phụ huynh'),
+                Text(widget.parent!.displayName),
+                Text(widget.parent!.email),
+                const Text(
+                  'Thay đổi email hoặc thông tin tài khoản chưa được dịch vụ hỗ trợ.',
+                ),
+              ],
+            ),
+          ),
       if (protected)
         OutlinedButton(
           key: const Key('gatedRefresh'),
@@ -580,7 +600,11 @@ class _GatedParentAreaState extends State<GatedParentArea> {
           child: const Text('Xem lịch sử học được phép truy cập'),
         ),
         if (activity != null && activity!.isEmpty)
-          const Text('No sessions returned.'),
+          const Text('Chưa có phiên học được máy chủ trả về.'),
+        if (activity != null)
+          const Text(
+            'Các phiên học gần đây do máy chủ lưu (tối đa 20). Không phải điểm số hay chỉ số thành thạo tổng hợp.',
+          ),
         if (activity != null)
           for (final item in activity!)
             Card(

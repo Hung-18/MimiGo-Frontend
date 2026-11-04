@@ -67,7 +67,7 @@ class _ProfilePanelState extends State<ProfilePanel> {
       setState(() {
         version = value['profileVersion'];
         alias.text = value['childAlias'];
-        avatar = value['stockAvatarKey'];
+        avatar = value['stockAvatarKey'] as String? ?? 'bear-blue';
       });
   });
   Future<void> save() => run(() async {
@@ -90,7 +90,7 @@ class _ProfilePanelState extends State<ProfilePanel> {
         key = null;
         version = value['profileVersion'];
         alias.text = value['childAlias'];
-        avatar = value['stockAvatarKey'];
+        avatar = value['stockAvatarKey'] as String? ?? 'bear-blue';
         notice = 'Máy chủ xác nhận hồ sơ hiện tại. Phiên bản $version.';
       });
   });

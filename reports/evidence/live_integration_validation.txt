@@ -1,0 +1,14 @@
+2026-11-04. Baseline 9155da3, feature/po-flutter-ui.
+
+dart format: changed Dart sources/tests formatted.
+flutter analyze --no-pub: PASS, no issues.
+flutter test --no-pub --reporter expanded: 376 PASS, 2 opt-in real-staging tests SKIPPED.
+Separate real public staging test: 1 PASS, 1 authenticated test SKIPPED (live_staging_readonly.txt).
+flutter build apk --debug --no-pub: PASS, process exit 0, assembleDebug 23.3 seconds.
+Output: build/app/outputs/flutter-apk/app-debug.apk.
+Normal entry uses staging API and Parent Gate without API-mode/Gate defines.
+Android build emits the existing Gradle Java native-access warning; build succeeds.
+
+No current authenticated business journey, device install or iOS result is claimed.
+No authorized credentials supplied. No staging account/child/learning/billing write.
+No Backend/Database/cloud configuration changes. API-integrated features remain unverified until authorized real journeys pass.

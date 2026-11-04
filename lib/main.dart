@@ -23,10 +23,10 @@ import 'parent_gate_screens.dart';
 import 'mimigo_design.dart';
 import 'mobile_demo.dart';
 import 'po/po_design.dart';
-import 'po/preview_app.dart';
 import 'po/mobile_services.dart';
 import 'po/resend_button.dart';
 import 'po/po_boot.dart';
+import 'po/live_child_home.dart';
 
 export 'api_failure.dart';
 
@@ -36,7 +36,7 @@ void main() {
 }
 
 /// Accepted auth/ChildProfile boundary plus the exact S2 Learning operations.
-/// Fixture remains the default; live mode is opt-in.
+/// The normal entry always uses live contracts. Fixtures require a test entry.
 abstract class MimiGoApi implements LearningApi {
   Future<TermsAcceptance> acceptCurrentTerms(
     String termsVersionId, {
@@ -69,21 +69,12 @@ class ApiConfiguration {
     this.childMediaBaseUrl = '',
   });
   factory ApiConfiguration.fromEnvironment() => ApiConfiguration(
-    const String.fromEnvironment(
-              'MIMIGO_API_MODE',
-              defaultValue: 'fixture',
-            ).toLowerCase() ==
-            'live'
-        ? ApiMode.live
-        : ApiMode.fixture,
+    ApiMode.live,
     const String.fromEnvironment(
       'MIMIGO_API_BASE_URL',
       defaultValue: 'https://mimigo-api-staging.onrender.com/api/v1',
     ),
-    parentGateEnabled: const bool.fromEnvironment(
-      'MIMIGO_PARENT_GATE_ENABLED',
-      defaultValue: false,
-    ),
+    parentGateEnabled: true,
     childMediaEnabled: const bool.fromEnvironment(
       'MIMIGO_CHILD_MEDIA_ENABLED',
       defaultValue: false,
@@ -801,6 +792,22 @@ class FixtureMimiGoApi implements MimiGoApi {
 
 class LiveMimiGoApi
     implements MimiGoApi, ParentGateApi, ChildMediaAccess, MobileCapabilities {
+  int _transportGeneration = 0;
+  final _inFlight = <HttpClientRequest>{};
+
+  /// Aborting transport never implies that a server-side write was rolled back.
+  void cancelPendingRequests() {
+    _transportGeneration++;
+    for (final request in _inFlight.toList()) {
+      try {
+        request.abort();
+      } catch (_) {
+        /* Test transports may not implement abort. */
+      }
+    }
+    _inFlight.clear();
+  }
+
   @override
   Future<ResendResult> resendVerification(String email) async =>
       ResendResult.fromJson(
@@ -1087,6 +1094,7 @@ class LiveMimiGoApi
   );
   @override
   void clearSession() {
+    cancelPendingRequests();
     _token = null;
     if (gateSession != null) {
       gateSession!.invalidateMemory();
@@ -1296,10 +1304,30 @@ class LiveMimiGoApi
     final uri = baseUri.replace(
       path: '${baseUri.path.replaceFirst(RegExp(r'/+$'), '')}/$encoded',
     );
+    final generation = _transportGeneration;
+    HttpClientRequest? pendingRequest;
+    void checkCurrent() {
+      if (generation != _transportGeneration) {
+        try {
+          pendingRequest?.abort();
+        } catch (_) {
+          /* A test transport may omit abort. */
+        }
+        throw const ApiFailure(
+          'Request cancelled.',
+          code: 'REQUEST_CANCELLED',
+          retryable: true,
+        );
+      }
+    }
+
     try {
       final req = await _client
           .openUrl(method, uri)
-          .timeout(const Duration(seconds: 12));
+          .timeout(const Duration(seconds: 30));
+      pendingRequest = req;
+      checkCurrent();
+      _inFlight.add(req);
       req.headers.contentType = ContentType.json;
       req.headers.set(HttpHeaders.acceptHeader, ContentType.json.mimeType);
       if (token != null)
@@ -1307,10 +1335,12 @@ class LiveMimiGoApi
       if (proof != null) req.headers.set('MimiGo-Parent-Proof', proof);
       headers?.forEach((name, value) => req.headers.set(name, value));
       if (body != null) req.write(jsonEncode(body));
-      final response = await req.close().timeout(const Duration(seconds: 20));
+      final response = await req.close().timeout(const Duration(seconds: 75));
+      checkCurrent();
       final id = response.headers.value('x-request-id');
       if (response.statusCode == 204) {
         await response.drain<void>().timeout(const Duration(seconds: 20));
+        checkCurrent();
         if (statuses != null && !statuses.contains(204))
           throw const ApiInvalidResponse('Unexpected response status.');
         return <String, dynamic>{};
@@ -1319,6 +1349,7 @@ class LiveMimiGoApi
           .bind(response)
           .join()
           .timeout(const Duration(seconds: 20));
+      checkCurrent();
       Map<String, dynamic> json;
       try {
         json = _map(jsonDecode(raw));
@@ -1375,6 +1406,8 @@ class LiveMimiGoApi
         code: 'CONNECTIVITY',
         retryable: true,
       );
+    } finally {
+      if (pendingRequest != null) _inFlight.remove(pendingRequest);
     }
   }
 }
@@ -1670,9 +1703,15 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
   }
 
   Future<void> loadGateParent({bool protectedArea = false}) async {
+    final generation = sessionGeneration;
+    final sessionId = gateSession?.current?.sessionId;
     final parent = await api.parentMe();
     final workspace = await api.learningWorkspace();
-    if (!mounted || gateSession?.current?.mode != SessionMode.parent) return;
+    if (!mounted ||
+        generation != sessionGeneration ||
+        sessionId != gateSession?.current?.sessionId ||
+        gateSession?.current?.mode != SessionMode.parent)
+      return;
     setState(() {
       authenticatedParent = parent;
       parentWorkspace = workspace;
@@ -1857,6 +1896,7 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
       accountEntryPending = false;
     }
     if (!mounted || confirmed != true) return;
+    if (api is LiveMimiGoApi) (api as LiveMimiGoApi).cancelPendingRequests();
     if (gateSession != null) {
       try {
         await gateSession!.logout();
@@ -1982,15 +2022,22 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
     required String password,
     required bool returningParent,
   }) async {
-    await api.login(email: email, password: password);
+    final generation = sessionGeneration;
+    final signed = await api.login(email: email, password: password);
+    final sessionId = gateSession?.current?.sessionId;
     final parent = await api.parentMe();
+    if (parent.parentId != signed.parentId)
+      throw const ApiInvalidResponse('Parent identity changed after login.');
     final workspace = returningParent || !parent.currentTermsAccepted
         ? await api.learningWorkspace()
         : null;
     final profiles =
         workspace?.children.map((item) => item.child).toList(growable: false) ??
         <ChildSummary>[];
-    if (!mounted) return;
+    if (!mounted ||
+        generation != sessionGeneration ||
+        sessionId != gateSession?.current?.sessionId)
+      return;
     setState(() {
       authenticatedParent = parent;
       parentWorkspace = workspace;
@@ -2192,6 +2239,7 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
               recover: gateRecover,
             ),
             Page.gatedParent => GatedParentArea(
+              parent: authenticatedParent,
               api: api,
               gate: gate!,
               home: goParentHome,
@@ -2295,23 +2343,35 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
                 });
               },
             ),
-            Page.child => ChildHome(
-              child: active,
-              gateAvailable: gate != null,
-              parentArea: openProtectedParent,
-              fixture: config.mode == ApiMode.fixture,
-              category: (value) => setState(() {
-                learningFromExplorer = false;
-                learningDomain = 'MATH';
-                selectedCategory = value;
-                page = Page.category;
-              }),
-              explore: openCurriculum,
-              english: () => openCurriculum(CurriculumDomain.english),
-              accountEntry: returnToAccountEntry,
-            ),
+            Page.child =>
+              config.mode == ApiMode.live && gate != null
+                  ? LiveChildHome(
+                      key: ValueKey(currentChildId),
+                      api: api,
+                      childId: currentChildId,
+                      alias: active?.alias,
+                      openDomain: openCurriculum,
+                      parentArea: gate != null
+                          ? openProtectedParent
+                          : returnToAccountEntry,
+                    )
+                  : ChildHome(
+                      child: active,
+                      gateAvailable: gate != null,
+                      parentArea: openProtectedParent,
+                      fixture: config.mode == ApiMode.fixture,
+                      category: (value) => setState(() {
+                        learningFromExplorer = false;
+                        learningDomain = 'MATH';
+                        selectedCategory = value;
+                        page = Page.category;
+                      }),
+                      explore: openCurriculum,
+                      english: () => openCurriculum(CurriculumDomain.english),
+                      accountEntry: returnToAccountEntry,
+                    ),
             Page.childCreated => Frame(
-              title: 'Synthetic child profile ready',
+              title: 'Hồ sơ bé đã được tạo',
               children: [
                 ChildCreated(
                   child: createdProfile!,
@@ -2459,9 +2519,7 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
             Page.learningLesson => Frame(
               childMode: true,
               wide: true,
-              title: learningFromExplorer
-                  ? 'Learning · development/demo'
-                  : 'Math learning · development/demo',
+              title: 'Cùng Mimi học nhé',
               children: [
                 LearningLessonView(
                   key: ValueKey((currentChildId, selectedLessonId)),
@@ -2542,7 +2600,7 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
                 enterChild: (child) {
                   if (inChildMode ||
                       child.state != 'ACTIVE' ||
-                      !child.withinProgramAgeRange)
+                      (!child.withinProgramAgeRange && gate == null))
                     return;
                   if (gate != null) {
                     openGatePin(child: child);
@@ -2659,7 +2717,6 @@ class Frame extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              if (!demoPresentation) const InternalBanner(),
               const SizedBox(height: 20),
               MimiPanel(
                 padding: EdgeInsets.all(
@@ -2735,29 +2792,11 @@ class Welcome extends StatelessWidget {
         title: 'Cùng Mimi\nkhám phá thế giới',
         subtitle: 'Học qua những điều bé yêu thích.',
       ),
-      if (!live) ...[
-        PoAction(
-          'Khám phá giao diện mới',
-          key: const Key('poPreview'),
-          icon: Icons.auto_awesome_rounded,
-          onPressed: () => Navigator.of(c)
-              .push(MaterialPageRoute<void>(builder: (_) => const PoPreview())),
-        ),
-        PoAction(
-          'Thử luồng đăng ký mẫu',
-          secondary: true,
-          onPressed: () => Navigator.of(c).push(
-            MaterialPageRoute<void>(
-              builder: (_) => const PreviewRegistration(),
-            ),
-          ),
-        ),
-      ],
       if (live)
         const PoCard(
           color: PoPalette.peach,
           child: Text(
-            'LIVE API · Staging tổng hợp. Đăng ký có thể chỉ mở cho email thử nghiệm được cho phép. Không nhập dữ liệu của trẻ thật. Chế độ API không chuyển sang dữ liệu mẫu khi gặp lỗi.',
+            'Đang kết nối môi trường staging. Đăng ký có thể giới hạn theo email được mời. Chỉ dùng hồ sơ thử nghiệm được cho phép trên môi trường này.',
           ),
         ),
       const Text(
@@ -2963,7 +3002,7 @@ class _SignInState extends State<SignIn> {
                 onPressed: busy
                     ? null
                     : () => widget.verify!(email.text.trim(), password.text),
-                child: const Text('Verify existing synthetic email'),
+                child: const Text('Xác minh email đã đăng ký'),
               ),
             const SizedBox(height: 16),
             ConstrainedBox(
@@ -3045,7 +3084,9 @@ class _RegisterState extends State<Register> {
       confirmation = TextEditingController(
         text: widget.fixture ? 'synthetic-pass' : '',
       ),
-      displayName = TextEditingController(text: 'SYN Parent');
+      displayName = TextEditingController(
+        text: widget.fixture ? 'SYN Parent' : '',
+      );
   late OnboardingReference current = widget.reference;
   bool terms = false, busy = false;
   bool versionChanged = false;
@@ -3602,7 +3643,7 @@ class ChildInput extends StatefulWidget {
 
 class _ChildInputState extends State<ChildInput> {
   late final alias = TextEditingController(
-        text: widget.initialDraft?.alias ?? 'SYN-Bee',
+        text: widget.initialDraft?.alias ?? '',
       ),
       dob = TextEditingController(
         text: widget.initialDraft == null

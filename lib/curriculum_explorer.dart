@@ -230,7 +230,7 @@ class _CurriculumExplorerState extends State<CurriculumExplorer> {
             key: const Key('explorerBreadcrumb'),
           ),
           const Text(
-            'The service checks age and access for this child. Only returned Free lessons are shown; unavailable domains are framework entries, not published content.',
+            'Chỉ hiển thị bài học được máy chủ cho phép cho bé. Bài Free và Core đều do dịch vụ kiểm tra tuổi, quyền và nội dung đã phát hành.',
           ),
           if (model.loading)
             const Padding(
@@ -261,7 +261,7 @@ class _CurriculumExplorerState extends State<CurriculumExplorer> {
                       code: value.code,
                       description: model.inDomain(value).isEmpty
                           ? 'Content not available yet'
-                          : 'Eligible Free lessons available',
+                          : 'Có bài học được dịch vụ cho phép',
                       onPressed: opening
                           ? null
                           : () => model.chooseDomain(value),
@@ -290,7 +290,7 @@ class _CurriculumExplorerState extends State<CurriculumExplorer> {
                           lesson.title,
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
-                        Text('${lesson.lessonCode} · Free · development/demo'),
+                        Text('${lesson.lessonCode} · ${lesson.access}'),
                         Text(lesson.objective),
                         Text('Primary skill: ${lesson.primarySkill}'),
                         Text('Revision: ${lesson.revisionNo}'),
@@ -321,7 +321,7 @@ class _CurriculumExplorerState extends State<CurriculumExplorer> {
               Text(
                 model.emptyReason == 'CHILD_OUTSIDE_PROGRAM_AGE'
                     ? 'The service returned no eligible lessons for this child’s age.'
-                    : 'No eligible Free lessons were returned for this selection.',
+                    : 'Chưa có bài học phù hợp được máy chủ trả về cho lựa chọn này.',
               ),
               if (model.emptyReason != null) Text(model.emptyReason!),
             ],

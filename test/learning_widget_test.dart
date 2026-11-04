@@ -205,7 +205,7 @@ void main() {
       expect(find.text('Synthetic Math'), findsOneWidget);
       expect(find.textContaining('Server feedback'), findsNothing);
       expect(find.byKey(const Key('option-$optionId')), findsNothing);
-      expect(find.textContaining('Playback is not available'), findsOneWidget);
+      expect(find.textContaining('Video chưa khả dụng'), findsOneWidget);
       expect(find.textContaining('not-playable.invalid'), findsNothing);
       expect(find.byType(Image), findsNothing);
       await tester.binding.handlePopRoute();

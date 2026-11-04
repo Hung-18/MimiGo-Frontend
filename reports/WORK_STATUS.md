@@ -1,4 +1,10 @@
-# PO-owned Flutter mobile MVP — 2026-11-04
+# Real Backend integration correction — 2026-11-04
+
+Continues clean `feature/po-flutter-ui` / `9155da3`. Normal entry now uses live staging and mandatory client Parent Gate; no preview menu, local activities or local progress substitute. Preserved PO art/design and native security, real Learning write/readback contracts, stable retries and server-confirmed completion. Added server-backed Child home, Free/Core support, paid age-out Child-catalog check, protected account display, owned-checkout status readback and transport cancellation/late-response guards. Fixture code is isolated to the explicit regression entry, not a normal mode flag. No Backend/Database/cloud/`.mimigo` writes.
+
+Real staging evidence: public onboarding reference through Flutter client **1 PASS**; authenticated existing-account test **SKIPPED**, no approved runtime identity/content supplied. No account/child/transaction/learning write performed on staging. Final full regression suite **376 PASS / 2 opt-in staging tests SKIPPED**; separate public staging invocation **1 PASS / 1 authenticated test SKIPPED**. Analyzer clean; normal live-only Android debug APK **PASS**, exit 0 (23.3s Gradle), no mode/Gate defines required. [Per-feature status/audit](PO_FLUTTER_MVP.md). **Not complete / no authenticated LIVE_E2E_PASS claimed.** PO authorized reviewed FE commit/push to this feature branch only; no deployment.
+
+# PO-owned Flutter mobile MVP — 2026-11-04 (historical preview delivery)
 
 PO-authorized implementation on clean `feature/po-flutter-ui` / `bbbf461`. Added a separate Vietnamese PO presentation with original vector bee/garden/artwork, connected Parent and Child preview, six responsive local activities, profile/settings/privacy/Premium screens and explicit preview-only state. Preserved prior clients, vault/refresh/proof handling, Learning contract, native screen protection, original fixture and existing Android/iOS projects. Added real contract-backed OTP resend, protected versioned alias/avatar edits and protected simulator Premium reads/checkout/settlement. Gate stays default-off; no real child, account, checkout or cloud configuration mutation. Public staging health and onboarding-reference GETs returned **200 JSON** only; no authenticated live E2E claim.
 

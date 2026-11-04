@@ -1,0 +1,56 @@
+00:00 +0: loading D:/Projects/MimiGo/MimiGo-Frontend/test/live_api_integration_test.dart
+00:00 +0: D:/Projects/MimiGo/MimiGo-Frontend/test/live_api_integration_test.dart: normal configuration always selects real API and secure Gate session
+00:00 +1: D:/Projects/MimiGo/MimiGo-Frontend/test/live_api_integration_test.dart: normal welcome has no preview routes or fixture adapter
+00:00 +2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:00 +3: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:00 +4: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:00 +5: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:00 +6: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:00 +7: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:01 +8: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:01 +9: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: an acknowledgment arriving after Back remains replayable on revisit
+00:01 +10: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: live Math opens an honest empty state and returns to Child Mode
+00:01 +11: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: protected roster failure retries without an empty-account claim or PIN bypass
+00:01 +12: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: Math fetches only the selected child catalog and opens details with working Back
+00:01 +13: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: live Logic opens an honest empty state and returns to Child Mode
+00:01 +14: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: account login lock uses Retry-After without private messages or another attempt
+00:01 +15: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: Math displays authoritative empty reason NO_ELIGIBLE_CONTENT
+00:01 +16: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: Math displays authoritative empty reason NO_ELIGIBLE_CONTENT
+00:02 +17: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: live Life skills opens an honest empty state and returns to Child Mode
+00:02 +18: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: PIN proof expiry hides protected data without requiring another API call
+00:02 +19: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: PIN proof expiry hides protected data without requiring another API call
+00:02 +20: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: PIN proof expiry hides protected data without requiring another API call
+00:02 +21: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: PIN proof expiry hides protected data without requiring another API call
+00:02 +22: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: PIN proof expiry hides protected data without requiring another API call
+00:02 +23: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: live English opens an honest empty state and returns to Child Mode
+00:02 +24: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: lesson detail HTTP 404 is visible without starting a session
+00:02 +25: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: six-digit form remains usable on a narrow large-text screen
+00:02 +26: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: six-digit form remains usable on a narrow large-text screen
+00:02 +27: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: live Discovery opens an honest empty state and returns to Child Mode
+00:02 +28: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: live Discovery opens an honest empty state and returns to Child Mode
+00:02 +29: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: live Discovery opens an honest empty state and returns to Child Mode
+00:02 +30: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: answer loading prevents duplicate sends and feedback only follows acknowledgment
+00:02 +31: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: enrollment requires password and matching six digits, clears fields and does not issue Parent proof
+00:02 +32: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: fixture Logic opens the original local game with feedback and back navigation
+00:02 +33: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: lost answer acknowledgment survives Back/revisit and retries the exact event/body
+00:02 +34: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: lost answer acknowledgment survives Back/revisit and retries the exact event/body
+00:02 +35: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: other fixture categories do not invent lessons
+00:02 +36: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: other fixture categories do not invent lessons
+00:03 +37: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: other fixture categories do not invent lessons
+00:03 +38: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: other fixture categories do not invent lessons
+00:03 +39: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: Parent Home uses public roster without protected requests, DOB, age or null placeholders
+00:03 +40: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: answer denial 403 hides session interaction and preserves the pending body
+00:03 +41: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: category loading, safe error, retry and empty result keep navigation available
+00:03 +42: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: complete PIN enrollment and Parent Area access reveal detail only after proof; background hides it
+00:03 +43: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: complete PIN enrollment and Parent Area access reveal detail only after proof; background hides it
+00:03 +44: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: complete PIN enrollment and Parent Area access reveal detail only after proof; background hides it
+00:03 +45: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: complete PIN enrollment and Parent Area access reveal detail only after proof; background hides it
+00:03 +46: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: complete PIN enrollment and Parent Area access reveal detail only after proof; background hides it
+00:04 +47: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: complete PIN enrollment and Parent Area access reveal detail only after proof; background hides it
+00:04 +48: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: account entry confirmation clears local authentication and requires sign in
+00:04 +49: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: account entry confirmation clears local authentication and requires sign in
+00:04 +50: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: Child Mode, switch and exit require actual token transitions; no Parent data appears before PIN
+00:05 +51: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: Child Mode, switch and exit require actual token transitions; no Parent data appears before PIN
+00:05 +52: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: revoked Child session refresh failure removes all protected app state and returns to login
+00:05 +53: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: restored Child session uses only child token and a generic label without persisted profile data
+00:06 +54: All tests passed!

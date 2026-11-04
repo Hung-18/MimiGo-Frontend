@@ -18,6 +18,56 @@ Map<String, dynamic> quote({
   if (status == 'SETTLED') 'settlement': {'result': 'SETTLED'},
 };
 void main() {
+  test(
+    'checkout readback keeps ownership and never fabricates a pending result',
+    () async {
+      final service = PremiumService((
+        method,
+        path, {
+        body,
+        bool protected = false,
+        Map<String, String>? headers,
+      }) async {
+        expect(method, 'GET');
+        expect(path, 'billing/premium-checkouts/checkout-a');
+        expect(protected, isTrue);
+        expect(body, isNull);
+        return quote(status: 'EXPIRED');
+      });
+      expect(
+        (await service.checkoutStatus(
+          'checkout-a',
+          'child-a',
+          'plan-a',
+        ))['status'],
+        'EXPIRED',
+      );
+      await expectLater(
+        service.checkoutStatus('checkout-a', 'foreign-child', 'plan-a'),
+        throwsA(isA<ApiInvalidResponse>()),
+      );
+    },
+  );
+  test(
+    'nullable server stock avatar does not block versioned profile management',
+    () async {
+      final service = ProfileService(
+        (
+          method,
+          path, {
+          body,
+          bool protected = false,
+          Map<String, String>? headers,
+        }) async => {
+          'childId': 'child-a',
+          'childAlias': 'SYN-A',
+          'profileVersion': 2,
+          'stockAvatarKey': null,
+        },
+      );
+      expect((await service.read('child-a'))['profileVersion'], 2);
+    },
+  );
   test('resend accepts only the uniform response and a valid cooldown', () {
     expect(
       ResendResult.fromJson({
