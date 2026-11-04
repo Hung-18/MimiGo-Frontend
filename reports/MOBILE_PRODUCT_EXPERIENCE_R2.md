@@ -1,5 +1,10 @@
 # Mobile Product Experience R2
 
+**PO rejected the mascot/visual result at `bada990`.** The implementation and
+test results below are historical evidence, not visual acceptance. The scoped
+character replacement and subsequent Android review are recorded in
+[Mascot acceptance correction](MASCOT_ACCEPTANCE_FIX_R2.md).
+
 Implemented on `feature/po-flutter-ui`, starting at verified `8967e0a`, 2026-11-04–05. Existing internal-auth documentation changes were preserved and excluded from this delivery. Frontend only; no deployment or shared-service changes.
 
 ## Screens and visual system

@@ -22,7 +22,7 @@ abstract final class MimiMotion {
 }
 
 /// A bounded animation burst: no timers, perpetual tickers or offscreen work.
-/// Entry gives a little hover, wing flutter and blink, then Mimi rests.
+/// Entry gives the selected illustrated pose a gentle hover, then Mimi rests.
 class MimiBee extends StatefulWidget {
   const MimiBee({super.key, this.size = 140, this.mood = MimiMood.idle});
   final double size;
@@ -100,112 +100,75 @@ class _MimiBeeState extends State<MimiBee>
     child: RepaintBoundary(
       child: AnimatedBuilder(
         animation: controller,
-        builder: (context, _) => CustomPaint(
-          size: Size.square(widget.size),
-          painter: _MimiPainter(widget.mood, allowed ? controller.value : 1),
-        ),
+        child: _MimiSprite(size: widget.size, mood: widget.mood),
+        builder: (context, child) {
+          final t = allowed ? controller.value : 1.0;
+          final pulse = math.sin(t * math.pi * 4) * (1 - t);
+          final joyful =
+              widget.mood == MimiMood.correct ||
+              widget.mood == MimiMood.completion;
+          return Transform.translate(
+            offset: Offset(0, -pulse * (joyful ? 5 : 2)),
+            child: Transform.rotate(
+              angle:
+                  pulse *
+                  switch (widget.mood) {
+                    MimiMood.greeting => .035,
+                    MimiMood.guide => .015,
+                    MimiMood.thinking => -.018,
+                    MimiMood.correct => .025,
+                    MimiMood.encourage => -.012,
+                    MimiMood.completion => .04,
+                    MimiMood.idle => .01,
+                  },
+              child: child,
+            ),
+          );
+        },
       ),
     ),
   );
 }
 
+/// Seven art-directed poses share one decoded atlas. Rigid transforms preserve
+/// the character's face, costume and silhouette throughout each bounded burst.
+class _MimiSprite extends StatelessWidget {
+  const _MimiSprite({required this.size, required this.mood});
+  static const asset = 'assets/mascot/mimi_poses.png';
+  final double size;
+  final MimiMood mood;
+  @override
+  Widget build(BuildContext context) {
+    final column = mood.index % 4;
+    final row = mood.index ~/ 4;
+    return SizedBox.square(
+      dimension: size,
+      child: ClipRect(
+        child: OverflowBox(
+          alignment: Alignment.topLeft,
+          minWidth: size * 4,
+          maxWidth: size * 4,
+          minHeight: size * 2,
+          maxHeight: size * 2,
+          child: Transform.translate(
+            offset: Offset(-column * size, -row * size),
+            child: Image.asset(
+              asset,
+              width: size * 4,
+              height: size * 2,
+              fit: BoxFit.fill,
+              filterQuality: FilterQuality.medium,
+              excludeFromSemantics: true,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 const _ink = Color(0xFF49335E);
 const _leaf = Color(0xFF61A780);
-
-class _MimiPainter extends CustomPainter {
-  const _MimiPainter(this.mood, this.t);
-  final MimiMood mood;
-  final double t;
-  @override
-  void paint(Canvas c, Size s) {
-    c.save();
-    c.scale(s.width / 180, s.height / 180);
-    final p = Paint()..strokeCap = StrokeCap.round;
-    void oval(double x, double y, double w, double h, Color color) {
-      p
-        ..color = color
-        ..style = PaintingStyle.fill;
-      c.drawOval(Rect.fromLTWH(x, y, w, h), p);
-    }
-
-    void line(Offset a, Offset b, double width) {
-      p
-        ..color = _ink
-        ..strokeWidth = width
-        ..style = PaintingStyle.stroke;
-      c.drawLine(a, b, p);
-    }
-
-    final wave = math.sin(t * math.pi * 4) * (1 - t);
-    final joyful = mood == MimiMood.correct || mood == MimiMood.completion;
-    oval(42, 158, 100, 10, const Color(0x1F32644F));
-    c.translate(0, -wave * (joyful ? 7 : 3));
-    oval(15, 44 - wave * 5, 70, 43 + wave * 8, const Color(0xFFF4FCFF));
-    oval(99, 39 + wave * 5, 66, 48 - wave * 8, const Color(0xFFF4FCFF));
-    oval(32, 53, 116, 102, const Color(0xFFFFD14F));
-    c.save();
-    c.clipPath(Path()..addOval(const Rect.fromLTWH(32, 53, 116, 102)));
-    oval(18, 116, 143, 15, _ink);
-    oval(18, 143, 143, 12, _ink);
-    c.restore();
-    line(const Offset(67, 57), const Offset(53, 31), 4);
-    line(const Offset(112, 57), const Offset(127, 30), 4);
-    oval(46, 22, 12, 12, _ink);
-    oval(122, 21, 12, 12, _ink);
-    final blink = t > .44 && t < .50;
-    if (blink || joyful) {
-      for (final x in [66.0, 107.0]) {
-        p
-          ..color = _ink
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 4;
-        c.drawArc(Rect.fromLTWH(x - 6, 79, 13, 12), math.pi, math.pi, false, p);
-      }
-    } else {
-      oval(62, 79, 9, mood == MimiMood.thinking ? 9 : 13, _ink);
-      oval(104, 79, 9, 13, _ink);
-      oval(64, 80, 3, 4, Colors.white);
-      oval(106, 80, 3, 4, Colors.white);
-    }
-    oval(45, 96, 20, 11, const Color(0xFFF69BA4));
-    oval(114, 96, 20, 11, const Color(0xFFF69BA4));
-    p
-      ..color = _ink
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
-    c.drawArc(
-      Rect.fromLTWH(78, 94, 24, joyful ? 21 : 12),
-      0,
-      math.pi,
-      false,
-      p,
-    );
-    final handY = switch (mood) {
-      MimiMood.greeting => 75.0 + wave * 12,
-      MimiMood.guide => 106.0,
-      MimiMood.thinking => 95.0,
-      _ => joyful ? 72.0 + wave * 6 : 115.0,
-    };
-    line(const Offset(142, 112), Offset(164, handY), 6);
-    oval(158, handY - 5, 12, 12, const Color(0xFFFFD14F));
-    line(const Offset(36, 114), Offset(18, joyful ? 84 : 123), 6);
-    if (joyful) {
-      // Decorative sparkles, never a score, currency or earned badge.
-      for (var i = 0; i < 5; i++) {
-        final x = 14.0 + i * 37;
-        final y = 17.0 + (i.isEven ? 0 : 14);
-        p
-          ..color = i.isEven ? const Color(0xFFEDA149) : const Color(0xFFDD73A7)
-          ..style = PaintingStyle.fill;
-        c.drawCircle(Offset(x, y), 2 + 2 * math.sin(t * math.pi), p);
-      }
-    }
-    c.restore();
-  }
-
-  @override
-  bool shouldRepaint(_MimiPainter old) => old.mood != mood || old.t != t;
-}
 
 /// Original scenery shared by welcome, discovery and supportive states.
 class GardenScene extends StatelessWidget {

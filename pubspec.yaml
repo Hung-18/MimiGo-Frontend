@@ -63,6 +63,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
+    - assets/mascot/mimi_poses.png
     - assets/fonts/baloo2/OFL.txt
     - assets/fonts/nunito/OFL.txt
   fonts:

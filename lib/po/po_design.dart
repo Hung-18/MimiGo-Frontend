@@ -295,7 +295,7 @@ class PoGarden extends StatelessWidget {
                   : Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 6),
-            Text(subtitle, style: const TextStyle(color: PoPalette.plum)),
+            Text(subtitle, style: const TextStyle(color: MimiColors.ink)),
           ],
         );
         if (compact) {
@@ -306,7 +306,7 @@ class PoGarden extends StatelessWidget {
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      MimiBee(size: 76, mood: mood),
+                      MimiBee(size: 96, mood: mood),
                       text,
                     ],
                   )
@@ -314,7 +314,7 @@ class PoGarden extends StatelessWidget {
                     children: [
                       Expanded(child: text),
                       const SizedBox(width: 12),
-                      MimiBee(size: 76, mood: mood),
+                      MimiBee(size: 96, mood: mood),
                     ],
                   ),
           );
@@ -323,13 +323,13 @@ class PoGarden extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (stacked) ...[
-              GardenScene(
-                height: compact ? 120 : 200,
-                child: MimiBee(size: compact ? 110 : 180, mood: mood),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(22, 6, 22, 24),
-                child: text,
+              GardenScene(height: 210, child: MimiBee(size: 200, mood: mood)),
+              ColoredBox(
+                color: const Color(0xFFFFFBF3),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(22, 16, 22, 20),
+                  child: text,
+                ),
               ),
             ] else
               Padding(

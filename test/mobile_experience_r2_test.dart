@@ -17,6 +17,40 @@ import 'password_reset_test.dart' show RecoveryDouble;
 
 void main() {
   setUpAll(loadDesignFonts);
+  testWidgets(
+    'seven Mimi states use the shared character atlas and distinct poses',
+    (t) async {
+      for (final mood in MimiMood.values) {
+        await t.pumpWidget(
+          MaterialApp(
+            home: Center(child: MimiBee(size: 160, mood: mood)),
+          ),
+        );
+        await t.pumpAndSettle();
+        final art = t.widget<Image>(find.byType(Image));
+        expect(
+          (art.image as AssetImage).assetName,
+          'assets/mascot/mimi_poses.png',
+        );
+        final transforms = t.widgetList<Transform>(
+          find.descendant(
+            of: find.byType(OverflowBox),
+            matching: find.byType(Transform),
+          ),
+        );
+        expect(
+          transforms.single.transform.getTranslation().x,
+          -(mood.index % 4) * 160,
+        );
+        expect(
+          transforms.single.transform.getTranslation().y,
+          -(mood.index ~/ 4) * 160,
+        );
+        expect(t.binding.transientCallbackCount, 0);
+        expect(t.takeException(), isNull);
+      }
+    },
+  );
   testWidgets('Parent forms fit 320dp at 200% text without submitting data', (
     t,
   ) async {

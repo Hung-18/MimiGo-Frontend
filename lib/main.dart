@@ -2725,12 +2725,14 @@ class Frame extends StatelessWidget {
     this.childMode = false,
     this.wide = false,
     this.demoPresentation = false,
+    this.compactTitle = false,
   });
   final String title;
   final List<Widget> children;
   final VoidCallback? back;
   final bool childMode, wide;
   final bool demoPresentation;
+  final bool compactTitle;
   @override
   Widget build(BuildContext c) => DecoratedBox(
     decoration: const BoxDecoration(
@@ -2777,6 +2779,8 @@ class Frame extends StatelessWidget {
                         title,
                         style: title == 'MimiGo'
                             ? Theme.of(c).textTheme.displaySmall
+                            : compactTitle
+                            ? Theme.of(c).textTheme.titleLarge
                             : Theme.of(c).textTheme.headlineLarge,
                       ),
                     ),
@@ -2847,7 +2851,7 @@ class Welcome extends StatelessWidget {
     title: 'MimiGo',
     children: [
       const PoGarden(
-        title: 'Cùng Mimi\nkhám phá thế giới',
+        title: 'Cùng Mimi khám phá thế giới',
         subtitle: 'Học qua những điều bé yêu thích.',
       ),
       if (live)
@@ -2875,7 +2879,6 @@ class Welcome extends StatelessWidget {
         const Divider(height: 24),
         const Text('Dành cho phụ huynh · Luồng tài khoản thử nghiệm'),
       ],
-      const SizedBox(height: 20),
       ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 64),
         child: FilledButton(
@@ -2890,7 +2893,6 @@ class Welcome extends StatelessWidget {
           ),
         ),
       ),
-      const SizedBox(height: 12),
       if (busy)
         const LinearProgressIndicator(
           semanticsLabel: 'Đang tải thông tin đăng ký',
@@ -3256,6 +3258,7 @@ class _RegisterState extends State<Register> {
   @override
   Widget build(BuildContext c) => Frame(
     title: 'Tạo tài khoản phụ huynh',
+    compactTitle: true,
     back: busy ? null : widget.back,
     children: [
       const PoGarden(

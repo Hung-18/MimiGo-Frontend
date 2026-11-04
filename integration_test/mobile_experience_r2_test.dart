@@ -8,6 +8,7 @@ import 'package:mimigo_frontend/learning_models.dart';
 import 'package:mimigo_frontend/learning_screens.dart';
 import 'package:mimigo_frontend/parent_home.dart';
 import 'package:mimigo_frontend/po/live_child_home.dart';
+import 'package:mimigo_frontend/po/mimi_world.dart';
 
 import '../test/design_test_support.dart';
 import '../test/learning_test_data.dart' as data;
@@ -56,6 +57,45 @@ void main() {
       await capture('welcome');
       await tap('welcomeSignIn');
       expect(signInOpened, isTrue);
+      final reference = await t.runAsync(
+        FixtureMimiGoApi().onboardingReference,
+      );
+      var registered = false;
+      await show(
+        Register(
+          reference: reference!,
+          fixture: false,
+          live: true,
+          back: () {},
+          submitted: (_) async => registered = true,
+        ),
+      );
+      expect(
+        find.byKey(const Key('registrationTermsUnavailable')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('registerEmail')), findsNothing);
+      expect(registered, isFalse);
+      await capture('registration');
+      await show(
+        SingleChildScrollView(
+          child: Wrap(
+            children: [
+              for (final mood in MimiMood.values)
+                SizedBox(
+                  width: 160,
+                  child: Column(
+                    children: [
+                      MimiBee(size: 150, mood: mood),
+                      Text(mood.name),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
+      await capture('mascot_states');
       var enteredChild = false;
       await show(
         Frame(
