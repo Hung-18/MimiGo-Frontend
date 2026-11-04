@@ -1,0 +1,14 @@
+00:00 +0: loading D:/Projects/MimiGo/MimiGo-Frontend/test/po_mobile_test.dart
+00:00 +0: (setUpAll)
+00:00 +0: Toán học: wrong answer, complete and replay are interactive
+00:00 +1: Ngôn ngữ: wrong answer, complete and replay are interactive
+00:00 +2: Tiếng Anh: wrong answer, complete and replay are interactive
+00:00 +3: Kỹ năng sống: wrong answer, complete and replay are interactive
+00:01 +4: Logic: wrong answer, complete and replay are interactive
+00:01 +5: Khám phá: wrong answer, complete and replay are interactive
+00:01 +6: preview family selects child and PIN gates both mode transitions
+00:01 +7: public parent preview render at phone size
+00:01 +8: narrow phone and large type have no overflow
+00:02 +9: public child and settings screens render and navigate
+00:02 +10: (tearDownAll)
+00:02 +10: All tests passed!

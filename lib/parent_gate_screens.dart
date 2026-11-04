@@ -9,6 +9,9 @@ import 'parent_gate_api.dart';
 import 'parent_gate_session.dart';
 import 'gate_screen_security.dart';
 import 'mimigo_design.dart';
+import 'po/mobile_services.dart';
+import 'po/premium_panel.dart';
+import 'po/profile_panel.dart';
 
 String gateFailureText(ApiFailure failure) => switch (failure.code) {
   'INVALID_CREDENTIALS' => 'Email or password is incorrect.',
@@ -420,6 +423,7 @@ class _GatedParentAreaState extends State<GatedParentArea> {
   List<ParentActivityItem>? activity;
   ApiFailure? error;
   bool busy = false;
+  bool showPremium = false, showProfileEdit = false;
   String? info;
   @override
   void initState() {
@@ -482,6 +486,8 @@ class _GatedParentAreaState extends State<GatedParentArea> {
   });
   Future<void> choose(ChildSummary child) => run(() async {
     setState(() {
+      showPremium = false;
+      showProfileEdit = false;
       detail = null;
       activity = null;
     });
@@ -523,6 +529,32 @@ class _GatedParentAreaState extends State<GatedParentArea> {
           child: Text('View protected profile: ${child.alias}'),
         ),
       if (detail != null) ...[
+        if (widget.api is MobileCapabilities)
+          OutlinedButton(
+            onPressed: busy
+                ? null
+                : () => setState(() => showProfileEdit = !showProfileEdit),
+            child: const Text('Chỉnh tên gọi & ảnh đại diện'),
+          ),
+        if (showProfileEdit && widget.api is MobileCapabilities)
+          ProfilePanel(
+            key: ValueKey('profile-${detail!.id}'),
+            service: (widget.api as MobileCapabilities).profiles,
+            childId: detail!.id,
+          ),
+        if (widget.api is MobileCapabilities)
+          OutlinedButton(
+            onPressed: busy
+                ? null
+                : () => setState(() => showPremium = !showPremium),
+            child: const Text('Gói học & quyền Premium Core'),
+          ),
+        if (showPremium && widget.api is MobileCapabilities)
+          PremiumPanel(
+            key: ValueKey(detail!.id),
+            service: (widget.api as MobileCapabilities).premium,
+            childId: detail!.id,
+          ),
         Text(
           'Protected profile: ${detail!.alias}',
           key: const Key('protectedChildAlias'),

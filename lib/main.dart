@@ -22,12 +22,17 @@ import 'parent_gate_session.dart';
 import 'parent_gate_screens.dart';
 import 'mimigo_design.dart';
 import 'mobile_demo.dart';
+import 'po/po_design.dart';
+import 'po/preview_app.dart';
+import 'po/mobile_services.dart';
+import 'po/resend_button.dart';
+import 'po/po_boot.dart';
 
 export 'api_failure.dart';
 
 void main() {
   registerMimiFontLicenses();
-  runApp(const MimiGoApp());
+  runApp(const PoBoot(application: MimiGoApp()));
 }
 
 /// Accepted auth/ChildProfile boundary plus the exact S2 Learning operations.
@@ -73,7 +78,7 @@ class ApiConfiguration {
         : ApiMode.fixture,
     const String.fromEnvironment(
       'MIMIGO_API_BASE_URL',
-      defaultValue: 'http://10.0.2.2:5187/api/v1',
+      defaultValue: 'https://mimigo-api-staging.onrender.com/api/v1',
     ),
     parentGateEnabled: const bool.fromEnvironment(
       'MIMIGO_PARENT_GATE_ENABLED',
@@ -794,7 +799,63 @@ class FixtureMimiGoApi implements MimiGoApi {
   }
 }
 
-class LiveMimiGoApi implements MimiGoApi, ParentGateApi, ChildMediaAccess {
+class LiveMimiGoApi
+    implements MimiGoApi, ParentGateApi, ChildMediaAccess, MobileCapabilities {
+  @override
+  Future<ResendResult> resendVerification(String email) async =>
+      ResendResult.fromJson(
+        await _request(
+          'POST',
+          'auth/mock-email/resend',
+          body: {'email': email},
+        ),
+      );
+  @override
+  late final PremiumService premium = PremiumService((
+    method,
+    path, {
+    body,
+    bool protected = false,
+    Map<String, String>? headers,
+  }) {
+    if (!parentGateEnabled)
+      throw const ApiFailure(
+        'Parent Gate unavailable.',
+        code: 'PARENT_GATE_REQUIRED',
+        status: 403,
+      );
+    return _request(
+      method,
+      path,
+      body: body,
+      auth: true,
+      requireProof: protected,
+      headers: headers,
+    );
+  });
+  @override
+  late final ProfileService profiles = ProfileService((
+    method,
+    path, {
+    body,
+    bool protected = false,
+    Map<String, String>? headers,
+  }) {
+    if (!parentGateEnabled)
+      throw const ApiFailure(
+        'Parent Gate unavailable.',
+        code: 'PARENT_GATE_REQUIRED',
+        status: 403,
+      );
+    return _request(
+      method,
+      path,
+      body: body,
+      auth: true,
+      requireProof: true,
+      headers: headers,
+    );
+  });
   @override
   final bool parentGateEnabled;
   @override
@@ -1191,6 +1252,7 @@ class LiveMimiGoApi implements MimiGoApi, ParentGateApi, ChildMediaAccess {
     String? learningChildId,
     bool requireProof = false,
     bool includeProof = false,
+    Map<String, String>? headers,
   }) async {
     if (gateSession != null && auth) {
       return gateSession!.authorized(
@@ -1200,6 +1262,7 @@ class LiveMimiGoApi implements MimiGoApi, ParentGateApi, ChildMediaAccess {
           body: body,
           token: token,
           proof: requireProof || includeProof ? proof : null,
+          headers: headers,
         ),
         childId: learningChildId,
         proofRequired: requireProof,
@@ -1211,7 +1274,13 @@ class LiveMimiGoApi implements MimiGoApi, ParentGateApi, ChildMediaAccess {
         code: 'UNAUTHENTICATED',
         status: 401,
       );
-    return _rawRequest(method, path, body: body, token: auth ? _token : null);
+    return _rawRequest(
+      method,
+      path,
+      body: body,
+      token: auth ? _token : null,
+      headers: headers,
+    );
   }
 
   Future<Map<String, dynamic>> _rawRequest(
@@ -1221,6 +1290,7 @@ class LiveMimiGoApi implements MimiGoApi, ParentGateApi, ChildMediaAccess {
     String? token,
     String? proof,
     Set<int>? statuses,
+    Map<String, String>? headers,
   }) async {
     final encoded = path.split('/').map(Uri.encodeComponent).join('/');
     final uri = baseUri.replace(
@@ -1235,6 +1305,7 @@ class LiveMimiGoApi implements MimiGoApi, ParentGateApi, ChildMediaAccess {
       if (token != null)
         req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
       if (proof != null) req.headers.set('MimiGo-Parent-Proof', proof);
+      headers?.forEach((name, value) => req.headers.set(name, value));
       if (body != null) req.write(jsonEncode(body));
       final response = await req.close().timeout(const Duration(seconds: 20));
       final id = response.headers.value('x-request-id');
@@ -2062,7 +2133,7 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
     scaffoldMessengerKey: messengerKey,
     navigatorKey: navigatorKey,
     debugShowCheckedModeBanner: false,
-    theme: mimiTheme(),
+    theme: poTheme(),
     home: PopScope(
       canPop:
           page != Page.child &&
@@ -2153,6 +2224,7 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
               }),
             ),
             Page.register => Register(
+              live: config.mode == ApiMode.live,
               reference: reference!,
               fixture: config.mode == ApiMode.fixture,
               reloadReference: api.onboardingReference,
@@ -2655,25 +2727,49 @@ class Welcome extends StatelessWidget {
   final Future<void> Function() start;
   final VoidCallback signIn;
   @override
-  Widget build(BuildContext c) => Frame(
+  Widget build(BuildContext c) => PoScaffold(
+    preview: !live,
     title: 'MimiGo',
     children: [
-      Text(
-        live ? 'Learn, play, discover.' : 'Cùng học, cùng chơi, cùng khám phá!',
-        style: Theme.of(c).textTheme.headlineMedium,
-      ),
-      Text(
-        live
-            ? 'One parent account. A separate learning space for each child.'
-            : 'Khám phá bài học mẫu ngay, không cần tài khoản.',
-      ),
-      Text(
-        live
-            ? 'Development API mode. Use synthetic test accounts only.'
-            : 'DEMO · Dữ liệu mẫu, không kết nối mạng.',
+      const PoGarden(
+        title: 'Cùng Mimi\nkhám phá thế giới',
+        subtitle: 'Học qua những điều bé yêu thích.',
       ),
       if (!live) ...[
-        FilledButton.icon(
+        PoAction(
+          'Khám phá giao diện mới',
+          key: const Key('poPreview'),
+          icon: Icons.auto_awesome_rounded,
+          onPressed: () => Navigator.of(c)
+              .push(MaterialPageRoute<void>(builder: (_) => const PoPreview())),
+        ),
+        PoAction(
+          'Thử luồng đăng ký mẫu',
+          secondary: true,
+          onPressed: () => Navigator.of(c).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const PreviewRegistration(),
+            ),
+          ),
+        ),
+      ],
+      if (live)
+        const PoCard(
+          color: PoPalette.peach,
+          child: Text(
+            'LIVE API · Staging tổng hợp. Đăng ký có thể chỉ mở cho email thử nghiệm được cho phép. Không nhập dữ liệu của trẻ thật. Chế độ API không chuyển sang dữ liệu mẫu khi gặp lỗi.',
+          ),
+        ),
+      const Text(
+        'Một gia đình, nhiều hành trình riêng. Ba mẹ quản lý, bé tự do khám phá trong không gian học của mình.',
+      ),
+      TextButton(
+        key: const Key('welcomeSignIn'),
+        onPressed: busy ? null : signIn,
+        child: const Text('Ba mẹ đã có tài khoản? Đăng nhập'),
+      ),
+      if (!live) ...[
+        OutlinedButton.icon(
           key: const Key('welcomeMobileDemo'),
           onPressed: busy
               ? null
@@ -2683,7 +2779,6 @@ class Welcome extends StatelessWidget {
           icon: const Icon(Icons.play_circle_outline),
           label: const Text('Khám phá bản demo'),
         ),
-        const Text('Hồ sơ mẫu → Giỏ trái cây → Chọn hình → Chơi lại'),
         const Divider(height: 24),
         const Text('Dành cho phụ huynh · Luồng tài khoản thử nghiệm'),
       ],
@@ -2698,7 +2793,7 @@ class Welcome extends StatelessWidget {
           ),
           onPressed: busy ? null : start,
           child: Text(
-            busy ? 'Loading current account Terms…' : 'Create a parent account',
+            busy ? 'Đang tải phiên bản điều khoản…' : 'Tạo tài khoản phụ huynh',
           ),
         ),
       ),
@@ -2708,26 +2803,24 @@ class Welcome extends StatelessWidget {
           semanticsLabel: 'Loading account reference',
         ),
       OnboardingError(error),
-      TextButton(
-        key: const Key('welcomeSignIn'),
-        onPressed: busy ? null : signIn,
-        child: const Text('Already have an account? Sign in'),
-      ),
       const Divider(height: 32),
-      Text('A world to explore', style: Theme.of(c).textTheme.titleLarge),
+      Text(
+        'Thế giới nhỏ, khám phá lớn',
+        style: Theme.of(c).textTheme.titleLarge,
+      ),
       const Text(
-        'Six curriculum domains · available lessons depend on the service.',
+        '6 lĩnh vực trong khung học · nội dung khả dụng do dịch vụ xác nhận.',
       ),
       const Wrap(
         spacing: 8,
         runSpacing: 8,
         children: [
-          Chip(label: Text('Math')),
-          Chip(label: Text('Language')),
-          Chip(label: Text('English')),
-          Chip(label: Text('Life skills')),
+          Chip(label: Text('Toán học')),
+          Chip(label: Text('Ngôn ngữ')),
+          Chip(label: Text('English Companion')),
+          Chip(label: Text('Kỹ năng sống')),
           Chip(label: Text('Logic')),
-          Chip(label: Text('Discovery')),
+          Chip(label: Text('Khám phá')),
         ],
       ),
     ],
@@ -2814,11 +2907,11 @@ class _SignInState extends State<SignIn> {
 
   @override
   Widget build(BuildContext context) => Frame(
-    title: 'Sign in to your parent account',
+    title: 'Đăng nhập dành cho ba mẹ',
     back: busy ? null : widget.back,
     children: [
       const Text(
-        'Use an existing verified parent account. R0 accounts use @example.test email addresses.',
+        'Dùng tài khoản đã xác minh. Staging có thể giới hạn email đăng ký; OTP được gửi qua email khi dịch vụ hỗ trợ.',
       ),
       const SizedBox(height: 16),
       Form(
@@ -2833,7 +2926,7 @@ class _SignInState extends State<SignIn> {
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
               autocorrect: false,
-              decoration: const InputDecoration(labelText: 'Parent email'),
+              decoration: const InputDecoration(labelText: 'Email phụ huynh'),
               validator: (value) =>
                   RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
                       .hasMatch(value?.trim() ?? '')
@@ -2849,7 +2942,7 @@ class _SignInState extends State<SignIn> {
               autocorrect: false,
               enableSuggestions: false,
               textInputAction: TextInputAction.done,
-              decoration: const InputDecoration(labelText: 'Password'),
+              decoration: const InputDecoration(labelText: 'Mật khẩu'),
               validator: (value) => value == null || value.isEmpty
                   ? 'Enter your password.'
                   : null,
@@ -2891,11 +2984,29 @@ class _SignInState extends State<SignIn> {
                           Text('Signing in…'),
                         ],
                       )
-                    : const Text('Sign in'),
+                    : const Text('Đăng nhập'),
               ),
             ),
           ],
         ),
+      ),
+      TextButton(
+        onPressed: () => showDialog<void>(
+          context: context,
+          builder: (c) => AlertDialog(
+            title: const Text('Quên mật khẩu?'),
+            content: const Text(
+              'Dịch vụ khôi phục mật khẩu chưa được mở trên staging. Không có email khôi phục nào được gửi. Vui lòng liên hệ người vận hành thử nghiệm.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(c),
+                child: const Text('Đã hiểu'),
+              ),
+            ],
+          ),
+        ),
+        child: const Text('Quên mật khẩu?'),
       ),
     ],
   );
@@ -2903,6 +3014,7 @@ class _SignInState extends State<SignIn> {
 
 class Register extends StatefulWidget {
   const Register({
+    this.live = false,
     super.key,
     required this.reference,
     required this.back,
@@ -2919,6 +3031,7 @@ class Register extends StatefulWidget {
   final VoidCallback? signIn;
   @override
   State<Register> createState() => _RegisterState();
+  final bool live;
 }
 
 class _RegisterState extends State<Register> {
@@ -3009,15 +3122,17 @@ class _RegisterState extends State<Register> {
 
   @override
   Widget build(BuildContext c) => Frame(
-    title: 'Create parent account',
+    title: 'Tạo tài khoản phụ huynh',
     back: busy ? null : widget.back,
     children: [
       Text(
         'Terms: ${current.terms?.code ?? 'unavailable'}. Terms are separate from child consent.',
       ),
       Text(current.disclaimer),
-      const Text(
-        'R0 synthetic accounts only. The API supplies mock Terms version metadata, not a full legal document. No email is sent and this does not prove guardian authority.',
+      Text(
+        widget.live
+            ? 'Staging thử nghiệm: chỉ email được cho phép có thể đăng ký. Mã xác minh sẽ được gửi qua dịch vụ email khi khả dụng. Thông tin điều khoản chỉ là metadata tổng hợp, không phải văn bản pháp lý đầy đủ hay chứng minh giám hộ.'
+            : 'R0 synthetic accounts only. The API supplies mock Terms version metadata, not a full legal document. No email is sent and this does not prove guardian authority.',
       ),
       if (current.terms?.effectiveFrom != null)
         Text(
@@ -3039,12 +3154,19 @@ class _RegisterState extends State<Register> {
               keyboardType: TextInputType.emailAddress,
               autocorrect: false,
               validator: (value) =>
-                  RegExp(r'^[^\s@]+@example\.test$')
-                      .hasMatch(value?.trim() ?? '')
+                  RegExp(
+                    widget.live
+                        ? r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+                        : r'^[^\s@]+@example\.test$',
+                  ).hasMatch(value?.trim() ?? '')
                   ? null
+                  : widget.live
+                  ? 'Kiểm tra định dạng email.'
                   : 'Use a synthetic email ending in @example.test.',
-              decoration: const InputDecoration(
-                labelText: 'Parent email (@example.test in R0)',
+              decoration: InputDecoration(
+                labelText: widget.live
+                    ? 'Email phụ huynh'
+                    : 'Parent email (@example.test in R0)',
                 prefixIcon: Icon(Icons.mail_outline),
               ),
             ),
@@ -3173,14 +3295,12 @@ class _OtpState extends State<Otp> {
   Widget build(BuildContext c) => AnimatedBuilder(
     animation: model,
     builder: (c, _) => Frame(
-      title: model.verified
-          ? 'Synthetic email verified'
-          : 'Verify synthetic email',
+      title: model.verified ? 'Email đã được xác minh' : 'Nhập mã xác nhận',
       back: model.busy ? null : widget.back,
       children: [
         Text(
           widget.mockOtp == null
-              ? 'No mock code was returned. Enter the development mock code from the Backend operator.'
+              ? 'Kiểm tra email để lấy mã 6 chữ số. Nếu dịch vụ chưa gửi được, hãy thử gửi lại hoặc liên hệ người vận hành. Không có mã mặc định.'
               : 'Development mock OTP returned by Backend: ${widget.mockOtp}. No email was sent.',
         ),
         Text('Synthetic account: ${widget.email}'),
@@ -3191,8 +3311,13 @@ class _OtpState extends State<Otp> {
           ),
         ],
         const Text(
-          'Wrong, expired and unavailable codes receive the same response. No resend endpoint exists; a development operator must resolve an expired or locked verification. You can return to sign-in without creating another account.',
+          'Mã sai, hết hạn hoặc không khả dụng đều không thể xác minh. Có thể quay lại đăng nhập mà không tạo thêm tài khoản.',
         ),
+        if (widget.api is MobileCapabilities)
+          ResendButton(
+            api: widget.api as MobileCapabilities,
+            email: widget.email,
+          ),
         if (model.busy)
           const LinearProgressIndicator(
             semanticsLabel: 'Verifying and signing in',
@@ -3213,7 +3338,7 @@ class _OtpState extends State<Otp> {
             letterSpacing: 4,
             fontWeight: FontWeight.w700,
           ),
-          decoration: const InputDecoration(labelText: 'Six-digit mock code'),
+          decoration: const InputDecoration(labelText: 'Mã xác nhận 6 chữ số'),
         ),
         OnboardingError(model.error),
         if (model.retrySeconds > 0)
@@ -3228,7 +3353,7 @@ class _OtpState extends State<Otp> {
                   ? 'Checking…'
                   : model.verified
                   ? 'Retry parent sign-in'
-                  : 'Verify and sign in',
+                  : 'Xác nhận và đăng nhập',
             ),
           ),
         ),
@@ -3724,6 +3849,10 @@ class ChildHome extends StatelessWidget {
         ? 'Welcome back to Child Mode!'
         : 'Hi, ${child!.alias}!',
     children: [
+      PoGarden(
+        title: child == null ? 'Cùng Mimi khám phá!' : 'Chào ${child!.alias}!',
+        subtitle: 'Mỗi ngày một điều mới, bé nhé.',
+      ),
       MimiNotice(
         icon: Icons.explore_outlined,
         color: const Color(0xFFFFF4CD),

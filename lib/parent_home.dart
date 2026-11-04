@@ -5,6 +5,7 @@ import 'main.dart'
 import 'parent_gate_api.dart';
 import 'mimigo_design.dart';
 import 'api_failure.dart';
+import 'po/po_design.dart';
 import 'parent_onboarding.dart' show OnboardingError;
 
 /// Parent-only selection before entering Child Mode. This does not grant a
@@ -194,6 +195,11 @@ class _ParentHomeState extends State<ParentHome> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const PoGarden(
+            title: 'Cùng con lớn lên,\nmỗi ngày một chút',
+            subtitle: 'Chọn một không gian học tập cho bé.',
+            compact: true,
+          ),
           Text(
             'Welcome, ${widget.parent.displayName}',
             style: Theme.of(context).textTheme.headlineSmall,

@@ -107,6 +107,7 @@ Future<void> openSignIn(WidgetTester tester, AuthApi api) async {
     ),
   );
   expect(find.byKey(const Key('welcomeStart')), findsOneWidget);
+  await tester.ensureVisible(find.byKey(const Key('welcomeSignIn')));
   await tester.tap(find.byKey(const Key('welcomeSignIn')));
   await tester.pumpAndSettle();
 }
@@ -184,7 +185,7 @@ void main() {
       expect(api.calls, isEmpty);
       await tester.tap(find.byType(BackButton));
       await tester.pumpAndSettle();
-      expect(find.text('Already have an account? Sign in'), findsOneWidget);
+      expect(find.text('Ba mẹ đã có tài khoản? Đăng nhập'), findsOneWidget);
     },
   );
 

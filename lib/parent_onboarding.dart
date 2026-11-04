@@ -84,9 +84,11 @@ class OnboardingError extends StatelessWidget {
   final ApiFailure? failure;
   static String message(ApiFailure error) {
     return switch (error.code) {
-      'INVALID_OTP' => 'The code could not be verified. It may be wrong, expired or unavailable. No resend service is available; ask the development operator for help.',
-      'INVALID_OTP_FORMAT' =>
-        'Enter the six-digit development verification code.',
+      'REGISTRATION_RESTRICTED' => 'Staging chưa mở đăng ký rộng rãi. Chỉ email thử nghiệm được cho phép mới có thể đăng ký.',
+      'EMAIL_DELIVERY_UNAVAILABLE' => 'Dịch vụ email tạm thời chưa gửi được mã. Thử gửi lại; không tạo lại tài khoản để tránh trùng lặp.',
+      'CLOUD_SURFACE_LOCKED' || 'ROUTE_NOT_FOUND' => 'Tính năng này chưa được mở trên môi trường hiện tại. Không có thao tác thành công nào được giả định.',
+      'INVALID_OTP' => 'Chưa xác minh được mã. Mã có thể sai, hết hạn hoặc không khả dụng. Dùng mã mới nhất trong email hoặc thử gửi lại khi dịch vụ cho phép.',
+      'INVALID_OTP_FORMAT' => 'Nhập đúng mã xác nhận gồm 6 chữ số.',
       'EMAIL_ALREADY_REGISTERED' => 'This synthetic email is already registered. Sign in, or use verification recovery if sign-in reports an unverified account.',
       'TERMS_VERSION_NOT_CURRENT' => 'Account Terms changed. Reload the current version and make a new explicit choice.',
       'TERMS_ACCEPTANCE_REQUIRED' => 'Explicit acceptance of current account Terms is required. This does not grant child consent.',

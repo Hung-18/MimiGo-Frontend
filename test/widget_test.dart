@@ -38,11 +38,14 @@ void main() {
     expect((await api.getChild(child.id)).recordedDecisions, hasLength(2));
   });
 
-  test('live configuration defaults to the Android Emulator host bridge', () {
-    final config = ApiConfiguration.fromEnvironment();
-    expect(config.baseUrl, contains('10.0.2.2'));
-    expect(LiveMimiGoApi(Uri.parse(config.baseUrl)), isA<LiveMimiGoApi>());
-  });
+  test(
+    'live configuration defaults to staging; local URL remains build-time',
+    () {
+      final config = ApiConfiguration.fromEnvironment();
+      expect(config.baseUrl, 'https://mimigo-api-staging.onrender.com/api/v1');
+      expect(LiveMimiGoApi(Uri.parse(config.baseUrl)), isA<LiveMimiGoApi>());
+    },
+  );
 
   testWidgets('terms and consent are unchecked and gate child input', (
     tester,

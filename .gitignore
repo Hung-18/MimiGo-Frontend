@@ -50,3 +50,6 @@ app.*.map.json
 
 # Local, read-only handoff material; also excluded in existing local Git settings.
 /.mimigo/
+
+# Extracted PO originals: source ZIP stays external; compact sheet is tracked.
+/reports/evidence/po_reference/*.png

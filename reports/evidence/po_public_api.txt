@@ -1,0 +1,10 @@
+2026-11-04 — read-only public staging checks from this Frontend session
+
+GET https://mimigo-api-staging.onrender.com/api/v1/health
+200 application/json; charset=utf-8
+
+GET https://mimigo-api-staging.onrender.com/api/v1/privacy/onboarding-reference
+200 application/json; charset=utf-8
+
+No authenticated requests, registration, child creation, checkout or settlement.
+These results establish public availability only, not authenticated E2E acceptance.

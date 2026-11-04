@@ -256,7 +256,10 @@ void main() {
       await submitSignIn(tester);
       await tapVisible(tester, 'resumeEmailVerification');
       expect(find.byType(Otp), findsOneWidget);
-      expect(find.textContaining('No mock code was returned'), findsOneWidget);
+      expect(
+        find.textContaining('Kiểm tra email để lấy mã 6 chữ số'),
+        findsOneWidget,
+      );
       await tester.enterText(find.byKey(const Key('otpCode')), '123456');
       await tapVisible(tester, 'otpVerify');
       expect(find.byType(ParentArea), findsOneWidget);
