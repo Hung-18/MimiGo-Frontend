@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'api_failure.dart';
 import 'user_messages.dart';
 import 'po/po_design.dart';
+import 'po/code_input.dart';
 
 abstract interface class PasswordResetApi {
   Future<int> requestPasswordReset(String email);
@@ -173,19 +173,10 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                         ),
                       if (accepted) ...[
                         const SizedBox(height: 16),
-                        TextFormField(
-                          key: const Key('resetCode'),
+                        SixDigitCodeField(
+                          fieldKey: const Key('resetCode'),
                           controller: otp,
                           enabled: !busy,
-                          keyboardType: TextInputType.number,
-                          autofillHints: const [AutofillHints.oneTimeCode],
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                            LengthLimitingTextInputFormatter(6),
-                          ],
-                          decoration: const InputDecoration(
-                            labelText: 'Mã xác nhận trong email',
-                          ),
                           validator: (v) => RegExp(r'^\d{6}$').hasMatch(v ?? '')
                               ? null
                               : 'Vui lòng nhập đủ 6 chữ số.',

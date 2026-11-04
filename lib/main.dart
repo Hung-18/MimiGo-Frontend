@@ -26,6 +26,7 @@ import 'mobile_demo.dart';
 import 'po/po_design.dart';
 import 'po/mobile_services.dart';
 import 'po/resend_button.dart';
+import 'po/code_input.dart';
 import 'po/po_boot.dart';
 import 'po/live_child_home.dart';
 import 'user_messages.dart';
@@ -1504,24 +1505,26 @@ List<Notice> _notices(Object? x) {
   final notices = x
       .map((v) {
         final n = _map(v);
+        final versionId = _string(n, 'noticeVersionId');
+        final contentHash = _string(n, 'contentHash');
         return Notice(
           _string(n, 'purposeCode'),
-          _string(n, 'noticeVersionId'),
+          versionId,
           _string(n, 'versionLabel'),
-          contentHash: _string(n, 'contentHash'),
+          contentHash: contentHash,
           effectiveFrom: _date(n, 'effectiveFrom'),
           isApprovedForRealUsers: _bool(n, 'isApprovedForRealUsers'),
+          document: ApprovedLegalDocument.fromSnapshot(
+            n,
+            versionId: versionId,
+            contentHash: contentHash,
+          ),
         );
       })
       .toList(growable: false);
-  if (notices.any(
-        (n) =>
-            n.purposeCode.isEmpty ||
-            n.versionId.isEmpty ||
-            n.isApprovedForRealUsers != false,
-      ) ||
+  if (notices.any((n) => n.purposeCode.isEmpty || n.versionId.isEmpty) ||
       notices.map((n) => n.purposeCode).toSet().length != notices.length)
-    throw const ApiInvalidResponse('Invalid R0 purpose notice snapshot.');
+    throw const ApiInvalidResponse('Invalid purpose notice snapshot.');
   return notices;
 }
 
@@ -1534,6 +1537,11 @@ OnboardingReference _reference(Map<String, dynamic> x) {
           _string(_map(termsJson), 'code'),
           contentHash: _string(_map(termsJson), 'contentHash'),
           effectiveFrom: _date(_map(termsJson), 'effectiveFrom'),
+          document: ApprovedLegalDocument.fromSnapshot(
+            _map(termsJson),
+            versionId: _string(_map(termsJson), 'termsVersionId'),
+            contentHash: _string(_map(termsJson), 'contentHash'),
+          ),
         );
   final raw = x['purposes'];
   if (raw is! List)
@@ -2734,15 +2742,7 @@ class Frame extends StatelessWidget {
   final bool demoPresentation;
   final bool compactTitle;
   @override
-  Widget build(BuildContext c) => DecoratedBox(
-    decoration: const BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [MimiColors.sky, MimiColors.canvas, Colors.white],
-        stops: [0, .45, 1],
-      ),
-    ),
+  Widget build(BuildContext c) => StorybookSurface(
     child: SingleChildScrollView(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: EdgeInsets.symmetric(
@@ -2854,12 +2854,6 @@ class Welcome extends StatelessWidget {
         title: 'Cùng Mimi khám phá thế giới',
         subtitle: 'Học qua những điều bé yêu thích.',
       ),
-      if (live)
-        const Text(
-          'Đăng ký có thể đang giới hạn theo thư mời.',
-          style: TextStyle(fontSize: 13),
-        ),
-      const Text('Ba mẹ đồng hành. Bé khám phá cùng Mimi.'),
       TextButton(
         key: const Key('welcomeSignIn'),
         onPressed: busy ? null : signIn,
@@ -2883,10 +2877,6 @@ class Welcome extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: 64),
         child: FilledButton(
           key: const Key('welcomeStart'),
-          style: FilledButton.styleFrom(
-            backgroundColor: MimiColors.yellow,
-            foregroundColor: MimiColors.ink,
-          ),
           onPressed: busy ? null : start,
           child: Text(
             busy ? 'Đang tải phiên bản điều khoản…' : 'Tạo tài khoản phụ huynh',
@@ -2898,13 +2888,15 @@ class Welcome extends StatelessWidget {
           semanticsLabel: 'Đang tải thông tin đăng ký',
         ),
       OnboardingError(error),
+      if (live)
+        const Text(
+          'Đăng ký theo khả năng cung cấp của dịch vụ.',
+          style: TextStyle(fontSize: 13),
+        ),
       const Divider(height: 32),
       Text(
         'Thế giới nhỏ, khám phá lớn',
         style: Theme.of(c).textTheme.titleLarge,
-      ),
-      const Text(
-        '6 lĩnh vực trong khung học · nội dung khả dụng do dịch vụ xác nhận.',
       ),
       const Wrap(
         spacing: 12,
@@ -3459,10 +3451,14 @@ class _OtpState extends State<Otp> {
       title: model.verified ? 'Email đã được xác minh' : 'Nhập mã xác nhận',
       back: model.busy ? null : widget.back,
       children: [
-        Center(
-          child: MimiBee(
-            size: 100,
-            mood: model.busy ? MimiMood.thinking : MimiMood.guide,
+        ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: GardenScene(
+            height: 170,
+            child: MimiBee(
+              size: 165,
+              mood: model.busy ? MimiMood.thinking : MimiMood.guide,
+            ),
           ),
         ),
         const Text(
@@ -3470,18 +3466,9 @@ class _OtpState extends State<Otp> {
         ),
         Text('Email: ${widget.email}'),
         if (widget.registration != null) ...[
-          Text(
-            'Mã có hiệu lực đến ${viTime(widget.registration!.otpExpiresAt)}',
-          ),
+          Text('Hạn mã ban đầu: ${viTime(widget.registration!.otpExpiresAt)}'),
+          CodeExpiry(expiresAt: widget.registration!.otpExpiresAt),
         ],
-        const Text(
-          'Mã sai, hết hạn hoặc không khả dụng đều không thể xác minh. Có thể quay lại đăng nhập mà không tạo thêm tài khoản.',
-        ),
-        if (widget.api is MobileCapabilities)
-          ResendButton(
-            api: widget.api as MobileCapabilities,
-            email: widget.email,
-          ),
         if (model.busy)
           const LinearProgressIndicator(
             semanticsLabel: 'Đang xác minh và đăng nhập',
@@ -3490,20 +3477,10 @@ class _OtpState extends State<Otp> {
           const Text(
             'Email đã được xác minh. Ba mẹ có thể thử đăng nhập lại mà không cần nhập mã nữa.',
           ),
-        TextField(
-          key: const Key('otpCode'),
+        SixDigitCodeField(
+          fieldKey: const Key('otpCode'),
           controller: code,
           enabled: !model.busy && !model.verified,
-          maxLength: 6,
-          keyboardType: TextInputType.number,
-          autofillHints: const [AutofillHints.oneTimeCode],
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 26,
-            letterSpacing: 4,
-            fontWeight: FontWeight.w700,
-          ),
-          decoration: const InputDecoration(labelText: 'Mã xác nhận 6 chữ số'),
         ),
         OnboardingError(model.error),
         if (model.retrySeconds > 0)
@@ -3521,6 +3498,15 @@ class _OtpState extends State<Otp> {
                   : 'Xác nhận và đăng nhập',
             ),
           ),
+        ),
+        if (widget.api is MobileCapabilities)
+          ResendButton(
+            api: widget.api as MobileCapabilities,
+            email: widget.email,
+          ),
+        const Text(
+          'Kiểm tra cả thư rác. Mã sai hoặc hết hạn không thể xác minh. Ba mẹ có thể quay lại đăng nhập mà không tạo thêm tài khoản.',
+          style: TextStyle(fontSize: 13),
         ),
       ],
     ),
@@ -3599,6 +3585,13 @@ class _PrivacyState extends State<Privacy> {
     return Frame(
       title: 'Bảo vệ thông tin của bé',
       children: [
+        const OnboardingTrail(step: 0),
+        const PoGarden(
+          title: 'Ba mẹ cùng Mimi chăm sóc bé',
+          subtitle: 'Xem từng thông báo trước khi chọn.',
+          compact: true,
+          mood: MimiMood.guide,
+        ),
         const Text(
           'Ba mẹ xem thông tin và lựa chọn từng mục đích trước khi nhập hồ sơ bé.',
         ),
@@ -3784,6 +3777,22 @@ class _ChildInputState extends State<ChildInput> {
       );
   late String avatar = widget.initialDraft?.avatar ?? 'bear-blue';
   ApiFailure? error;
+  Future<void> pickDob() async {
+    final lastDate = vietnamToday().subtract(const Duration(days: 1));
+    final entered = parseDate(dob.text);
+    final selected = await showDatePicker(
+      context: context,
+      firstDate: DateTime(1900),
+      lastDate: lastDate,
+      initialDate:
+          entered != null && acceptableChildDob(entered, vietnamToday())
+          ? entered
+          : lastDate,
+      helpText: 'Ngày sinh của bé',
+    );
+    if (selected != null && mounted) dob.text = dateText(selected);
+  }
+
   @override
   void dispose() {
     alias.dispose();
@@ -3813,14 +3822,22 @@ class _ChildInputState extends State<ChildInput> {
     title: 'Tạo hồ sơ bé',
     back: widget.back,
     children: [
-      const Text(
-        'Chỉ tiếp tục sau khi ba mẹ đã xem và lựa chọn các mục đích sử dụng thông tin.',
+      const OnboardingTrail(step: 1),
+      const PoGarden(
+        title: 'Mimi làm quen với bé nhé!',
+        subtitle: 'Một hồ sơ riêng cho mỗi bé.',
+        compact: true,
+        mood: MimiMood.guide,
       ),
       const Text('Độ tuổi và quyền học sẽ được xác nhận sau khi lưu hồ sơ.'),
       TextField(
         key: const Key('childName'),
         controller: alias,
-        decoration: const InputDecoration(labelText: 'Tên gọi của bé'),
+        decoration: const InputDecoration(
+          labelText: 'Tên gọi của bé',
+          helperText: 'Bản thử nghiệm hiện yêu cầu tên bắt đầu bằng SYN-.',
+          prefixIcon: Icon(Icons.person_outline),
+        ),
       ),
       const SizedBox(height: 12),
       TextField(
@@ -3829,8 +3846,15 @@ class _ChildInputState extends State<ChildInput> {
         keyboardType: TextInputType.datetime,
         textInputAction: TextInputAction.done,
         onSubmitted: (_) => FocusScope.of(c).unfocus(),
-        decoration: const InputDecoration(
-          labelText: 'Ngày sinh (năm-tháng-ngày)',
+        decoration: InputDecoration(
+          labelText: 'Ngày sinh',
+          prefixIcon: const Icon(Icons.calendar_month_outlined),
+          hintText: 'YYYY-MM-DD',
+          suffixIcon: IconButton(
+            onPressed: pickDob,
+            tooltip: 'Chọn ngày sinh trên lịch',
+            icon: const Icon(Icons.date_range),
+          ),
         ),
       ),
       const SizedBox(height: 12),
@@ -3918,6 +3942,7 @@ class _ReviewState extends State<Review> {
       title: 'Xem lại hồ sơ',
       back: widget.model.canEdit && !leaving ? widget.back : null,
       children: [
+        const OnboardingTrail(step: 2),
         ListTile(
           title: const Text('Tên gọi'),
           subtitle: Text(widget.draft.alias),

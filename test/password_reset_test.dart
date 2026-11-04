@@ -100,7 +100,9 @@ void main() {
         find.byKey(const Key('resetConfirm')),
         'new-test-password',
       );
+      await t.pumpAndSettle();
       await t.ensureVisible(find.byKey(const Key('resetSubmit')));
+      await t.pumpAndSettle();
       await t.tap(find.byKey(const Key('resetSubmit')));
       await t.pumpAndSettle();
       expect(find.byKey(const Key('signInEmail')), findsOneWidget);
@@ -249,7 +251,9 @@ void main() {
         t.widget<TextButton>(find.byKey(const Key('resetResend'))).onPressed,
         isNull,
       );
+      await t.pumpAndSettle();
       await t.ensureVisible(find.byKey(const Key('resetSubmit')));
+      await t.pumpAndSettle();
       await t.tap(find.byKey(const Key('resetSubmit')));
       await t.pump();
       expect(api.confirmations, 0);
@@ -267,13 +271,17 @@ void main() {
         code: 'INVALID_RESET_CODE',
         status: 400,
       );
+      await t.pumpAndSettle();
       await t.ensureVisible(find.byKey(const Key('resetSubmit')));
+      await t.pumpAndSettle();
       await t.tap(find.byKey(const Key('resetSubmit')));
       await t.pumpAndSettle();
       expect(find.byKey(const Key('resetCode')), findsOneWidget);
       expect(api.confirmations, 1);
       api.failure = null;
+      await t.pumpAndSettle();
       await t.ensureVisible(find.byKey(const Key('resetSubmit')));
+      await t.pumpAndSettle();
       await t.tap(find.byKey(const Key('resetSubmit')));
       await t.pumpAndSettle();
       expect(find.text('open'), findsOneWidget);

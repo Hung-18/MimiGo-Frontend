@@ -173,7 +173,8 @@ void main() {
         final ended = completed['endedAt'];
         expect(ended, isNotNull);
         await tap(tester, 'replayLearning');
-        await waitFor(tester, find.text('Session: IN_PROGRESS'));
+        await waitFor(tester, find.text('Lượt học: Đang học'));
+        expect(find.byKey(const Key('completionConfirmed')), findsNothing);
         expect(backend.sessions, hasLength(2));
         expect(completed['endedAt'], ended);
         for (final request in backend.requests.where(

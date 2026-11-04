@@ -6,7 +6,7 @@ import '../mimigo_design.dart';
 import 'mimi_world.dart';
 export 'mimi_world.dart';
 
-/// PO mobile presentation. Original vector artwork, no reference-board crops.
+/// PO mobile presentation. Original bundled artwork, no reference-board crops.
 abstract final class PoPalette {
   static const pink = Color(0xFFE92F85);
   static const plum = Color(0xFF49335E);
@@ -273,6 +273,16 @@ class PoGarden extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     clipBehavior: Clip.antiAlias,
     decoration: BoxDecoration(
+      image: compact
+          ? const DecorationImage(
+              image: AssetImage('assets/scenery/garden.png'),
+              fit: BoxFit.cover,
+              colorFilter: ColorFilter.mode(
+                Color(0xE6FFFFFF),
+                BlendMode.srcOver,
+              ),
+            )
+          : null,
       gradient: const LinearGradient(
         colors: [PoPalette.sky, PoPalette.mint],
         begin: Alignment.topCenter,
@@ -323,7 +333,7 @@ class PoGarden extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (stacked) ...[
-              GardenScene(height: 210, child: MimiBee(size: 200, mood: mood)),
+              GardenScene(height: 240, child: MimiBee(size: 220, mood: mood)),
               ColoredBox(
                 color: const Color(0xFFFFFBF3),
                 child: Padding(
@@ -350,6 +360,66 @@ class PoGarden extends StatelessWidget {
           ],
         );
       },
+    ),
+  );
+}
+
+class StorybookSurface extends StatelessWidget {
+  const StorybookSurface({super.key, required this.child});
+  final Widget child;
+  @override
+  Widget build(BuildContext context) => Material(
+    color: PoPalette.cream,
+    child: Ink(
+      decoration: const BoxDecoration(
+        color: PoPalette.cream,
+        image: DecorationImage(
+          image: AssetImage('assets/scenery/garden.png'),
+          fit: BoxFit.cover,
+          alignment: Alignment.topCenter,
+          colorFilter: ColorFilter.mode(Color(0xD9FFFCF6), BlendMode.srcOver),
+        ),
+      ),
+      child: child,
+    ),
+  );
+}
+
+class OnboardingTrail extends StatelessWidget {
+  const OnboardingTrail({super.key, required this.step});
+  final int step;
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label:
+        'Bước ${step + 1} trong 3: ${const ['Thông báo', 'Hồ sơ bé', 'Xem lại'][step]}',
+    child: ExcludeSemantics(
+      child: Row(
+        children: [
+          for (var i = 0; i < 3; i++) ...[
+            if (i > 0)
+              Expanded(
+                child: Container(
+                  height: 3,
+                  color: i <= step ? MimiColors.action : MimiColors.border,
+                ),
+              ),
+            CircleAvatar(
+              radius: 17,
+              backgroundColor: i <= step
+                  ? MimiColors.action
+                  : MimiColors.border,
+              child: i < step
+                  ? const Icon(Icons.check, size: 19, color: Colors.white)
+                  : Text(
+                      '${i + 1}',
+                      style: TextStyle(
+                        color: i == step ? Colors.white : MimiColors.ink,
+                      ),
+                    ),
+            ),
+          ],
+        ],
+      ),
     ),
   );
 }
@@ -385,35 +455,37 @@ class PoScaffold extends StatelessWidget {
       actions: actions,
     ),
     bottomNavigationBar: bottom,
-    body: SafeArea(
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 680),
-          child: SingleChildScrollView(
-            key: PageStorageKey((title, key)),
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (preview)
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 14),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: PoPill(
-                        'UI PREVIEW · DỮ LIỆU TỔNG HỢP',
-                        color: PoPalette.peach,
+    body: StorybookSurface(
+      child: SafeArea(
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: SingleChildScrollView(
+              key: PageStorageKey((title, key)),
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (preview)
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 14),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: PoPill(
+                          'UI PREVIEW · DỮ LIỆU TỔNG HỢP',
+                          color: PoPalette.peach,
+                        ),
                       ),
                     ),
-                  ),
-                for (final child in children)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: child,
-                  ),
-              ],
+                  for (final child in children)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: child,
+                    ),
+                ],
+              ),
             ),
           ),
         ),

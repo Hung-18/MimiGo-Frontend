@@ -167,10 +167,9 @@ class _MimiSprite extends StatelessWidget {
   }
 }
 
-const _ink = Color(0xFF49335E);
 const _leaf = Color(0xFF61A780);
 
-/// Original scenery shared by welcome, discovery and supportive states.
+/// Bundled original storybook scenery; no remote images or offscreen ticker.
 class GardenScene extends StatelessWidget {
   const GardenScene({super.key, this.child, this.height = 210});
   final Widget? child;
@@ -181,198 +180,62 @@ class GardenScene extends StatelessWidget {
     child: Stack(
       fit: StackFit.expand,
       children: [
-        const ExcludeSemantics(child: CustomPaint(painter: _GardenPainter())),
+        const Positioned.fill(child: StorybookBackdrop()),
         if (child != null) Center(child: child),
       ],
     ),
   );
 }
 
-class _GardenPainter extends CustomPainter {
-  const _GardenPainter();
+/// Decorative only. Forms always own an opaque surface above this artwork.
+class StorybookBackdrop extends StatelessWidget {
+  const StorybookBackdrop({super.key, this.alignment = Alignment.center});
+  final Alignment alignment;
   @override
-  void paint(Canvas c, Size s) {
-    final p = Paint();
-    c.save();
-    c.scale(s.width / 360, s.height / 230);
-    void oval(double x, double y, double w, double h, Color color) {
-      p.color = color;
-      c.drawOval(Rect.fromLTWH(x, y, w, h), p);
-    }
-
-    oval(278, 10, 43, 43, const Color(0xFFFFD568));
-    for (final x in [20.0, 222.0]) {
-      oval(x, 34, 64, 16, Colors.white);
-      oval(x + 14, 22, 28, 28, Colors.white);
-    }
-    oval(-110, 155, 440, 180, const Color(0xFFB6DDB1));
-    oval(160, 152, 350, 190, const Color(0xFF9ECDAD));
-    p.color = const Color(0xFFFFE8BA);
-    c.drawPath(
-      Path()
-        ..moveTo(166, 230)
-        ..quadraticBezierTo(280, 185, 188, 171)
-        ..quadraticBezierTo(326, 192, 240, 230)
-        ..close(),
-      p,
-    );
-    for (final x in [28.0, 323.0]) {
-      p
-        ..color = const Color(0xFF99775C)
-        ..strokeWidth = 8
-        ..strokeCap = StrokeCap.round;
-      c.drawLine(Offset(x, 170), Offset(x, 100), p);
-      oval(x - 25, 74, 50, 64, _leaf);
-      oval(x - 19, 63, 40, 49, const Color(0xFF83BF85));
-    }
-    for (var i = 0; i < 9; i++) {
-      final x = 10.0 + i * 43;
-      final y = 202.0 + (i.isEven ? 7 : -8);
-      p
-        ..color = _leaf
-        ..strokeWidth = 3;
-      c.drawLine(Offset(x, y), Offset(x, y + 17), p);
-      for (var j = 0; j < 5; j++) {
-        final a = j * math.pi * 2 / 5;
-        oval(
-          x - 4 + math.cos(a) * 6,
-          y - 4 + math.sin(a) * 6,
-          8,
-          8,
-          i.isEven ? const Color(0xFFF7A7C6) : const Color(0xFFFFF8E9),
-        );
-      }
-      oval(x - 3, y - 3, 6, 6, const Color(0xFFFFCE46));
-    }
-    c.restore();
-  }
-
-  @override
-  bool shouldRepaint(_GardenPainter oldDelegate) => false;
+  Widget build(BuildContext context) => ExcludeSemantics(
+    child: RepaintBoundary(
+      child: Image.asset(
+        'assets/scenery/garden.png',
+        fit: BoxFit.cover,
+        alignment: alignment,
+        filterQuality: FilterQuality.medium,
+        excludeFromSemantics: true,
+      ),
+    ),
+  );
 }
 
-/// Native illustrated destinations for the six canonical curriculum codes.
+/// Six decorative destinations in canonical domain order, sharing one atlas.
 class DomainIllustration extends StatelessWidget {
   const DomainIllustration(this.kind, {super.key});
   final int kind;
   @override
   Widget build(BuildContext context) => ExcludeSemantics(
-    child: SizedBox(
-      height: 86,
-      width: 132,
-      child: CustomPaint(painter: _DomainPainter(kind)),
+    child: SizedBox.square(
+      dimension: 132,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: OverflowBox(
+          alignment: Alignment.topLeft,
+          minWidth: 396,
+          maxWidth: 396,
+          minHeight: 264,
+          maxHeight: 264,
+          child: Transform.translate(
+            offset: Offset(-(kind % 3) * 132, -(kind ~/ 3) * 132),
+            child: Image.asset(
+              'assets/scenery/domains.png',
+              width: 396,
+              height: 264,
+              fit: BoxFit.fill,
+              filterQuality: FilterQuality.medium,
+              excludeFromSemantics: true,
+            ),
+          ),
+        ),
+      ),
     ),
   );
-}
-
-class _DomainPainter extends CustomPainter {
-  const _DomainPainter(this.kind);
-  final int kind;
-  @override
-  void paint(Canvas c, Size s) {
-    c.save();
-    c.scale(s.width / 132, s.height / 86);
-    final p = Paint();
-    void shape(Rect rect, Color color, [double radius = 12]) {
-      p.color = color;
-      c.drawRRect(RRect.fromRectAndRadius(rect, Radius.circular(radius)), p);
-    }
-
-    shape(const Rect.fromLTWH(7, 69, 118, 10), const Color(0xFFD0DFC5), 5);
-    if (kind == 0) {
-      for (var i = 0; i < 3; i++) {
-        shape(
-          Rect.fromLTWH(14 + i * 35, 39 - i * 12, 30, 30 + i * 12),
-          [
-            const Color(0xFFF393A9),
-            const Color(0xFFFAC95B),
-            const Color(0xFF83BDD8),
-          ][i],
-        );
-        final tp = TextPainter(
-          text: TextSpan(
-            text: '${i + 1}',
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-              color: _ink,
-            ),
-          ),
-          textDirection: TextDirection.ltr,
-        )..layout();
-        tp.paint(c, Offset(22 + i * 35, 38 - i * 12));
-      }
-    } else if (kind == 1 || kind == 2) {
-      shape(const Rect.fromLTWH(18, 19, 47, 49), const Color(0xFFF7ACB8), 6);
-      shape(const Rect.fromLTWH(67, 19, 47, 49), const Color(0xFFFFE7AC), 6);
-      for (var i = 0; i < 3; i++) {
-        shape(Rect.fromLTWH(29, 33 + i * 10, 23, 3), Colors.white, 1);
-        shape(
-          Rect.fromLTWH(79, 33 + i * 10, 23, 3),
-          const Color(0xFFB4A681),
-          1,
-        );
-      }
-      if (kind == 2) {
-        shape(const Rect.fromLTWH(74, 2, 47, 25), const Color(0xFF9DCFD4));
-        final tp = TextPainter(
-          text: const TextSpan(
-            text: 'Hi!',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: _ink,
-            ),
-          ),
-          textDirection: TextDirection.ltr,
-        )..layout();
-        tp.paint(c, const Offset(84, 1));
-      }
-    } else if (kind == 3) {
-      shape(const Rect.fromLTWH(39, 33, 54, 38), const Color(0xFF85BCAF));
-      p
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 7
-        ..color = _leaf;
-      c.drawArc(
-        const Rect.fromLTWH(48, 18, 36, 36),
-        math.pi,
-        math.pi,
-        false,
-        p,
-      );
-      p.style = PaintingStyle.fill;
-      shape(const Rect.fromLTWH(48, 41, 36, 19), const Color(0xFFE6F4D1), 6);
-    } else if (kind == 4) {
-      shape(const Rect.fromLTWH(18, 31, 40, 40), const Color(0xFFB69BDF), 4);
-      p.color = const Color(0xFFEFAD83);
-      c.drawCircle(const Offset(91, 51), 21, p);
-      p.color = const Color(0xFF91BFBA);
-      c.drawPath(
-        Path()..addPolygon(const [
-          Offset(45, 26),
-          Offset(67, 0),
-          Offset(89, 26),
-        ], true),
-        p,
-      );
-    } else {
-      shape(const Rect.fromLTWH(60, 43, 7, 29), _leaf, 3);
-      p.color = const Color(0xFF98CBB1);
-      c.drawOval(const Rect.fromLTWH(30, 30, 34, 17), p);
-      c.drawOval(const Rect.fromLTWH(65, 20, 35, 20), p);
-      p
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 5
-        ..color = _ink;
-      c.drawCircle(const Offset(48, 35), 22, p);
-      c.drawLine(const Offset(31, 52), const Offset(15, 69), p);
-    }
-    c.restore();
-  }
-
-  @override
-  bool shouldRepaint(_DomainPainter old) => kind != old.kind;
 }
 
 /// Count reflects acknowledged cues in this session, independent of correctness.

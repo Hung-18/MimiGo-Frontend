@@ -704,8 +704,12 @@ class _LearningLessonViewState extends State<LearningLessonView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Center(
-                child: MimiBee(size: 150, mood: MimiMood.completion),
+              const ClipRRect(
+                borderRadius: BorderRadius.all(Radius.circular(20)),
+                child: GardenScene(
+                  height: 160,
+                  child: MimiBee(size: 150, mood: MimiMood.completion),
+                ),
               ),
               const SizedBox(height: 12),
               Semantics(
@@ -833,13 +837,16 @@ class _LearningLessonViewState extends State<LearningLessonView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Align(
-              alignment: Alignment.centerRight,
-              child: MimiBee(
-                size: 76,
-                mood: sendingCue == cue.cueId
-                    ? MimiMood.thinking
-                    : MimiMood.guide,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: GardenScene(
+                height: 100,
+                child: MimiBee(
+                  size: 96,
+                  mood: sendingCue == cue.cueId
+                      ? MimiMood.thinking
+                      : MimiMood.guide,
+                ),
               ),
             ),
             Text(

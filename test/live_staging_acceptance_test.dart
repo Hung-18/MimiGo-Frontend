@@ -25,9 +25,19 @@ void main() {
         final reference = await api.onboardingReference();
         expect(reference.terms?.id, isNotEmpty);
         expect(reference.notices, isNotEmpty);
-        expect(
-          reference.notices.every((n) => n.isApprovedForRealUsers == false),
-          isTrue,
+        // Both unapproved metadata and approved documents are valid contracts.
+        // Availability is reported without consenting or creating an account.
+        for (final notice in reference.notices) {
+          if (notice.hasApprovedDocument) {
+            expect(
+              notice.document!.matches(notice.versionId, notice.contentHash),
+              isTrue,
+            );
+          }
+        }
+        // ignore: avoid_print
+        print(
+          'LEGAL_AVAILABILITY terms=${reference.terms?.hasApprovedDocument == true} notices=${reference.notices.where((n) => n.hasApprovedDocument).length}/${reference.notices.length}',
         );
       } finally {
         api.gateSession!.dispose();
