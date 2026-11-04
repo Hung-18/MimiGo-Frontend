@@ -240,22 +240,29 @@ class _ParentHomeState extends State<ParentHome> {
             if (model.children.isEmpty && !model.busy && model.error == null)
               const Text('Chưa có hồ sơ bé.', key: Key('parentChildrenEmpty')),
             ...model.children.map(
-              (profile) => Card(
-                child: ListTile(
-                  key: Key('parent-child-${profile.id}'),
-                  minVerticalPadding: 16,
-                  title: Text(profile.alias),
-                  leading: MimiAvatar(stockKey: profile.stockAvatarKey),
-                  subtitle: Text(
-                    '${viState(profile.state)}\n'
-                    '${profile.withinProgramAgeRange ? '' : 'Ngoài độ tuổi của chương trình\n'}'
-                    '${availability(model.catalogStatuses[profile.id])}',
+              (profile) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: PoCard(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 8,
                   ),
-                  isThreeLine: true,
-                  trailing: const Icon(Icons.chevron_right),
                   onTap: model.busy || leaving
                       ? null
                       : () => model.choose(profile.id),
+                  child: ListTile(
+                    key: Key('parent-child-${profile.id}'),
+                    minVerticalPadding: 16,
+                    title: Text(profile.alias),
+                    leading: MimiAvatar(stockKey: profile.stockAvatarKey),
+                    subtitle: Text(
+                      '${viState(profile.state)}\n'
+                      '${profile.withinProgramAgeRange ? '' : 'Ngoài độ tuổi của chương trình\n'}'
+                      '${availability(model.catalogStatuses[profile.id])}',
+                    ),
+                    isThreeLine: true,
+                    trailing: const Icon(Icons.chevron_right),
+                  ),
                 ),
               ),
             ),
@@ -311,6 +318,10 @@ class _ParentHomeState extends State<ParentHome> {
           ],
           const SizedBox(height: 16),
           if (widget.openParentArea != null) ...[
+            const PoHeading(
+              'Dành cho ba mẹ',
+              subtitle: 'Thông tin riêng tư được bảo vệ bằng PIN.',
+            ),
             Text('Mã PIN: ${viState(widget.parent.parentGate?.status)}'),
             OutlinedButton(
               key: const Key('openParentArea'),

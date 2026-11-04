@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../mimigo_design.dart';
+import 'mimi_world.dart';
+export 'mimi_world.dart';
 
 /// PO mobile presentation. Original vector artwork, no reference-board crops.
 abstract final class PoPalette {
@@ -18,7 +20,7 @@ abstract final class PoPalette {
 
 ThemeData poTheme() => mimiTheme().copyWith(
   scaffoldBackgroundColor: PoPalette.cream,
-  colorScheme: mimiTheme().colorScheme.copyWith(primary: PoPalette.pink),
+  colorScheme: mimiTheme().colorScheme.copyWith(primary: MimiColors.action),
   appBarTheme: const AppBarTheme(
     backgroundColor: PoPalette.cream,
     foregroundColor: PoPalette.plum,
@@ -27,7 +29,7 @@ ThemeData poTheme() => mimiTheme().copyWith(
   ),
 );
 
-class PoCard extends StatelessWidget {
+class PoCard extends StatefulWidget {
   const PoCard({
     super.key,
     required this.child,
@@ -40,19 +42,33 @@ class PoCard extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final VoidCallback? onTap;
   @override
-  Widget build(BuildContext context) => Material(
-    color: color,
-    borderRadius: BorderRadius.circular(PoPalette.radius),
-    child: InkWell(
-      onTap: onTap,
+  State<PoCard> createState() => _PoCardState();
+}
+
+class _PoCardState extends State<PoCard> {
+  bool pressed = false;
+  @override
+  Widget build(BuildContext context) => AnimatedScale(
+    scale: pressed && !MimiMotion.reduced(context) ? .975 : 1,
+    duration: MimiMotion.reduced(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 120),
+    child: Material(
+      color: widget.color,
       borderRadius: BorderRadius.circular(PoPalette.radius),
-      child: Container(
-        padding: padding,
-        decoration: BoxDecoration(
-          border: Border.all(color: PoPalette.plum.withValues(alpha: .07)),
-          borderRadius: BorderRadius.circular(PoPalette.radius),
+      child: InkWell(
+        onTap: widget.onTap,
+        onHighlightChanged: (value) => setState(() => pressed = value),
+        borderRadius: BorderRadius.circular(PoPalette.radius),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 64),
+          padding: widget.padding,
+          decoration: BoxDecoration(
+            border: Border.all(color: PoPalette.plum.withValues(alpha: .09)),
+            borderRadius: BorderRadius.circular(PoPalette.radius),
+          ),
+          child: widget.child,
         ),
-        child: child,
       ),
     ),
   );
@@ -110,36 +126,7 @@ class PoDomainMark extends StatelessWidget {
   const PoDomainMark(this.kind, {super.key});
   final int kind;
   @override
-  Widget build(BuildContext context) => kind < 3
-      ? Text(
-          ['123', 'Aa', 'Hi!'][kind],
-          style: const TextStyle(
-            fontFamily: 'Baloo2',
-            fontSize: 34,
-            color: PoPalette.pink,
-            fontWeight: FontWeight.w800,
-          ),
-        )
-      : Icon(
-          [
-            Icons.favorite_rounded,
-            Icons.extension_rounded,
-            Icons.eco_rounded,
-          ][kind - 3],
-          size: 40,
-          color: PoPalette.pink,
-        );
-}
-
-class MimiBee extends StatelessWidget {
-  const MimiBee({super.key, this.size = 140});
-  final double size;
-  @override
-  Widget build(BuildContext context) => Semantics(
-    image: true,
-    label: 'Mimi, bạn ong nhỏ đang vẫy chào',
-    child: CustomPaint(size: Size.square(size), painter: const _BeePainter()),
-  );
+  Widget build(BuildContext context) => DomainIllustration(kind);
 }
 
 /// Portable vector pictures: no emoji fonts or remote image dependency.
@@ -271,142 +258,99 @@ class _PicturePainter extends CustomPainter {
   bool shouldRepaint(_PicturePainter oldDelegate) => oldDelegate.kind != kind;
 }
 
-class _BeePainter extends CustomPainter {
-  const _BeePainter();
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.save();
-    canvas.scale(size.width / 160, size.height / 160);
-    final p = Paint();
-    void oval(Rect r, Color c) {
-      p.color = c;
-      canvas.drawOval(r, p);
-    }
-
-    oval(const Rect.fromLTWH(28, 132, 108, 12), const Color(0x200C5E4C));
-    oval(const Rect.fromLTWH(12, 37, 66, 43), Colors.white);
-    oval(const Rect.fromLTWH(85, 32, 65, 46), Colors.white);
-    oval(const Rect.fromLTWH(31, 48, 102, 89), const Color(0xFFFFCE46));
-    canvas.save();
-    canvas.clipPath(Path()..addOval(const Rect.fromLTWH(31, 48, 102, 89)));
-    p.color = PoPalette.plum;
-    canvas.drawRect(const Rect.fromLTWH(32, 103, 100, 12), p);
-    canvas.drawRect(const Rect.fromLTWH(32, 124, 100, 9), p);
-    canvas.restore();
-    p
-      ..color = PoPalette.plum
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(const Offset(60, 53), const Offset(48, 30), p);
-    canvas.drawLine(const Offset(102, 52), const Offset(114, 29), p);
-    p.style = PaintingStyle.fill;
-    canvas.drawCircle(const Offset(47, 27), 6, p);
-    canvas.drawCircle(const Offset(116, 26), 6, p);
-    canvas.drawCircle(const Offset(63, 77), 5, p);
-    canvas.drawCircle(const Offset(102, 77), 5, p);
-    p
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
-    canvas.drawArc(const Rect.fromLTWH(73, 78, 20, 14), 0, math.pi, false, p);
-    p.style = PaintingStyle.fill;
-    oval(const Rect.fromLTWH(44, 83, 17, 10), const Color(0xFFFF8AA3));
-    oval(const Rect.fromLTWH(106, 83, 17, 10), const Color(0xFFFF8AA3));
-    p
-      ..color = PoPalette.plum
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 5;
-    canvas.drawLine(const Offset(127, 100), const Offset(143, 86), p);
-    canvas.drawLine(const Offset(34, 102), const Offset(21, 93), p);
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(_BeePainter oldDelegate) => false;
-}
-
 class PoGarden extends StatelessWidget {
   const PoGarden({
     super.key,
     required this.title,
     required this.subtitle,
     this.compact = false,
+    this.mood = MimiMood.greeting,
   });
   final String title, subtitle;
   final bool compact;
+  final MimiMood mood;
   @override
   Widget build(BuildContext context) => Container(
     clipBehavior: Clip.antiAlias,
     decoration: BoxDecoration(
       gradient: const LinearGradient(
         colors: [PoPalette.sky, PoPalette.mint],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
       ),
       borderRadius: BorderRadius.circular(32),
     ),
-    child: Stack(
-      children: [
-        const Positioned(
-          right: -24,
-          bottom: -48,
-          child: _Hill(color: Color(0xFFAED8B1), size: 210),
-        ),
-        const Positioned(
-          left: -40,
-          bottom: -85,
-          child: _Hill(color: Color(0xFFC3E2A2), size: 230),
-        ),
-        Positioned(
-          right: 18,
-          top: 14,
-          child: Icon(
-            Icons.wb_sunny_rounded,
-            color: Colors.amber.shade400,
-            size: 34,
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(22),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final stacked =
+            constraints.maxWidth < 420 ||
+            MediaQuery.textScalerOf(context).scale(16) > 24;
+        final text = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: compact
+                  ? Theme.of(context).textTheme.titleLarge
+                  : Theme.of(context).textTheme.headlineMedium,
+            ),
+            const SizedBox(height: 6),
+            Text(subtitle, style: const TextStyle(color: PoPalette.plum)),
+          ],
+        );
+        if (compact) {
+          final largeText = MediaQuery.textScalerOf(context).scale(16) > 24;
+          return Padding(
+            padding: const EdgeInsets.all(20),
+            child: largeText
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      MimiBee(size: 76, mood: mood),
+                      text,
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Expanded(child: text),
+                      const SizedBox(width: 12),
+                      MimiBee(size: 76, mood: mood),
+                    ],
+                  ),
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (stacked) ...[
+              GardenScene(
+                height: compact ? 120 : 200,
+                child: MimiBee(size: compact ? 110 : 180, mood: mood),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(22, 6, 22, 24),
+                child: text,
+              ),
+            ] else
+              Padding(
+                padding: const EdgeInsets.all(22),
+                child: Row(
                   children: [
-                    const PoPill('MỖI NGÀY MỘT KHÁM PHÁ', color: Colors.white),
-                    const SizedBox(height: 14),
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.headlineMedium,
+                    Expanded(child: text),
+                    SizedBox(
+                      width: compact ? 130 : 190,
+                      child: GardenScene(
+                        height: compact ? 140 : 200,
+                        child: MimiBee(size: compact ? 110 : 160, mood: mood),
+                      ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(color: PoPalette.plum),
-                    ),
-                    const SizedBox(height: 18),
                   ],
                 ),
               ),
-              MimiBee(size: compact ? 82 : 114),
-            ],
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     ),
-  );
-}
-
-class _Hill extends StatelessWidget {
-  const _Hill({required this.color, required this.size});
-  final Color color;
-  final double size;
-  @override
-  Widget build(BuildContext context) => Container(
-    width: size,
-    height: size,
-    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
   );
 }
 
@@ -498,7 +442,7 @@ class PoAction extends StatelessWidget {
           label: Text(label),
         )
       : FilledButton.icon(
-          style: FilledButton.styleFrom(backgroundColor: PoPalette.pink),
+          style: FilledButton.styleFrom(backgroundColor: MimiColors.action),
           onPressed: onPressed,
           icon: Icon(icon),
           label: Text(label),

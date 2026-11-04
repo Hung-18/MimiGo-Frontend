@@ -110,8 +110,13 @@ class UserError extends StatelessWidget {
       children: [
         Semantics(
           liveRegion: true,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF1E8),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFE8CDBA)),
+            ),
             child: Text(
               message ?? friendlyError(e),
               key: messageKey,

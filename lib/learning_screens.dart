@@ -8,6 +8,7 @@ import 'child_media_player.dart';
 import 'learning_models.dart';
 import 'learning_session_memory.dart';
 import 'mimigo_design.dart';
+import 'po/po_design.dart';
 
 class LearningLabel extends StatelessWidget {
   const LearningLabel({super.key});
@@ -162,12 +163,14 @@ class LearningLessonView extends StatefulWidget {
     required this.pending,
     this.sessions,
     this.domainCode = 'MATH',
+    this.focused = false,
   });
   final LearningApi api;
   final String childId, lessonId;
   final PendingLearningAnswers pending;
   final LearningSessionMemory? sessions;
   final String domainCode;
+  final bool focused;
   @override
   State<LearningLessonView> createState() => _LearningLessonViewState();
 }
@@ -181,6 +184,10 @@ class _LearningLessonViewState extends State<LearningLessonView> {
   final answerErrors = <String, ApiFailure>{};
   final selected = <String, String>{};
   final feedback = <String, AnswerFeedback>{};
+  final cueAnchors = <String, GlobalKey>{};
+  final completionAnchor = GlobalKey();
+  (String, String)? focusedCue;
+  String? reviewCompletedId;
   bool loadingDetail = false, loadingSession = false;
   String? sendingCue;
   String? viewedSessionId;
@@ -517,6 +524,13 @@ class _LearningLessonViewState extends State<LearningLessonView> {
         hasMainVideo &&
         session?.state == 'IN_PROGRESS' &&
         !viewingHistory;
+    // Video timing remains authoritative. Focused navigation applies only to
+    // the existing non-video question presentation, never to media pause cues.
+    final useFocus = widget.focused && !playPrivateMedia;
+    final focusId = focusedCue?.$1 == session?.sessionId
+        ? focusedCue?.$2
+        : cues.firstOrNull?.cueId;
+    final showCompletedAnswers = reviewCompletedId == session?.sessionId;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -574,6 +588,14 @@ class _LearningLessonViewState extends State<LearningLessonView> {
                 if (mounted) setState(() => reachedMediaCue = cueId);
               },
             ),
+          SessionTrail(
+            recorded: cues
+                .where(
+                  (cue) => answers.any((answer) => answer.cueId == cue.cueId),
+                )
+                .length,
+            total: cues.length,
+          ),
           Text(
             'Lượt học: ${viState(session!.state)}',
             key: const Key('learningSessionState'),
@@ -592,12 +614,33 @@ class _LearningLessonViewState extends State<LearningLessonView> {
           ...cues
               .where(
                 (cue) =>
-                    !playPrivateMedia ||
-                    answers.any((answer) => answer.cueId == cue.cueId) ||
-                    reachedMediaCue == cue.cueId,
+                    (!useFocus ||
+                        (session!.state == 'COMPLETED'
+                            ? showCompletedAnswers
+                            : cue.cueId == focusId)) &&
+                    (!playPrivateMedia ||
+                        answers.any((answer) => answer.cueId == cue.cueId) ||
+                        reachedMediaCue == cue.cueId),
               )
               .map((cue) => cueView(context, cue)),
-          completionView(),
+          if (!useFocus ||
+              session!.state != 'IN_PROGRESS' ||
+              focusId == cues.lastOrNull?.cueId)
+            SizedBox(key: completionAnchor, child: completionView()),
+          if (useFocus && session!.state == 'COMPLETED')
+            TextButton(
+              key: const Key('reviewCompletedAnswers'),
+              onPressed: () => setState(
+                () => reviewCompletedId = showCompletedAnswers
+                    ? null
+                    : session!.sessionId,
+              ),
+              child: Text(
+                showCompletedAnswers
+                    ? 'Thu gọn câu trả lời'
+                    : 'Xem câu trả lời đã lưu',
+              ),
+            ),
         ],
         if (!denied &&
             memory.completed(widget.childId, widget.lessonId).isNotEmpty) ...[
@@ -661,14 +704,8 @@ class _LearningLessonViewState extends State<LearningLessonView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Icon(
-                  Icons.check_circle_outline,
-                  size: 48,
-                  color: Color(0xFF246335),
-                  semanticLabel: 'Đã xác nhận hoàn thành',
-                ),
+              const Center(
+                child: MimiBee(size: 150, mood: MimiMood.completion),
               ),
               const SizedBox(height: 12),
               Semantics(
@@ -791,16 +828,53 @@ class _LearningLessonViewState extends State<LearningLessonView> {
     return Card(
       key: Key('cue-${cue.cueId}'),
       child: Padding(
+        key: cueAnchors.putIfAbsent(cue.cueId, GlobalKey.new),
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Align(
+              alignment: Alignment.centerRight,
+              child: MimiBee(
+                size: 76,
+                mood: sendingCue == cue.cueId
+                    ? MimiMood.thinking
+                    : MimiMood.guide,
+              ),
+            ),
             Text(
               'Câu hỏi ${cue.seq}',
               style: Theme.of(context).textTheme.labelLarge
                   ?.copyWith(color: MimiColors.action),
             ),
             const SizedBox(height: 8),
+            if (widget.focused &&
+                current.state == 'IN_PROGRESS' &&
+                !(widget.api is ChildMediaAccess &&
+                    (widget.api as ChildMediaAccess).childMediaEnabled) &&
+                cue.seq !=
+                    detail!.cues
+                        .map((c) => c.seq)
+                        .reduce((a, b) => a < b ? a : b))
+              TextButton.icon(
+                key: Key('previous-cue-${cue.cueId}'),
+                icon: const Icon(Icons.arrow_back_rounded),
+                label: const Text('Câu trước'),
+                onPressed: operationBusy || loadingSession
+                    ? null
+                    : () {
+                        final previous =
+                            detail!.cues.where((c) => c.seq < cue.seq).toList()
+                              ..sort((a, b) => b.seq.compareTo(a.seq));
+                        if (previous.isNotEmpty)
+                          setState(
+                            () => focusedCue = (
+                              current.sessionId,
+                              previous.first.cueId,
+                            ),
+                          );
+                      },
+              ),
             Semantics(
               header: true,
               child: Text(
@@ -817,7 +891,7 @@ class _LearningLessonViewState extends State<LearningLessonView> {
                     (option) => Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(minHeight: 64),
+                        constraints: const BoxConstraints(minHeight: 80),
                         child: Semantics(
                           key: Key('choice-semantics-${option.optionId}'),
                           selected: chosen == option.optionId,
@@ -842,9 +916,9 @@ class _LearningLessonViewState extends State<LearningLessonView> {
                                     () => selected[cue.cueId] = option.optionId,
                                   )
                                 : null,
-                            child: Text(
-                              '${chosen == option.optionId ? 'Đã chọn: ' : ''}${option.labelText}',
-                              style: Theme.of(context).textTheme.titleMedium,
+                            child: ActivityChoice(
+                              label: option.labelText,
+                              selected: chosen == option.optionId,
                             ),
                           ),
                         ),
@@ -894,6 +968,19 @@ class _LearningLessonViewState extends State<LearningLessonView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      Center(
+                        child: MimiBee(
+                          key: ValueKey((
+                            current.sessionId,
+                            cue.cueId,
+                            value.attemptNo,
+                          )),
+                          size: 108,
+                          mood: value.isCorrect == true
+                              ? MimiMood.correct
+                              : MimiMood.encourage,
+                        ),
+                      ),
                       Text(
                         value.isCorrect == true
                             ? 'Đúng rồi! Mình cùng xem lời giải nhé.'
@@ -920,6 +1007,48 @@ class _LearningLessonViewState extends State<LearningLessonView> {
                 key: Key('recorded-${cue.cueId}-${answer.attemptNo}'),
               ),
             ),
+            if (recorded.isNotEmpty &&
+                current.state == 'IN_PROGRESS' &&
+                !(widget.api is ChildMediaAccess &&
+                    (widget.api as ChildMediaAccess).childMediaEnabled))
+              OutlinedButton.icon(
+                key: Key('next-cue-${cue.cueId}'),
+                icon: const Icon(Icons.arrow_downward_rounded),
+                label: Text(
+                  detail!.cues.any((next) => next.seq > cue.seq)
+                      ? 'Câu tiếp theo'
+                      : 'Xem bước hoàn thành',
+                ),
+                onPressed: operationBusy || loadingSession
+                    ? null
+                    : () {
+                        final following =
+                            detail!.cues
+                                .where((next) => next.seq > cue.seq)
+                                .toList()
+                              ..sort((a, b) => a.seq.compareTo(b.seq));
+                        if (widget.focused && following.isNotEmpty) {
+                          setState(
+                            () => focusedCue = (
+                              current.sessionId,
+                              following.first.cueId,
+                            ),
+                          );
+                          return;
+                        }
+                        final target = following.isEmpty
+                            ? completionAnchor.currentContext
+                            : cueAnchors[following.first.cueId]?.currentContext;
+                        if (target != null)
+                          Scrollable.ensureVisible(
+                            target,
+                            alignment: .1,
+                            duration: MimiMotion.reduced(context)
+                                ? Duration.zero
+                                : MimiMotion.entrance,
+                          );
+                      },
+              ),
           ],
         ),
       ),

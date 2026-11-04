@@ -2594,6 +2594,7 @@ class _MimiGoAppState extends State<MimiGoApp> with WidgetsBindingObserver {
                   pending: pendingLearningAnswers,
                   sessions: learningSessions,
                   domainCode: learningDomain,
+                  focused: config.mode == ApiMode.live,
                 ),
                 const SizedBox(height: 16),
                 ConstrainedBox(
@@ -2782,7 +2783,6 @@ class Frame extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
               const SizedBox(height: 20),
               MimiPanel(
                 padding: EdgeInsets.all(
@@ -2855,9 +2855,7 @@ class Welcome extends StatelessWidget {
           'Đăng ký có thể đang giới hạn theo thư mời.',
           style: TextStyle(fontSize: 13),
         ),
-      const Text(
-        'Một gia đình, nhiều hành trình riêng. Ba mẹ quản lý, bé tự do khám phá trong không gian học của mình.',
-      ),
+      const Text('Ba mẹ đồng hành. Bé khám phá cùng Mimi.'),
       TextButton(
         key: const Key('welcomeSignIn'),
         onPressed: busy ? null : signIn,
@@ -2907,16 +2905,10 @@ class Welcome extends StatelessWidget {
         '6 lĩnh vực trong khung học · nội dung khả dụng do dịch vụ xác nhận.',
       ),
       const Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          Chip(label: Text('Toán học')),
-          Chip(label: Text('Ngôn ngữ')),
-          Chip(label: Text('Tiếng Anh đồng hành')),
-          Chip(label: Text('Kỹ năng sống')),
-          Chip(label: Text('Logic')),
-          Chip(label: Text('Khám phá')),
-        ],
+        spacing: 12,
+        runSpacing: 12,
+        alignment: WrapAlignment.center,
+        children: [PoDomainMark(0), PoDomainMark(1), PoDomainMark(5)],
       ),
     ],
   );
@@ -3007,6 +2999,11 @@ class _SignInState extends State<SignIn> {
     title: 'Đăng nhập dành cho ba mẹ',
     back: busy ? null : widget.back,
     children: [
+      const PoGarden(
+        title: 'Chào ba mẹ!',
+        subtitle: 'Đăng nhập để tiếp tục hành trình cùng bé.',
+        compact: true,
+      ),
       const Text('Ba mẹ đăng nhập bằng tài khoản đã xác minh email nhé.'),
       const SizedBox(height: 16),
       Form(
@@ -3261,6 +3258,11 @@ class _RegisterState extends State<Register> {
     title: 'Tạo tài khoản phụ huynh',
     back: busy ? null : widget.back,
     children: [
+      const PoGarden(
+        title: 'Khởi đầu cùng ba mẹ',
+        subtitle: 'Thông tin tài khoản dành riêng cho phụ huynh.',
+        compact: true,
+      ),
       if (!widget.fixture && current.terms?.hasApprovedDocument != true)
         const Text(
           AccountAvailability.termsUnavailable,
@@ -3454,6 +3456,12 @@ class _OtpState extends State<Otp> {
       title: model.verified ? 'Email đã được xác minh' : 'Nhập mã xác nhận',
       back: model.busy ? null : widget.back,
       children: [
+        Center(
+          child: MimiBee(
+            size: 100,
+            mood: model.busy ? MimiMood.thinking : MimiMood.guide,
+          ),
+        ),
         const Text(
           'Ba mẹ kiểm tra email và nhập mã xác nhận gồm 6 chữ số nhé.',
         ),
@@ -3485,6 +3493,7 @@ class _OtpState extends State<Otp> {
           enabled: !model.busy && !model.verified,
           maxLength: 6,
           keyboardType: TextInputType.number,
+          autofillHints: const [AutofillHints.oneTimeCode],
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 26,

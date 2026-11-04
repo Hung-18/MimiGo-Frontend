@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import 'api_failure.dart';
 import 'user_messages.dart';
+import 'po/po_design.dart';
 
 abstract interface class PasswordResetApi {
   Future<int> requestPasswordReset(String email);
@@ -129,150 +130,165 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
         automaticallyImplyLeading: !busy,
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            const Text('Ba mẹ dùng email đã đăng ký để khôi phục mật khẩu.'),
-            const SizedBox(height: 16),
-            Form(
-              key: form,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextFormField(
-                    key: const Key('resetEmail'),
-                    controller: email,
-                    enabled: !busy && !accepted,
-                    keyboardType: TextInputType.emailAddress,
-                    autocorrect: false,
-                    decoration: const InputDecoration(
-                      labelText: 'Email phụ huynh',
-                    ),
-                    validator: (v) =>
-                        RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
-                            .hasMatch(v?.trim() ?? '')
-                        ? null
-                        : 'Vui lòng nhập email hợp lệ.',
-                  ),
-                  if (notice != null)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Text(notice!, key: const Key('resetAccepted')),
-                    ),
-                  if (accepted) ...[
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      key: const Key('resetCode'),
-                      controller: otp,
-                      enabled: !busy,
-                      keyboardType: TextInputType.number,
-                      autofillHints: const [AutofillHints.oneTimeCode],
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(6),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 620),
+            child: ListView(
+              padding: const EdgeInsets.all(24),
+              children: [
+                const PoGarden(
+                  title: 'Khôi phục tài khoản',
+                  subtitle: 'Ba mẹ làm từng bước, Mimi chờ ở đây.',
+                  compact: true,
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Ba mẹ dùng email đã đăng ký để khôi phục mật khẩu.',
+                ),
+                const SizedBox(height: 16),
+                Form(
+                  key: form,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      TextFormField(
+                        key: const Key('resetEmail'),
+                        controller: email,
+                        enabled: !busy && !accepted,
+                        keyboardType: TextInputType.emailAddress,
+                        autocorrect: false,
+                        decoration: const InputDecoration(
+                          labelText: 'Email phụ huynh',
+                        ),
+                        validator: (v) =>
+                            RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
+                                .hasMatch(v?.trim() ?? '')
+                            ? null
+                            : 'Vui lòng nhập email hợp lệ.',
+                      ),
+                      if (notice != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Text(notice!, key: const Key('resetAccepted')),
+                        ),
+                      if (accepted) ...[
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          key: const Key('resetCode'),
+                          controller: otp,
+                          enabled: !busy,
+                          keyboardType: TextInputType.number,
+                          autofillHints: const [AutofillHints.oneTimeCode],
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(6),
+                          ],
+                          decoration: const InputDecoration(
+                            labelText: 'Mã xác nhận trong email',
+                          ),
+                          validator: (v) => RegExp(r'^\d{6}$').hasMatch(v ?? '')
+                              ? null
+                              : 'Vui lòng nhập đủ 6 chữ số.',
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          key: const Key('resetPassword'),
+                          controller: password,
+                          enabled: !busy,
+                          obscureText: true,
+                          autocorrect: false,
+                          enableSuggestions: false,
+                          decoration: const InputDecoration(
+                            labelText: 'Mật khẩu mới (10–128 ký tự)',
+                          ),
+                          validator: (v) =>
+                              (v?.length ?? 0) >= 10 && (v?.length ?? 0) <= 128
+                              ? null
+                              : 'Mật khẩu cần từ 10 đến 128 ký tự.',
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          key: const Key('resetConfirm'),
+                          controller: confirmation,
+                          enabled: !busy,
+                          obscureText: true,
+                          autocorrect: false,
+                          enableSuggestions: false,
+                          decoration: const InputDecoration(
+                            labelText: 'Nhập lại mật khẩu mới',
+                          ),
+                          validator: (v) =>
+                              v == password.text && (v?.isNotEmpty ?? false)
+                              ? null
+                              : 'Hai mật khẩu chưa khớp.',
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Đổi mật khẩu thành công sẽ đăng xuất tài khoản trên mọi thiết bị. Mã PIN được giữ nguyên.',
+                        ),
                       ],
-                      decoration: const InputDecoration(
-                        labelText: 'Mã xác nhận trong email',
+                      UserError(error),
+                      if (seconds > 0)
+                        Text(
+                          'Có thể yêu cầu mã mới sau $seconds giây.',
+                          key: const Key('resetCooldown'),
+                        ),
+                      if (busy)
+                        const LinearProgressIndicator(
+                          semanticsLabel: 'Đang chờ xác nhận',
+                        ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 64,
+                        child: FilledButton(
+                          key: const Key('resetSubmit'),
+                          onPressed:
+                              busy ||
+                                  (!accepted && seconds > 0) ||
+                                  (error?.status == 429 && seconds > 0)
+                              ? null
+                              : () => run(accepted),
+                          child: Text(
+                            busy
+                                ? 'Đang chờ xác nhận…'
+                                : accepted
+                                ? 'Xác nhận mật khẩu mới'
+                                : 'Yêu cầu mã xác nhận',
+                          ),
+                        ),
                       ),
-                      validator: (v) => RegExp(r'^\d{6}$').hasMatch(v ?? '')
-                          ? null
-                          : 'Vui lòng nhập đủ 6 chữ số.',
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      key: const Key('resetPassword'),
-                      controller: password,
-                      enabled: !busy,
-                      obscureText: true,
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      decoration: const InputDecoration(
-                        labelText: 'Mật khẩu mới (10–128 ký tự)',
+                      if (accepted) ...[
+                        TextButton(
+                          key: const Key('resetResend'),
+                          onPressed: busy || seconds > 0
+                              ? null
+                              : () => run(false),
+                          child: const Text('Yêu cầu mã mới'),
+                        ),
+                        TextButton(
+                          onPressed: busy
+                              ? null
+                              : () => setState(() {
+                                  accepted = false;
+                                  otp.clear();
+                                  password.clear();
+                                  confirmation.clear();
+                                  notice = null;
+                                  error = null;
+                                }),
+                          child: const Text('Dùng email khác'),
+                        ),
+                      ],
+                      TextButton(
+                        onPressed: busy ? null : () => Navigator.pop(context),
+                        child: const Text('Về đăng nhập'),
                       ),
-                      validator: (v) =>
-                          (v?.length ?? 0) >= 10 && (v?.length ?? 0) <= 128
-                          ? null
-                          : 'Mật khẩu cần từ 10 đến 128 ký tự.',
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      key: const Key('resetConfirm'),
-                      controller: confirmation,
-                      enabled: !busy,
-                      obscureText: true,
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      decoration: const InputDecoration(
-                        labelText: 'Nhập lại mật khẩu mới',
-                      ),
-                      validator: (v) =>
-                          v == password.text && (v?.isNotEmpty ?? false)
-                          ? null
-                          : 'Hai mật khẩu chưa khớp.',
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Đổi mật khẩu thành công sẽ đăng xuất tài khoản trên mọi thiết bị. Mã PIN được giữ nguyên.',
-                    ),
-                  ],
-                  UserError(error),
-                  if (seconds > 0)
-                    Text(
-                      'Có thể yêu cầu mã mới sau $seconds giây.',
-                      key: const Key('resetCooldown'),
-                    ),
-                  if (busy)
-                    const LinearProgressIndicator(
-                      semanticsLabel: 'Đang chờ xác nhận',
-                    ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    height: 64,
-                    child: FilledButton(
-                      key: const Key('resetSubmit'),
-                      onPressed:
-                          busy ||
-                              (!accepted && seconds > 0) ||
-                              (error?.status == 429 && seconds > 0)
-                          ? null
-                          : () => run(accepted),
-                      child: Text(
-                        busy
-                            ? 'Đang chờ xác nhận…'
-                            : accepted
-                            ? 'Xác nhận mật khẩu mới'
-                            : 'Yêu cầu mã xác nhận',
-                      ),
-                    ),
+                    ],
                   ),
-                  if (accepted) ...[
-                    TextButton(
-                      key: const Key('resetResend'),
-                      onPressed: busy || seconds > 0 ? null : () => run(false),
-                      child: const Text('Yêu cầu mã mới'),
-                    ),
-                    TextButton(
-                      onPressed: busy
-                          ? null
-                          : () => setState(() {
-                              accepted = false;
-                              otp.clear();
-                              password.clear();
-                              confirmation.clear();
-                              notice = null;
-                              error = null;
-                            }),
-                      child: const Text('Dùng email khác'),
-                    ),
-                  ],
-                  TextButton(
-                    onPressed: busy ? null : () => Navigator.pop(context),
-                    child: const Text('Về đăng nhập'),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     ),

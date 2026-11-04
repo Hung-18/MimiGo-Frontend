@@ -58,6 +58,7 @@ class _LiveChildHomeState extends State<LiveChildHome> {
               ? 'Cùng Mimi khám phá!'
               : 'Chào ${widget.alias}!',
           subtitle: 'Mỗi ngày một điều mới, bé nhé.',
+          mood: model.loading ? MimiMood.thinking : MimiMood.guide,
         ),
         if (model.loading)
           const LinearProgressIndicator(
@@ -65,15 +66,19 @@ class _LiveChildHomeState extends State<LiveChildHome> {
           ),
         if (model.error != null) LearningError(model.error!),
         if (!model.loading && model.error == null && model.lessons.isEmpty)
-          const PoCard(
+          PoCard(
             key: Key('liveCatalogEmpty'),
             color: PoPalette.mint,
             child: Column(
               children: [
-                Icon(Icons.spa_outlined, size: 52),
+                const MimiBee(size: 110, mood: MimiMood.encourage),
                 SizedBox(height: 12),
-                Text('Chưa có bài học phù hợp được phát hành'),
                 Text(
+                  model.emptyReason == 'CHILD_OUTSIDE_PROGRAM_AGE'
+                      ? 'Chưa có bài học phù hợp với độ tuổi của bé'
+                      : 'Chưa có bài học phù hợp được phát hành',
+                ),
+                const Text(
                   'Mimi sẽ hiển thị bài học khi dịch vụ xác nhận nội dung và quyền truy cập cho bé.',
                 ),
               ],

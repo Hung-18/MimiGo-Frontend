@@ -140,7 +140,10 @@ void main() {
       expect(find.byKey(const Key('completionConfirmed')), findsOneWidget);
       expect(api.starts, 1);
       expect(api.readIds.last, sessionId);
+      expect(find.byKey(const Key('recorded-$cueId-1')), findsNothing);
+      await tapVisible(tester, 'reviewCompletedAnswers');
       expect(find.byKey(const Key('recorded-$cueId-1')), findsOneWidget);
+      expect(api.starts, 1);
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('lesson-$lessonId')), findsOneWidget);
