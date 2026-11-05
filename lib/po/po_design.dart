@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 
 import '../mimigo_design.dart';
 import 'mimi_world.dart';
+import 'storybook_forms.dart';
 export 'mimi_world.dart';
+export 'storybook_forms.dart';
 
 /// PO mobile presentation. Original bundled artwork, no reference-board crops.
 abstract final class PoPalette {
@@ -123,10 +125,11 @@ class PoHeading extends StatelessWidget {
 }
 
 class PoDomainMark extends StatelessWidget {
-  const PoDomainMark(this.kind, {super.key});
+  const PoDomainMark(this.kind, {super.key, this.size = 96});
   final int kind;
+  final double size;
   @override
-  Widget build(BuildContext context) => DomainIllustration(kind);
+  Widget build(BuildContext context) => DomainIllustration(kind, size: size);
 }
 
 /// Portable vector pictures: no emoji fonts or remote image dependency.
@@ -270,97 +273,11 @@ class PoGarden extends StatelessWidget {
   final bool compact;
   final MimiMood mood;
   @override
-  Widget build(BuildContext context) => Container(
-    clipBehavior: Clip.antiAlias,
-    decoration: BoxDecoration(
-      image: compact
-          ? const DecorationImage(
-              image: AssetImage('assets/scenery/garden.png'),
-              fit: BoxFit.cover,
-              colorFilter: ColorFilter.mode(
-                Color(0xE6FFFFFF),
-                BlendMode.srcOver,
-              ),
-            )
-          : null,
-      gradient: const LinearGradient(
-        colors: [PoPalette.sky, PoPalette.mint],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ),
-      borderRadius: BorderRadius.circular(32),
-    ),
-    child: LayoutBuilder(
-      builder: (context, constraints) {
-        final stacked =
-            constraints.maxWidth < 420 ||
-            MediaQuery.textScalerOf(context).scale(16) > 24;
-        final text = Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: compact
-                  ? Theme.of(context).textTheme.titleLarge
-                  : Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 6),
-            Text(subtitle, style: const TextStyle(color: MimiColors.ink)),
-          ],
-        );
-        if (compact) {
-          final largeText = MediaQuery.textScalerOf(context).scale(16) > 24;
-          return Padding(
-            padding: const EdgeInsets.all(20),
-            child: largeText
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      MimiBee(size: 96, mood: mood),
-                      text,
-                    ],
-                  )
-                : Row(
-                    children: [
-                      Expanded(child: text),
-                      const SizedBox(width: 12),
-                      MimiBee(size: 96, mood: mood),
-                    ],
-                  ),
-          );
-        }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (stacked) ...[
-              GardenScene(height: 240, child: MimiBee(size: 220, mood: mood)),
-              ColoredBox(
-                color: const Color(0xFFFFFBF3),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(22, 16, 22, 20),
-                  child: text,
-                ),
-              ),
-            ] else
-              Padding(
-                padding: const EdgeInsets.all(22),
-                child: Row(
-                  children: [
-                    Expanded(child: text),
-                    SizedBox(
-                      width: compact ? 130 : 190,
-                      child: GardenScene(
-                        height: compact ? 140 : 200,
-                        child: MimiBee(size: compact ? 110 : 160, mood: mood),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        );
-      },
-    ),
+  Widget build(BuildContext context) => StorybookBanner(
+    title: title,
+    subtitle: subtitle,
+    compact: compact,
+    mood: mood,
   );
 }
 
@@ -373,11 +290,11 @@ class StorybookSurface extends StatelessWidget {
     child: Ink(
       decoration: const BoxDecoration(
         color: PoPalette.cream,
-        image: DecorationImage(
-          image: AssetImage('assets/scenery/garden.png'),
-          fit: BoxFit.cover,
-          alignment: Alignment.topCenter,
-          colorFilter: ColorFilter.mode(Color(0xD9FFFCF6), BlendMode.srcOver),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [MimiColors.sky, MimiColors.canvas, Colors.white],
+          stops: [0, .3, 1],
         ),
       ),
       child: child,
@@ -443,10 +360,13 @@ class PoScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
+      toolbarHeight: 64,
+      leadingWidth: 64,
       automaticallyImplyLeading: false,
       leading: back == null
           ? null
           : IconButton(
+              constraints: const BoxConstraints(minWidth: 64, minHeight: 64),
               onPressed: back,
               icon: const Icon(Icons.arrow_back_rounded),
               tooltip: 'Quay lại',

@@ -47,6 +47,7 @@ class _LiveChildHomeState extends State<LiveChildHome> {
       actions: [
         IconButton(
           key: const Key('liveParentGate'),
+          constraints: const BoxConstraints(minWidth: 64, minHeight: 64),
           onPressed: widget.parentArea,
           tooltip: 'Cổng phụ huynh',
           icon: const Icon(Icons.lock_outline_rounded),
@@ -85,13 +86,16 @@ class _LiveChildHomeState extends State<LiveChildHome> {
             ),
           ),
         if (model.error == null && !model.loading) ...[
-          PoAction(
-            'Tất cả bài học',
-            key: const Key('openCurriculum'),
-            icon: Icons.auto_stories_outlined,
-            onPressed: () => widget.openDomain(),
+          PoHeading(
+            'Bé muốn khám phá gì?',
+            trailing: IconButton(
+              key: const Key('openCurriculum'),
+              constraints: const BoxConstraints(minWidth: 64, minHeight: 64),
+              tooltip: 'Tất cả bài học',
+              onPressed: () => widget.openDomain(),
+              icon: const Icon(Icons.auto_stories_outlined),
+            ),
           ),
-          const PoHeading('Bé muốn khám phá gì?'),
           LayoutBuilder(
             builder: (context, c) => Wrap(
               spacing: 12,
@@ -118,6 +122,7 @@ class _LiveChildHomeState extends State<LiveChildHome> {
                           ? null
                           : () => widget.openDomain(domain),
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           PoDomainMark(domain.index),

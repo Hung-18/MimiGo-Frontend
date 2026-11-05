@@ -12,6 +12,7 @@ class RecoveryDouble implements PasswordResetApi {
   int requests = 0, confirmations = 0;
   ApiFailure? failure;
   Completer<int>? pending;
+  Completer<void>? pendingConfirmation;
   @override
   Future<int> requestPasswordReset(String email) async {
     requests++;
@@ -28,6 +29,7 @@ class RecoveryDouble implements PasswordResetApi {
   ) async {
     confirmations++;
     if (failure != null) throw failure!;
+    if (pendingConfirmation != null) await pendingConfirmation!.future;
   }
 }
 
@@ -61,7 +63,7 @@ void main() {
     (t) async {
       await t.binding.setSurfaceSize(const Size(390, 1000));
       addTearDown(() => t.binding.setSurfaceSize(null));
-      final api = RecoveryDouble();
+      final api = RecoveryDouble()..pendingConfirmation = Completer<void>();
       await t.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -104,6 +106,9 @@ void main() {
       await t.ensureVisible(find.byKey(const Key('resetSubmit')));
       await t.pumpAndSettle();
       await t.tap(find.byKey(const Key('resetSubmit')));
+      await t.pump();
+      expect(find.byKey(const Key('passwordResetConfirmed')), findsNothing);
+      api.pendingConfirmation!.complete();
       await t.pumpAndSettle();
       expect(find.byKey(const Key('signInEmail')), findsOneWidget);
       expect(

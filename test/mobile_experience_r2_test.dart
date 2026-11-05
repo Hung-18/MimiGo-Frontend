@@ -276,6 +276,11 @@ void main() {
         ),
       );
       await t.pumpAndSettle();
+      for (final key in ['liveParentGate', 'openCurriculum']) {
+        final targetSize = t.getSize(find.byKey(Key(key)));
+        expect(targetSize.width, greaterThanOrEqualTo(64));
+        expect(targetSize.height, greaterThanOrEqualTo(64));
+      }
       final target = find.byKey(const Key('live-domain-MATH'));
       await t.ensureVisible(target);
       final gesture = await t.startGesture(t.getCenter(target));

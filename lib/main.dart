@@ -31,6 +31,7 @@ import 'po/po_boot.dart';
 import 'po/live_child_home.dart';
 import 'user_messages.dart';
 import 'account_availability.dart';
+import 'approved_document_reader.dart';
 import 'password_reset.dart';
 
 export 'api_failure.dart';
@@ -2734,6 +2735,8 @@ class Frame extends StatelessWidget {
     this.wide = false,
     this.demoPresentation = false,
     this.compactTitle = false,
+    this.illustrated = false,
+    this.mood = MimiMood.greeting,
   });
   final String title;
   final List<Widget> children;
@@ -2741,76 +2744,82 @@ class Frame extends StatelessWidget {
   final bool childMode, wide;
   final bool demoPresentation;
   final bool compactTitle;
+  final bool illustrated;
+  final MimiMood mood;
   @override
-  Widget build(BuildContext c) => StorybookSurface(
-    child: SingleChildScrollView(
-      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      padding: EdgeInsets.symmetric(
-        horizontal: MediaQuery.sizeOf(c).width < 400 ? 16 : 24,
-        vertical: 24,
-      ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: wide ? MimiSpace.learningWidth : MimiSpace.parentWidth,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (back != null) ...[
-                    Container(
-                      width: childMode ? 64 : 48,
-                      height: childMode ? 64 : 48,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: BackButton(onPressed: back),
-                    ),
-                    const SizedBox(width: 12),
-                  ],
-                  Expanded(
-                    child: Semantics(
-                      header: true,
-                      child: Text(
-                        title,
-                        style: title == 'MimiGo'
-                            ? Theme.of(c).textTheme.displaySmall
-                            : compactTitle
-                            ? Theme.of(c).textTheme.titleLarge
-                            : Theme.of(c).textTheme.headlineLarge,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              MimiPanel(
-                padding: EdgeInsets.all(
-                  MediaQuery.textScalerOf(c).scale(16) > 24 ? 12 : 20,
+  Widget build(BuildContext c) => illustrated
+      ? StorybookForm(title: title, back: back, mood: mood, children: children)
+      : StorybookSurface(
+          child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: EdgeInsets.symmetric(
+              horizontal: MediaQuery.sizeOf(c).width < 400 ? 16 : 24,
+              vertical: 24,
+            ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: wide
+                      ? MimiSpace.learningWidth
+                      : MimiSpace.parentWidth,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    for (final child in children)
-                      Padding(
-                        padding: EdgeInsets.only(
-                          bottom: child is SizedBox ? 0 : 12,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (back != null) ...[
+                          Container(
+                            width: childMode ? 64 : 48,
+                            height: childMode ? 64 : 48,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: BackButton(onPressed: back),
+                          ),
+                          const SizedBox(width: 12),
+                        ],
+                        Expanded(
+                          child: Semantics(
+                            header: true,
+                            child: Text(
+                              title,
+                              style: title == 'MimiGo'
+                                  ? Theme.of(c).textTheme.displaySmall
+                                  : compactTitle
+                                  ? Theme.of(c).textTheme.titleLarge
+                                  : Theme.of(c).textTheme.headlineLarge,
+                            ),
+                          ),
                         ),
-                        child: child,
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    MimiPanel(
+                      padding: EdgeInsets.all(
+                        MediaQuery.textScalerOf(c).scale(16) > 24 ? 12 : 20,
                       ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (final child in children)
+                            Padding(
+                              padding: EdgeInsets.only(
+                                bottom: child is SizedBox ? 0 : 12,
+                              ),
+                              child: child,
+                            ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ],
+            ),
           ),
-        ),
-      ),
-    ),
-  );
+        );
 }
 
 class InternalBanner extends StatelessWidget {
@@ -2846,65 +2855,134 @@ class Welcome extends StatelessWidget {
   final Future<void> Function() start;
   final VoidCallback signIn;
   @override
-  Widget build(BuildContext c) => PoScaffold(
-    preview: !live,
-    title: 'MimiGo',
-    children: [
-      const PoGarden(
-        title: 'Cùng Mimi khám phá thế giới',
-        subtitle: 'Học qua những điều bé yêu thích.',
-      ),
-      TextButton(
-        key: const Key('welcomeSignIn'),
-        onPressed: busy ? null : signIn,
-        child: const Text('Ba mẹ đã có tài khoản? Đăng nhập'),
-      ),
-      if (!live) ...[
-        OutlinedButton.icon(
-          key: const Key('welcomeMobileDemo'),
-          onPressed: busy
-              ? null
-              : () => Navigator.of(c).push(
-                  MaterialPageRoute<void>(builder: (_) => const MobileDemo()),
-                ),
-          icon: const Icon(Icons.play_circle_outline),
-          label: const Text('Khám phá bản demo'),
-        ),
-        const Divider(height: 24),
-        const Text('Dành cho phụ huynh · Luồng tài khoản thử nghiệm'),
-      ],
-      ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 64),
-        child: FilledButton(
-          key: const Key('welcomeStart'),
-          onPressed: busy ? null : start,
-          child: Text(
-            busy ? 'Đang tải phiên bản điều khoản…' : 'Tạo tài khoản phụ huynh',
+  Widget build(BuildContext c) => Scaffold(
+    body: StorybookCanvas(
+      height: 600,
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 620),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Center(child: MimiWordmark(size: 76)),
+                  const SizedBox(height: 6),
+                  const Center(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Color(0xF5FFFFFF),
+                        borderRadius: BorderRadius.all(Radius.circular(24)),
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 7,
+                        ),
+                        child: Text(
+                          'Cùng Mimi học tập và khám phá!',
+                          style: TextStyle(
+                            color: MimiColors.blueText,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Center(
+                    child: MimiBee(size: 224, mood: MimiMood.greeting),
+                  ),
+                  MimiPanel(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Cùng Mimi khám phá thế giới',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(c).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Mỗi ngày một điều mới, ba mẹ cùng bé nhé.',
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 18),
+                        FilledButton(
+                          key: const Key('welcomeStart'),
+                          onPressed: busy ? null : start,
+                          child: Text(
+                            busy
+                                ? 'Đang tải phiên bản điều khoản…'
+                                : 'Tạo tài khoản phụ huynh',
+                          ),
+                        ),
+                        TextButton(
+                          key: const Key('welcomeSignIn'),
+                          onPressed: busy ? null : signIn,
+                          child: const Text('Ba mẹ đã có tài khoản? Đăng nhập'),
+                        ),
+                        if (busy)
+                          const LinearProgressIndicator(
+                            semanticsLabel: 'Đang tải thông tin đăng ký',
+                          ),
+                        OnboardingError(error),
+                        if (live)
+                          const Text(
+                            'Đăng ký theo khả năng cung cấp của dịch vụ.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        if (!live)
+                          OutlinedButton.icon(
+                            key: const Key('welcomeMobileDemo'),
+                            onPressed: busy
+                                ? null
+                                : () => Navigator.of(c).push(
+                                    MaterialPageRoute<void>(
+                                      builder: (_) => const MobileDemo(),
+                                    ),
+                                  ),
+                            icon: const Icon(Icons.play_circle_outline),
+                            label: const Text('Khám phá bản demo'),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  MimiPanel(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (final item in const [
+                          (0, 'Toán học'),
+                          (1, 'Ngôn ngữ'),
+                          (5, 'Khám phá'),
+                        ])
+                          Expanded(
+                            child: Column(
+                              children: [
+                                PoDomainMark(item.$1, size: 64),
+                                const SizedBox(height: 4),
+                                Text(
+                                  item.$2,
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(c).textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
-      if (busy)
-        const LinearProgressIndicator(
-          semanticsLabel: 'Đang tải thông tin đăng ký',
-        ),
-      OnboardingError(error),
-      if (live)
-        const Text(
-          'Đăng ký theo khả năng cung cấp của dịch vụ.',
-          style: TextStyle(fontSize: 13),
-        ),
-      const Divider(height: 32),
-      Text(
-        'Thế giới nhỏ, khám phá lớn',
-        style: Theme.of(c).textTheme.titleLarge,
-      ),
-      const Wrap(
-        spacing: 12,
-        runSpacing: 12,
-        alignment: WrapAlignment.center,
-        children: [PoDomainMark(0), PoDomainMark(1), PoDomainMark(5)],
-      ),
-    ],
+    ),
   );
 }
 
@@ -2932,6 +3010,8 @@ class _SignInState extends State<SignIn> {
   final email = TextEditingController();
   final password = TextEditingController();
   bool busy = false;
+  bool resetComplete = false;
+  bool passwordVisible = false;
   ApiFailure? error;
   DateTime? retryAt;
   Timer? retryTimer;
@@ -2991,13 +3071,19 @@ class _SignInState extends State<SignIn> {
   @override
   Widget build(BuildContext context) => Frame(
     title: 'Đăng nhập dành cho ba mẹ',
+    illustrated: true,
+    mood: resetComplete ? MimiMood.correct : MimiMood.greeting,
     back: busy ? null : widget.back,
     children: [
-      const PoGarden(
-        title: 'Chào ba mẹ!',
-        subtitle: 'Đăng nhập để tiếp tục hành trình cùng bé.',
-        compact: true,
-      ),
+      if (resetComplete)
+        const MimiNotice(
+          icon: Icons.check_circle_outline,
+          color: Color(0xFFE6F5EA),
+          child: Text(
+            'Đã đổi mật khẩu. Ba mẹ đăng nhập bằng mật khẩu mới nhé.',
+            key: Key('passwordResetConfirmed'),
+          ),
+        ),
       const Text('Ba mẹ đăng nhập bằng tài khoản đã xác minh email nhé.'),
       const SizedBox(height: 16),
       Form(
@@ -3012,7 +3098,10 @@ class _SignInState extends State<SignIn> {
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
               autocorrect: false,
-              decoration: const InputDecoration(labelText: 'Email phụ huynh'),
+              decoration: const InputDecoration(
+                labelText: 'Email phụ huynh',
+                prefixIcon: Icon(Icons.mail_outline),
+              ),
               validator: (value) =>
                   RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
                       .hasMatch(value?.trim() ?? '')
@@ -3024,11 +3113,26 @@ class _SignInState extends State<SignIn> {
               key: const Key('signInPassword'),
               controller: password,
               enabled: !busy,
-              obscureText: true,
+              obscureText: !passwordVisible,
               autocorrect: false,
               enableSuggestions: false,
               textInputAction: TextInputAction.done,
-              decoration: const InputDecoration(labelText: 'Mật khẩu'),
+              decoration: InputDecoration(
+                labelText: 'Mật khẩu',
+                prefixIcon: const Icon(Icons.lock_outline),
+                suffixIcon: IconButton(
+                  onPressed: busy
+                      ? null
+                      : () =>
+                            setState(() => passwordVisible = !passwordVisible),
+                  tooltip: passwordVisible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu',
+                  icon: Icon(
+                    passwordVisible
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                  ),
+                ),
+              ),
               validator: (value) => value == null || value.isEmpty
                   ? 'Ba mẹ nhập mật khẩu nhé.'
                   : null,
@@ -3096,14 +3200,8 @@ class _SignInState extends State<SignIn> {
                   setState(() {
                     error = null;
                     retryAt = null;
+                    resetComplete = true;
                   });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Đã đổi mật khẩu. Ba mẹ đăng nhập bằng mật khẩu mới nhé.',
-                      ),
-                    ),
-                  );
                 }
               }
             : () => showDialog<void>(
@@ -3166,7 +3264,20 @@ class _RegisterState extends State<Register> {
   late OnboardingReference current = widget.reference;
   bool terms = false, busy = false;
   bool versionChanged = false;
+  bool passwordVisible = false, confirmationVisible = false;
   ApiFailure? error;
+  Future<void> readTerms() async {
+    final snapshot = current.terms;
+    if (busy || versionChanged || snapshot?.hasApprovedDocument != true) return;
+    final decision = await readApprovedDocument(context, snapshot!.document!);
+    if (!mounted || busy || versionChanged || decision == null) return;
+    if (current.terms?.hasApprovedDocument == true &&
+        current.terms!.id == snapshot.id &&
+        current.terms!.contentHash == snapshot.contentHash) {
+      setState(() => terms = decision);
+    }
+  }
+
   @override
   void dispose() {
     email.dispose();
@@ -3250,13 +3361,13 @@ class _RegisterState extends State<Register> {
   @override
   Widget build(BuildContext c) => Frame(
     title: 'Tạo tài khoản phụ huynh',
+    illustrated: true,
     compactTitle: true,
     back: busy ? null : widget.back,
     children: [
-      const PoGarden(
-        title: 'Khởi đầu cùng ba mẹ',
-        subtitle: 'Thông tin tài khoản dành riêng cho phụ huynh.',
-        compact: true,
+      const Text(
+        'Một tài khoản của ba mẹ, nhiều hồ sơ riêng cho các bé.',
+        textAlign: TextAlign.center,
       ),
       if (!widget.fixture && current.terms?.hasApprovedDocument != true)
         const Text(
@@ -3264,11 +3375,12 @@ class _RegisterState extends State<Register> {
           key: Key('registrationTermsUnavailable'),
         ),
       if (current.terms?.hasApprovedDocument == true) ...[
-        Text(
-          current.terms!.document!.title,
-          style: Theme.of(c).textTheme.titleLarge,
+        ApprovedDocumentCard(
+          document: current.terms!.document!,
+          readKey: const Key('registrationReadTerms'),
+          read: readTerms,
+          enabled: !busy && !versionChanged,
         ),
-        Text(current.terms!.document!.body),
       ],
       if (busy)
         const LinearProgressIndicator(semanticsLabel: 'Đang tạo tài khoản'),
@@ -3329,7 +3441,7 @@ class _RegisterState extends State<Register> {
                     !busy &&
                     (widget.fixture ||
                         current.terms?.hasApprovedDocument == true),
-                obscureText: true,
+                obscureText: !passwordVisible,
                 textInputAction: TextInputAction.done,
                 onFieldSubmitted: (_) => FocusScope.of(c).unfocus(),
                 enableSuggestions: false,
@@ -3338,9 +3450,22 @@ class _RegisterState extends State<Register> {
                     (value?.length ?? 0) < 10 || (value?.length ?? 0) > 128
                     ? 'Mật khẩu cần có từ 10 đến 128 ký tự.'
                     : null,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Mật khẩu (10–128 ký tự)',
-                  prefixIcon: Icon(Icons.lock_outline),
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  suffixIcon: IconButton(
+                    onPressed: busy
+                        ? null
+                        : () => setState(
+                            () => passwordVisible = !passwordVisible,
+                          ),
+                    tooltip: passwordVisible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu',
+                    icon: Icon(
+                      passwordVisible
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -3351,16 +3476,31 @@ class _RegisterState extends State<Register> {
                     !busy &&
                     (widget.fixture ||
                         current.terms?.hasApprovedDocument == true),
-                obscureText: true,
+                obscureText: !confirmationVisible,
                 enableSuggestions: false,
                 autocorrect: false,
                 validator: (value) =>
                     value != password.text || (value?.isEmpty ?? true)
                     ? 'Ba mẹ nhập lại đúng mật khẩu nhé.'
                     : null,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Nhập lại mật khẩu',
-                  prefixIcon: Icon(Icons.lock_outline),
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  suffixIcon: IconButton(
+                    onPressed: busy
+                        ? null
+                        : () => setState(
+                            () => confirmationVisible = !confirmationVisible,
+                          ),
+                    tooltip: confirmationVisible
+                        ? 'Ẩn mật khẩu nhập lại'
+                        : 'Hiện mật khẩu nhập lại',
+                    icon: Icon(
+                      confirmationVisible
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -3449,18 +3589,14 @@ class _OtpState extends State<Otp> {
     animation: model,
     builder: (c, _) => Frame(
       title: model.verified ? 'Email đã được xác minh' : 'Nhập mã xác nhận',
+      illustrated: true,
+      mood: model.busy
+          ? MimiMood.thinking
+          : model.verified
+          ? MimiMood.correct
+          : MimiMood.guide,
       back: model.busy ? null : widget.back,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: GardenScene(
-            height: 170,
-            child: MimiBee(
-              size: 165,
-              mood: model.busy ? MimiMood.thinking : MimiMood.guide,
-            ),
-          ),
-        ),
         const Text(
           'Ba mẹ kiểm tra email và nhập mã xác nhận gồm 6 chữ số nhé.',
         ),
@@ -3544,10 +3680,29 @@ class _PrivacyState extends State<Privacy> {
   bool guardian = false, busy = false;
   final choices = <String, bool>{};
   ApiFailure? error;
+  Future<void> readNotice(Notice notice) async {
+    final attemptId = widget.attempt?.id;
+    if (busy || !notice.hasApprovedDocument) return;
+    final decision = await readApprovedDocument(context, notice.document!);
+    if (!mounted || busy || decision == null || widget.attempt?.id != attemptId)
+      return;
+    if (widget.attempt!.notices.any(
+      (n) =>
+          n.purposeCode == notice.purposeCode &&
+          n.versionId == notice.versionId &&
+          n.contentHash == notice.contentHash &&
+          n.hasApprovedDocument,
+    )) {
+      setState(() => choices[notice.purposeCode] = decision);
+    }
+  }
+
   @override
   void didUpdateWidget(covariant Privacy oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.attempt?.id != widget.attempt?.id) {
+    String fingerprint(OnboardingAttempt? value) =>
+        '${value?.id}:${value?.notices.map((n) => '${n.purposeCode}/${n.versionId}/${n.contentHash}').join('|')}';
+    if (fingerprint(oldWidget.attempt) != fingerprint(widget.attempt)) {
       guardian = false;
       choices.clear();
     }
@@ -3584,14 +3739,10 @@ class _PrivacyState extends State<Privacy> {
         );
     return Frame(
       title: 'Bảo vệ thông tin của bé',
+      illustrated: true,
+      mood: MimiMood.guide,
       children: [
         const OnboardingTrail(step: 0),
-        const PoGarden(
-          title: 'Ba mẹ cùng Mimi chăm sóc bé',
-          subtitle: 'Xem từng thông báo trước khi chọn.',
-          compact: true,
-          mood: MimiMood.guide,
-        ),
         const Text(
           'Ba mẹ xem thông tin và lựa chọn từng mục đích trước khi nhập hồ sơ bé.',
         ),
@@ -3652,7 +3803,13 @@ class _PrivacyState extends State<Privacy> {
                           _purposeDescription(n.purposeCode),
                           style: Theme.of(c).textTheme.titleMedium,
                         ),
-                        if (n.hasApprovedDocument) Text(n.document!.body),
+                        if (n.hasApprovedDocument)
+                          ApprovedDocumentCard(
+                            document: n.document!,
+                            readKey: Key('noticeRead-${n.purposeCode}'),
+                            enabled: !busy,
+                            read: () => readNotice(n),
+                          ),
                         ExpansionTile(
                           tilePadding: EdgeInsets.zero,
                           title: const Text('Chi tiết kỹ thuật'),
@@ -3820,15 +3977,11 @@ class _ChildInputState extends State<ChildInput> {
   @override
   Widget build(BuildContext c) => Frame(
     title: 'Tạo hồ sơ bé',
+    illustrated: true,
+    mood: MimiMood.guide,
     back: widget.back,
     children: [
       const OnboardingTrail(step: 1),
-      const PoGarden(
-        title: 'Mimi làm quen với bé nhé!',
-        subtitle: 'Một hồ sơ riêng cho mỗi bé.',
-        compact: true,
-        mood: MimiMood.guide,
-      ),
       const Text('Độ tuổi và quyền học sẽ được xác nhận sau khi lưu hồ sơ.'),
       TextField(
         key: const Key('childName'),
@@ -3940,6 +4093,8 @@ class _ReviewState extends State<Review> {
     animation: widget.model,
     builder: (c, _) => Frame(
       title: 'Xem lại hồ sơ',
+      illustrated: true,
+      mood: MimiMood.thinking,
       back: widget.model.canEdit && !leaving ? widget.back : null,
       children: [
         const OnboardingTrail(step: 2),

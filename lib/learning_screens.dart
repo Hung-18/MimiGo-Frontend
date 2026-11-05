@@ -542,10 +542,14 @@ class _LearningLessonViewState extends State<LearningLessonView> {
             style: Theme.of(context).textTheme.headlineSmall,
           ),
         ),
-        Text(lesson.summary.objective),
+        Text(
+          lesson.summary.objective,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
         if (lesson.assets.isNotEmpty && !playPrivateMedia)
           const Text(
-            'Video hiện chưa khả dụng. Bé vẫn có thể xem các câu hỏi của bài học bên dưới.',
+            'Video hiện chưa khả dụng. Bé có thể làm câu hỏi.',
+            style: TextStyle(fontSize: 13),
           ),
         if (sessionError != null) LearningError(sessionError!),
         if (loadingSession)
@@ -566,7 +570,7 @@ class _LearningLessonViewState extends State<LearningLessonView> {
               child: Text(
                 session == null && viewedSessionId == null
                     ? 'Bắt đầu hoặc tiếp tục học'
-                    : 'Tải lại lượt học đã lưu',
+                    : 'Xem lại lượt học',
               ),
             ),
           ),
@@ -599,6 +603,7 @@ class _LearningLessonViewState extends State<LearningLessonView> {
           Text(
             'Lượt học: ${viState(session!.state)}',
             key: const Key('learningSessionState'),
+            style: Theme.of(context).textTheme.bodySmall,
           ),
           if (session!.state != 'IN_PROGRESS')
             Text(
@@ -698,7 +703,7 @@ class _LearningLessonViewState extends State<LearningLessonView> {
           active != current.sessionId &&
           memory.session(widget.childId, active)?.state == 'IN_PROGRESS';
       return Card(
-        color: const Color(0xFFF0F8F1),
+        color: Colors.white,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -717,16 +722,20 @@ class _LearningLessonViewState extends State<LearningLessonView> {
                 child: Text(
                   'Bé đã hoàn thành!',
                   key: Key('completionConfirmed'),
+                  textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
               ),
               Text(
                 'Kết quả đã được lưu',
                 key: const Key('completedSessionIdentity'),
+                textAlign: TextAlign.center,
               ),
               Text(
                 'Kết thúc: ${viTime(current.endedAt)}',
                 key: const Key('completedEndedAt'),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall,
               ),
               if (replayFailure != null) LearningError(replayFailure),
               if (replaying)

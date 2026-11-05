@@ -207,26 +207,27 @@ class StorybookBackdrop extends StatelessWidget {
 
 /// Six decorative destinations in canonical domain order, sharing one atlas.
 class DomainIllustration extends StatelessWidget {
-  const DomainIllustration(this.kind, {super.key});
+  const DomainIllustration(this.kind, {super.key, this.size = 96});
   final int kind;
+  final double size;
   @override
   Widget build(BuildContext context) => ExcludeSemantics(
     child: SizedBox.square(
-      dimension: 132,
+      dimension: size,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
         child: OverflowBox(
           alignment: Alignment.topLeft,
-          minWidth: 396,
-          maxWidth: 396,
-          minHeight: 264,
-          maxHeight: 264,
+          minWidth: size * 3,
+          maxWidth: size * 3,
+          minHeight: size * 2,
+          maxHeight: size * 2,
           child: Transform.translate(
-            offset: Offset(-(kind % 3) * 132, -(kind ~/ 3) * 132),
+            offset: Offset(-(kind % 3) * size, -(kind ~/ 3) * size),
             child: Image.asset(
               'assets/scenery/domains.png',
-              width: 396,
-              height: 264,
+              width: size * 3,
+              height: size * 2,
               fit: BoxFit.fill,
               filterQuality: FilterQuality.medium,
               excludeFromSemantics: true,

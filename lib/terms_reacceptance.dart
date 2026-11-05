@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'main.dart' show MimiGoApi, TermsReference, ParentSummary;
 import 'api_failure.dart';
 import 'account_availability.dart';
+import 'approved_document_reader.dart';
 import 'user_messages.dart';
 
 class TermsReacceptanceState extends ChangeNotifier {
@@ -202,7 +203,29 @@ class _TermsReacceptanceState extends State<TermsReacceptance> {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
-            if (terms.document != null) Text(terms.document!.body),
+            if (terms.document != null)
+              ApprovedDocumentCard(
+                document: terms.document!,
+                readKey: const Key('reacceptReadTerms'),
+                enabled: !model.busy && !model.denied && !leaving,
+                read: () async {
+                  final snapshot = terms;
+                  final decision = await readApprovedDocument(
+                    context,
+                    snapshot.document!,
+                  );
+                  if (!mounted ||
+                      decision == null ||
+                      leaving ||
+                      model.busy ||
+                      model.denied)
+                    return;
+                  if (model.terms?.id == snapshot.id &&
+                      model.terms?.contentHash == snapshot.contentHash &&
+                      model.terms?.hasApprovedDocument == true)
+                    model.choose(decision);
+                },
+              ),
             CheckboxListTile(
               key: const Key('reacceptTermsCheckbox'),
               contentPadding: EdgeInsets.zero,

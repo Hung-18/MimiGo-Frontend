@@ -205,7 +205,7 @@ class _ParentHomeState extends State<ParentHome> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const PoGarden(
-            title: 'Cùng con lớn lên,\nmỗi ngày một chút',
+            title: 'Cùng con lớn lên mỗi ngày',
             subtitle: 'Chọn một không gian học tập cho bé.',
             compact: true,
           ),
