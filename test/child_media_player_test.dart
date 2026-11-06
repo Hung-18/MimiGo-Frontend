@@ -35,6 +35,8 @@ class MediaLearningApi extends LearningTestApi implements ChildMediaAccess {
 }
 
 class TestMediaAccess extends ChangeNotifier implements ChildMediaAccess {
+  TestMediaAccess({this.signed = false});
+  final bool signed;
   bool current = true;
   @override
   bool get childMediaEnabled => true;
@@ -54,6 +56,7 @@ class TestMediaAccess extends ChangeNotifier implements ChildMediaAccess {
       '$lesson/revisions/$revision/main-video',
     ),
     'child-only',
+    sendBearer: !signed,
   );
   void revoke() {
     current = false;
@@ -124,6 +127,38 @@ void main() {
   late VideoPlayerPlatform original;
   setUp(() => original = VideoPlayerPlatform.instance);
   tearDown(() => VideoPlayerPlatform.instance = original);
+
+  testWidgets(
+    'signed playback never sends API bearer to native storage player',
+    (tester) async {
+      final platform = TestVideoPlatform();
+      VideoPlayerPlatform.instance = platform;
+      final access = TestMediaAccess(signed: true);
+      final lesson = LessonDetail.fromJson(detailJson());
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ChildMediaPlayer(
+              access: access,
+              childId: childId,
+              lesson: lesson,
+              cues: lesson.cues,
+              answeredCueIds: const {},
+              onCueReached: (_) {},
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(platform.sources.single.httpHeaders, isEmpty);
+      access.revoke();
+      await tester.pump();
+      expect(find.byKey(const Key('mediaRetry')), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+      access.dispose();
+    },
+  );
 
   testWidgets(
     'native source carries Child header; seek stops at cue and revocation stops',

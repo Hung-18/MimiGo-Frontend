@@ -1,11 +1,20 @@
 import 'package:flutter/foundation.dart';
 
-/// A short-lived, in-memory source. The URI contains only lesson and revision
-/// identity; the bearer is passed as an HTTP header to the native player.
+/// A short-lived, in-memory source. Signed storage grants never receive the
+/// API bearer; the legacy local debug adapter uses header authentication.
 class ChildMediaSource {
-  const ChildMediaSource(this.uri, this.bearer);
+  const ChildMediaSource(
+    this.uri,
+    this.bearer, {
+    this.sendBearer = true,
+    this.expiresAt,
+  });
   final Uri uri;
   final String bearer;
+  final bool sendBearer;
+  final DateTime? expiresAt;
+  Map<String, String> get httpHeaders =>
+      sendBearer ? {'Authorization': 'Bearer $bearer'} : const {};
 }
 
 abstract interface class ChildMediaAccess {

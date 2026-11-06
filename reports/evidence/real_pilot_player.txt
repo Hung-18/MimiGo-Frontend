@@ -1,0 +1,5 @@
+00:00 +0: loading D:/Projects/MimiGo/MimiGo-Frontend/test/child_media_player_test.dart
+00:00 +0: signed playback never sends API bearer to native storage player
+00:00 +1: native source carries Child header; seek stops at cue and revocation stops
+00:00 +2: lesson keeps cue hidden until video pause and records server answer
+00:00 +3: All tests passed!

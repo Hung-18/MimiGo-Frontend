@@ -38,7 +38,7 @@ void main() {
     'disabled/default and nonlocal media configurations fail closed',
     () async {
       final defaults = ApiConfiguration.fromEnvironment();
-      expect(defaults.childMediaEnabled, false);
+      expect(defaults.childMediaEnabled, true);
       expect(api(media: false).childMediaEnabled, false);
       expect(api(gate: false).childMediaEnabled, false);
       expect(api(host: 'https://media.example.test').childMediaEnabled, false);

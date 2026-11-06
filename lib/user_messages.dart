@@ -52,8 +52,14 @@ String friendlyError(ApiFailure e) => switch (e.code) {
   'ATTEMPT_NOT_FOUND' ||
   'NOTICE_CHANGED_REDISPLAY_REQUIRED' => 'Lượt xem xét đã hết hạn hoặc nội dung đã thay đổi. Ba mẹ cần tải lại và lựa chọn từ đầu.',
   'ATTEMPT_ALREADY_CONSUMED' || 'IDEMPOTENCY_CONFLICT' => 'Không thể gửi lại dưới dạng yêu cầu mới. Ba mẹ hãy kiểm tra hồ sơ trước khi tiếp tục.',
+  'PERMISSION_NOT_GRANTED' => 'Quyền sử dụng dữ liệu học tập của bé đã được rút hoặc chưa được cấp. Ba mẹ vui lòng kiểm tra lại quyền của bé.',
+  'CHILD_NOTICE_NOT_APPROVED' => 'Thông báo về dữ liệu của bé chưa được phê duyệt. Ba mẹ vui lòng quay lại sau.',
+  'MEDIA_NOT_AVAILABLE' => 'Video bài học hiện chưa khả dụng. Ba mẹ vui lòng chọn bài khác hoặc thử lại sau.',
+  'MEDIA_STORAGE_UNAVAILABLE' =>
+    'Chưa kết nối được video. Ba mẹ vui lòng thử lại sau.',
   'CORE_PERMISSION_REQUIRED' =>
     'Ba mẹ cần xem xét riêng từng mục đích bắt buộc trước khi tiếp tục.',
+  'NICKNAME_MUST_NOT_IDENTIFY' ||
   'INVALID_CHILD_PROFILE' ||
   'INVALID_CHILD_ALIAS' ||
   'SYNTHETIC_ALIAS_REQUIRED' ||

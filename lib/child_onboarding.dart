@@ -22,6 +22,8 @@ class ChildCreationState extends ChangeNotifier {
     'ATTEMPT_NOT_FOUND',
     'NOTICE_CHANGED_REDISPLAY_REQUIRED',
     'CORE_PERMISSION_REQUIRED',
+    'CHILD_NOTICE_NOT_APPROVED',
+    'NICKNAME_MUST_NOT_IDENTIFY',
     'INVALID_CHILD_ALIAS',
     'SYNTHETIC_ALIAS_REQUIRED',
     'DATE_OF_BIRTH_REQUIRED',
@@ -51,8 +53,8 @@ class ChildCreationState extends ChangeNotifier {
       if (generation != _generation) return null;
       if (child.id.isEmpty ||
           child.alias != request.childAlias ||
-          child.dateOfBirth == null ||
-          dateText(child.dateOfBirth!) != dateText(request.dateOfBirth) ||
+          (child.dateOfBirth != null &&
+              dateText(child.dateOfBirth!) != dateText(request.dateOfBirth)) ||
           child.stockAvatarKey != request.stockAvatarKey)
         throw const ApiInvalidResponse(
           'Created child does not match the submitted profile.',
@@ -87,6 +89,17 @@ DateTime vietnamToday([DateTime? now]) {
 bool acceptableChildDob(DateTime date, DateTime today) =>
     !date.isBefore(DateTime(1900, 1, 1)) && date.isBefore(today);
 
+/// Pilot nickname shape; server validation remains authoritative.
+bool acceptableChildNickname(String value) {
+  final alias = value.trim();
+  return alias.isNotEmpty &&
+      alias.length <= 30 &&
+      !RegExp(
+        r'[@/\\<>]|[0-9]{5,}|(https?:|www\.)',
+        caseSensitive: false,
+      ).hasMatch(alias);
+}
+
 class ChildCreated extends StatelessWidget {
   const ChildCreated({
     super.key,
@@ -111,7 +124,7 @@ class ChildCreated extends StatelessWidget {
       const Text(
         'Hồ sơ đã được lưu. Ba mẹ chọn hồ sơ trước khi bé vào học nhé.',
       ),
-      Text('${child.ageYears} tuổi'),
+      if (child.ageYears != null) Text('${child.ageYears} tuổi'),
       Text(viState(child.state)),
       Text(
         child.withinProgramAgeRange

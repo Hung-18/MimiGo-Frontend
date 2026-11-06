@@ -1,0 +1,9 @@
+00:00 +0: loading D:/Projects/MimiGo/MimiGo-Frontend/test/real_pilot_contract_test.dart
+00:00 +0: PUBLIC_PILOT: approved legal bodies validate through actual client
+00:00 +1: Cloud creation confirms identity without DOB or withheld age
+00:00 +2: normal entry targets pilot and enables authenticated media
+00:00 +3: fresh child-authenticated grant per playback; no bearer to storage
+00:00 +4: malformed, expired and unsafe playback grants fail closed
+00:00 +5: media denials remain server denials without fallback
+00:00 +6: real nicknames accepted; contact data rejected
+00:00 +7: All tests passed!

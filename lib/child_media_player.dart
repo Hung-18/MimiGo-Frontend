@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 import 'child_media_access.dart';
+import 'api_failure.dart';
+import 'user_messages.dart';
 import 'learning_models.dart';
 
 /// The existing lesson view owns questions and answers. This widget supplies
@@ -34,6 +36,7 @@ class ChildMediaPlayerState extends State<ChildMediaPlayer>
   String? reachedCue;
   bool loading = false;
   bool failed = false;
+  ApiFailure? failure;
   bool? lastPlaying, lastBuffering;
   int generation = 0;
 
@@ -83,6 +86,7 @@ class ChildMediaPlayerState extends State<ChildMediaPlayer>
 
   void stop() {
     generation++;
+    loading = false;
     final previous = controller;
     controller = null;
     source = null;
@@ -103,6 +107,7 @@ class ChildMediaPlayerState extends State<ChildMediaPlayer>
     setState(() {
       loading = true;
       failed = false;
+      failure = null;
     });
     VideoPlayerController? next;
     try {
@@ -118,7 +123,7 @@ class ChildMediaPlayerState extends State<ChildMediaPlayer>
       source = grant;
       next = VideoPlayerController.networkUrl(
         grant.uri,
-        httpHeaders: {'Authorization': 'Bearer ${grant.bearer}'},
+        httpHeaders: grant.httpHeaders,
       );
       await next.initialize();
       if (!mounted || run != generation) return;
@@ -127,6 +132,13 @@ class ChildMediaPlayerState extends State<ChildMediaPlayer>
       setState(() {});
       checkCue();
       if (reachedCue == null) await next.play();
+    } on ApiFailure catch (error) {
+      if (mounted && run == generation) {
+        setState(() {
+          failed = true;
+          failure = error;
+        });
+      }
     } catch (_) {
       // Native errors can include request URLs or headers. Never render them.
       if (mounted && run == generation) setState(() => failed = true);
@@ -205,6 +217,7 @@ class ChildMediaPlayerState extends State<ChildMediaPlayer>
         if (loading)
           const CircularProgressIndicator(semanticsLabel: 'Đang tải video'),
         if (failed) ...[
+          if (failure != null) UserError(failure),
           const Text(
             'Chưa mở được video. Bé nhờ ba mẹ kiểm tra hoặc thử lại nhé.',
           ),

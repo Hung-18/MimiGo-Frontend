@@ -1,0 +1,471 @@
+00:00 +0: loading D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart
+00:00 +0: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: resume GET decodes OPEN without a POST or expiry change
+00:00 +1: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: resume GET decodes ATTEMPT_ALREADY_CONSUMED without a POST or expiry change
+00:00 +2: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: resume GET decodes PARENT_NOT_ACTIVE without a POST or expiry change
+00:00 +3: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: resume GET decodes TERMS_ACCEPTANCE_REQUIRED without a POST or expiry change
+00:00 +4: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: resume GET decodes ATTEMPT_EXPIRED without a POST or expiry change
+00:00 +5: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: resume GET decodes ATTEMPT_NOTICES_INCOMPLETE without a POST or expiry change
+00:00 +6: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: resume GET decodes NOTICE_CHANGED_REDISPLAY_REQUIRED without a POST or expiry change
+00:00 +7: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: malformed resume unknown-status cannot be treated as open or created
+00:00 +8: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: malformed resume missing-child cannot be treated as open or created
+00:00 +9: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: malformed resume consumed-without-child cannot be treated as open or created
+00:00 +10: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: malformed resume open-with-child cannot be treated as open or created
+00:00 +11: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: resume busy/disposal ignores a late response; mismatched identity is rejected
+00:00 +12: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +13: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +14: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +15: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +16: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +17: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +18: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +19: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +20: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +21: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +22: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +23: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +24: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +25: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +26: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +27: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +28: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +29: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +30: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +31: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +32: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +33: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +34: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +35: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +36: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +37: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:00 +38: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:01 +39: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:01 +40: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:01 +41: D:/Projects/MimiGo/MimiGo-Frontend/test/approved_document_reader_test.dart: reader starts unchecked, renders full text and explicitly agrees
+00:01 +42: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: Góc phụ huynh resumes a known OPEN attempt with original notices and fresh unchecked choices
+00:01 +43: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: Góc phụ huynh resumes a known OPEN attempt with original notices and fresh unchecked choices
+00:01 +44: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: Góc phụ huynh resumes a known OPEN attempt with original notices and fresh unchecked choices
+00:02 +45: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: Góc phụ huynh resumes a known OPEN attempt with original notices and fresh unchecked choices
+00:02 +46: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: Góc phụ huynh resumes a known OPEN attempt with original notices and fresh unchecked choices
+00:02 +47: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: Góc phụ huynh resumes a known OPEN attempt with original notices and fresh unchecked choices
+00:02 +48: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: live Language opens an honest empty state and returns to Child Mode
+00:02 +49: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: live Language opens an honest empty state and returns to Child Mode
+00:02 +50: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: live Language opens an honest empty state and returns to Child Mode
+00:02 +51: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: live Language opens an honest empty state and returns to Child Mode
+00:02 +52: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: live Language opens an honest empty state and returns to Child Mode
+00:02 +53: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: live Language opens an honest empty state and returns to Child Mode
+00:02 +54: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: live Language opens an honest empty state and returns to Child Mode
+00:02 +55: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: live Language opens an honest empty state and returns to Child Mode
+00:02 +56: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: live Language opens an honest empty state and returns to Child Mode
+00:02 +57: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: live Language opens an honest empty state and returns to Child Mode
+00:02 +58: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: live Language opens an honest empty state and returns to Child Mode
+00:02 +59: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: live Language opens an honest empty state and returns to Child Mode
+00:02 +60: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: live Language opens an honest empty state and returns to Child Mode
+00:02 +61: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: live Language opens an honest empty state and returns to Child Mode
+00:02 +62: D:/Projects/MimiGo/MimiGo-Frontend/test/child_mode_test.dart: live Language opens an honest empty state and returns to Child Mode
+00:02 +63: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: refresh removes a withdrawn topic and stale lesson navigation
+00:02 +64: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: refresh removes a withdrawn topic and stale lesson navigation
+00:02 +65: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: refresh removes a withdrawn topic and stale lesson navigation
+00:02 +66: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: refresh removes a withdrawn topic and stale lesson navigation
+00:02 +67: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: refresh removes a withdrawn topic and stale lesson navigation
+00:02 +68: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: notice metadata precedes DOB and independent required choices; refusal returns to Góc phụ huynh
+00:02 +69: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: notice metadata precedes DOB and independent required choices; refusal returns to Góc phụ huynh
+00:02 +70: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: notice metadata precedes DOB and independent required choices; refusal returns to Góc phụ huynh
+00:02 +71: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: notice metadata precedes DOB and independent required choices; refusal returns to Góc phụ huynh
+00:02 +72: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: notice metadata precedes DOB and independent required choices; refusal returns to Góc phụ huynh
+00:02 +73: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: notice metadata precedes DOB and independent required choices; refusal returns to Góc phụ huynh
+00:02 +74: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: notice metadata precedes DOB and independent required choices; refusal returns to Góc phụ huynh
+00:02 +75: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: notice metadata precedes DOB and independent required choices; refusal returns to Góc phụ huynh
+00:03 +76: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: notice metadata precedes DOB and independent required choices; refusal returns to Góc phụ huynh
+00:03 +77: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: notice metadata precedes DOB and independent required choices; refusal returns to Góc phụ huynh
+00:03 +78: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: notice metadata precedes DOB and independent required choices; refusal returns to Góc phụ huynh
+00:03 +79: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: notice metadata precedes DOB and independent required choices; refusal returns to Góc phụ huynh
+00:03 +80: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: notice metadata precedes DOB and independent required choices; refusal returns to Góc phụ huynh
+00:03 +81: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: notice metadata precedes DOB and independent required choices; refusal returns to Góc phụ huynh
+00:03 +82: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: notice metadata precedes DOB and independent required choices; refusal returns to Góc phụ huynh
+00:03 +83: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: notice metadata precedes DOB and independent required choices; refusal returns to Góc phụ huynh
+00:03 +84: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +85: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +86: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +87: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +88: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +89: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +90: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +91: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +92: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +93: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +94: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +95: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +96: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +97: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +98: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +99: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +100: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +101: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +102: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +103: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +104: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +105: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +106: D:/Projects/MimiGo/MimiGo-Frontend/test/additive_onboarding_contract_test.dart: read after lost creation acknowledgment finds consumed child without another creation
+00:03 +107: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: matching returned Free domain enters the existing player with its authenticated child
+00:03 +108: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: matching returned Free domain enters the existing player with its authenticated child
+00:03 +109: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: matching returned Free domain enters the existing player with its authenticated child
+00:03 +110: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: matching returned Free domain enters the existing player with its authenticated child
+00:03 +111: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: matching returned Free domain enters the existing player with its authenticated child
+00:03 +112: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: matching returned Free domain enters the existing player with its authenticated child
+00:03 +113: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: matching returned Free domain enters the existing player with its authenticated child
+00:03 +114: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: matching returned Free domain enters the existing player with its authenticated child
+00:03 +115: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: matching returned Free domain enters the existing player with its authenticated child
+00:03 +116: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: matching returned Free domain enters the existing player with its authenticated child
+00:03 +117: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: matching returned Free domain enters the existing player with its authenticated child
+00:03 +118: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: matching returned Free domain enters the existing player with its authenticated child
+00:03 +119: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: matching returned Free domain enters the existing player with its authenticated child
+00:03 +120: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: matching returned Free domain enters the existing player with its authenticated child
+00:03 +121: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: matching returned Free domain enters the existing player with its authenticated child
+00:03 +122: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: matching returned Free domain enters the existing player with its authenticated child
+00:03 +123: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: matching returned Free domain enters the existing player with its authenticated child
+00:03 +124: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: matching returned Free domain enters the existing player with its authenticated child
+00:03 +125: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: fresh notices erase prior choices and first-child success uses service eligibility before entry
+00:03 +126: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: fresh notices erase prior choices and first-child success uses service eligibility before entry
+00:03 +127: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: fresh notices erase prior choices and first-child success uses service eligibility before entry
+00:03 +128: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: fresh notices erase prior choices and first-child success uses service eligibility before entry
+00:03 +129: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: fresh notices erase prior choices and first-child success uses service eligibility before entry
+00:04 +130: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: fresh notices erase prior choices and first-child success uses service eligibility before entry
+00:04 +131: D:/Projects/MimiGo/MimiGo-Frontend/test/child_onboarding_test.dart: fresh notices erase prior choices and first-child success uses service eligibility before entry
+00:04 +132: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_completion_widget_test.dart: final explanation precedes explicit Complete; only server acknowledgment completes
+00:04 +133: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_completion_widget_test.dart: final explanation precedes explicit Complete; only server acknowledgment completes
+00:04 +134: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_completion_widget_test.dart: final explanation precedes explicit Complete; only server acknowledgment completes
+00:04 +135: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_completion_widget_test.dart: final explanation precedes explicit Complete; only server acknowledgment completes
+00:04 +136: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_completion_widget_test.dart: final explanation precedes explicit Complete; only server acknowledgment completes
+00:04 +137: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_completion_widget_test.dart: final explanation precedes explicit Complete; only server acknowledgment completes
+00:04 +138: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_completion_widget_test.dart: final explanation precedes explicit Complete; only server acknowledgment completes
+00:05 +139: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: an acknowledgment arriving after Back remains replayable on revisit
+00:05 +140: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: an acknowledgment arriving after Back remains replayable on revisit
+00:05 +141: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: an acknowledgment arriving after Back remains replayable on revisit
+00:05 +142: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: an acknowledgment arriving after Back remains replayable on revisit
+00:05 +143: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: an acknowledgment arriving after Back remains replayable on revisit
+00:05 +144: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: an acknowledgment arriving after Back remains replayable on revisit
+00:05 +145: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: an acknowledgment arriving after Back remains replayable on revisit
+00:05 +146: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: an acknowledgment arriving after Back remains replayable on revisit
+00:05 +147: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: an acknowledgment arriving after Back remains replayable on revisit
+00:05 +148: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: an acknowledgment arriving after Back remains replayable on revisit
+00:05 +149: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: an acknowledgment arriving after Back remains replayable on revisit
+00:06 +150: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: an acknowledgment arriving after Back remains replayable on revisit
+00:06 +151: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: an acknowledgment arriving after Back remains replayable on revisit
+00:06 +152: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: an acknowledgment arriving after Back remains replayable on revisit
+00:06 +153: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: an acknowledgment arriving after Back remains replayable on revisit
+00:06 +154: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: an acknowledgment arriving after Back remains replayable on revisit
+00:06 +155: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: an acknowledgment arriving after Back remains replayable on revisit
+00:06 +155 ~1: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: an acknowledgment arriving after Back remains replayable on revisit
+00:06 +155 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: an acknowledgment arriving after Back remains replayable on revisit
+00:06 +156 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: an acknowledgment arriving after Back remains replayable on revisit
+00:06 +157 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: an acknowledgment arriving after Back remains replayable on revisit
+00:06 +158 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_completion_widget_test.dart: Back and reopen read completed identity without implicitly starting a replay; Parent Gate remains locked
+00:06 +159 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_completion_widget_test.dart: Back and reopen read completed identity without implicitly starting a replay; Parent Gate remains locked
+00:06 +160 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_completion_widget_test.dart: Back and reopen read completed identity without implicitly starting a replay; Parent Gate remains locked
+00:06 +161 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_completion_widget_test.dart: Back and reopen read completed identity without implicitly starting a replay; Parent Gate remains locked
+00:06 +162 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_completion_widget_test.dart: Back and reopen read completed identity without implicitly starting a replay; Parent Gate remains locked
+00:07 +163 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_completion_widget_test.dart: Back and reopen read completed identity without implicitly starting a replay; Parent Gate remains locked
+00:07 +164 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_completion_widget_test.dart: Back and reopen read completed identity without implicitly starting a replay; Parent Gate remains locked
+00:07 +165 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_completion_widget_test.dart: Back and reopen read completed identity without implicitly starting a replay; Parent Gate remains locked
+00:07 +166 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_completion_widget_test.dart: Back and reopen read completed identity without implicitly starting a replay; Parent Gate remains locked
+00:07 +167 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: catalog HTTP 403 hides stale lessons and permits explicit retry
+00:07 +168 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/curriculum_explorer_test.dart: catalog HTTP 403 hides stale lessons and permits explicit retry
+00:07 +169 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: Math fetches only the selected child catalog and opens details with working Back
+00:07 +170 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: Math fetches only the selected child catalog and opens details with working Back
+00:07 +171 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_widget_test.dart: Math fetches only the selected child catalog and opens details with working Back
+00:07 +172 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_hardening_widget_test.dart: late answer HTTP 401 hides revisited interaction and history
+00:07 +173 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_hardening_widget_test.dart: late answer HTTP 401 hides revisited interaction and history
+00:07 +174 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_hardening_widget_test.dart: late answer HTTP 401 hides revisited interaction and history
+00:07 +175 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_hardening_widget_test.dart: late answer HTTP 401 hides revisited interaction and history
+00:07 +176 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_hardening_widget_test.dart: late answer HTTP 401 hides revisited interaction and history
+00:07 +177 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/learning_hardening_widget_test.dart: late answer HTTP 401 hides revisited interaction and history
+00:07 +178 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:07 +179 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:07 +180 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:07 +181 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:07 +182 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:08 +183 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:08 +184 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:08 +185 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:08 +186 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:08 +187 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:08 +188 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:08 +189 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:08 +190 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:08 +191 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:08 +192 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:08 +193 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:08 +194 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:08 +195 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:08 +196 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:08 +197 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:08 +198 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:08 +199 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:08 +200 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:08 +201 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:08 +202 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:08 +203 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:08 +204 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +205 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +206 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +207 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +208 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +209 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +210 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +211 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +212 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +213 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +214 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +215 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +216 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +217 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +218 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +219 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +220 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +221 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +222 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +223 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +224 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +225 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +226 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +227 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +228 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +229 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +230 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +231 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +232 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +233 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +234 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +235 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +236 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +237 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +238 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +239 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +240 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +241 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +242 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +243 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +244 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +245 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +246 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +247 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +248 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +249 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +250 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +251 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/mobile_demo_test.dart: direct local journey: profiles, wrong/right feedback, continuation, completion, replay and exit
+00:09 +252 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: invalid or today DOB and oversized alias never leave the child form
+00:09 +253 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: invalid or today DOB and oversized alias never leave the child form
+00:09 +254 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: invalid or today DOB and oversized alias never leave the child form
+00:09 +255 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: invalid or today DOB and oversized alias never leave the child form
+00:10 +256 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: invalid or today DOB and oversized alias never leave the child form
+00:10 +257 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: invalid or today DOB and oversized alias never leave the child form
+00:10 +258 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: invalid or today DOB and oversized alias never leave the child form
+00:10 +259 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: invalid or today DOB and oversized alias never leave the child form
+00:10 +260 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: invalid or today DOB and oversized alias never leave the child form
+00:10 +261 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: invalid or today DOB and oversized alias never leave the child form
+00:10 +262 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: invalid or today DOB and oversized alias never leave the child form
+00:10 +263 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:10 +264 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:10 +265 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:10 +266 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:10 +267 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:10 +268 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:10 +269 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:10 +270 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:10 +271 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:10 +272 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:10 +273 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:10 +274 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:11 +275 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:11 +276 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:11 +277 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:11 +278 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:11 +279 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:11 +280 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:11 +281 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:11 +282 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:11 +283 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:11 +284 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:11 +285 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:12 +286 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:12 +287 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:12 +288 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:12 +289 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:12 +290 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: failed history reload removes the previous result and permits retry
+00:12 +291 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: additional child starts independently and both owned identities survive roster selection
+00:12 +292 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: additional child starts independently and both owned identities survive roster selection
+00:12 +293 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: additional child starts independently and both owned identities survive roster selection
+00:12 +294 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: additional child starts independently and both owned identities survive roster selection
+00:12 +295 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: additional child starts independently and both owned identities survive roster selection
+00:12 +296 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: additional child starts independently and both owned identities survive roster selection
+00:12 +297 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: additional child starts independently and both owned identities survive roster selection
+00:12 +298 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: additional child starts independently and both owned identities survive roster selection
+00:12 +299 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: additional child starts independently and both owned identities survive roster selection
+00:13 +300 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: additional child starts independently and both owned identities survive roster selection
+00:13 +301 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: additional child starts independently and both owned identities survive roster selection
+00:13 +302 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/password_reset_test.dart: login opens recovery with preserved email and returns after confirmed reset
+00:13 +303 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/password_reset_test.dart: login opens recovery with preserved email and returns after confirmed reset
+00:13 +304 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/password_reset_test.dart: login opens recovery with preserved email and returns after confirmed reset
+00:13 +305 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/password_reset_test.dart: login opens recovery with preserved email and returns after confirmed reset
+00:13 +306 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/password_reset_test.dart: login opens recovery with preserved email and returns after confirmed reset
+00:13 +307 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/password_reset_test.dart: login opens recovery with preserved email and returns after confirmed reset
+00:13 +308 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/password_reset_test.dart: login opens recovery with preserved email and returns after confirmed reset
+00:13 +309 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/password_reset_test.dart: login opens recovery with preserved email and returns after confirmed reset
+00:13 +310 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_onboarding_test.dart: registration server failure stays inline; changed Terms require reload and fresh choice
+00:13 +311 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_onboarding_test.dart: registration server failure stays inline; changed Terms require reload and fresh choice
+00:13 +312 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_onboarding_test.dart: registration server failure stays inline; changed Terms require reload and fresh choice
+00:13 +313 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_onboarding_test.dart: registration server failure stays inline; changed Terms require reload and fresh choice
+00:13 +314 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_onboarding_test.dart: registration server failure stays inline; changed Terms require reload and fresh choice
+00:13 +315 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_onboarding_test.dart: registration server failure stays inline; changed Terms require reload and fresh choice
+00:13 +316 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_onboarding_test.dart: registration server failure stays inline; changed Terms require reload and fresh choice
+00:13 +317 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_onboarding_test.dart: registration server failure stays inline; changed Terms require reload and fresh choice
+00:13 +318 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_onboarding_test.dart: registration server failure stays inline; changed Terms require reload and fresh choice
+00:13 +319 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_onboarding_test.dart: registration server failure stays inline; changed Terms require reload and fresh choice
+00:13 +320 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_onboarding_test.dart: registration server failure stays inline; changed Terms require reload and fresh choice
+00:13 +321 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_onboarding_test.dart: registration server failure stays inline; changed Terms require reload and fresh choice
+00:13 +322 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_onboarding_test.dart: registration server failure stays inline; changed Terms require reload and fresh choice
+00:14 +323 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_onboarding_test.dart: registration server failure stays inline; changed Terms require reload and fresh choice
+00:14 +324 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +325 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +326 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +327 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +328 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +329 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +330 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +331 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +332 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +333 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +334 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +335 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +336 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +337 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +338 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +339 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +340 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +341 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +342 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +343 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +344 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +345 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +346 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +347 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +348 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +349 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +350 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +351 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +352 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +353 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +354 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +355 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +356 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +357 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +358 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +359 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +360 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: Child Mode exposes locked switch control and no PIN or sibling profile bypass
+00:14 +361 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: PIN proof expiry hides protected data without requiring another API call
+00:14 +362 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: PIN proof expiry hides protected data without requiring another API call
+00:14 +363 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: PIN proof expiry hides protected data without requiring another API call
+00:14 +364 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: PIN proof expiry hides protected data without requiring another API call
+00:14 +365 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: PIN proof expiry hides protected data without requiring another API call
+00:14 +366 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/password_reset_test.dart: accepted request, cooldown, validation, invalid code and confirmed return
+00:14 +367 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/pilot_legal_contract_test.dart: parsed approved document is readable and agreement starts unchecked
+00:14 +368 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/pilot_legal_contract_test.dart: parsed approved document is readable and agreement starts unchecked
+00:14 +369 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/pilot_legal_contract_test.dart: parsed approved document is readable and agreement starts unchecked
+00:14 +370 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/pilot_legal_contract_test.dart: parsed approved document is readable and agreement starts unchecked
+00:14 +371 ~2: D:/Projects/MimiGo/MimiGo-Frontend/test/pilot_legal_contract_test.dart: parsed approved document is readable and agreement starts unchecked
+00:14 +371 ~3: D:/Projects/MimiGo/MimiGo-Frontend/test/pilot_legal_contract_test.dart: parsed approved document is readable and agreement starts unchecked
+00:15 +371 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/pilot_legal_contract_test.dart: parsed approved document is readable and agreement starts unchecked
+00:15 +372 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/pilot_legal_contract_test.dart: parsed approved document is readable and agreement starts unchecked
+00:15 +373 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: fixture preserves seven independent profiles, age boundaries and exact creation replay
+00:15 +374 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: fixture preserves seven independent profiles, age boundaries and exact creation replay
+00:15 +375 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: fixture preserves seven independent profiles, age boundaries and exact creation replay
+00:15 +376 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: fixture preserves seven independent profiles, age boundaries and exact creation replay
+00:15 +377 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: fixture preserves seven independent profiles, age boundaries and exact creation replay
+00:15 +378 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: fixture preserves seven independent profiles, age boundaries and exact creation replay
+00:15 +379 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: fixture preserves seven independent profiles, age boundaries and exact creation replay
+00:15 +380 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: fixture preserves seven independent profiles, age boundaries and exact creation replay
+00:15 +381 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: fixture preserves seven independent profiles, age boundaries and exact creation replay
+00:15 +382 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: fixture preserves seven independent profiles, age boundaries and exact creation replay
+00:15 +383 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: fixture preserves seven independent profiles, age boundaries and exact creation replay
+00:15 +384 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: fixture preserves seven independent profiles, age boundaries and exact creation replay
+00:15 +385 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: fixture preserves seven independent profiles, age boundaries and exact creation replay
+00:15 +386 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: fixture preserves seven independent profiles, age boundaries and exact creation replay
+00:15 +387 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/multi_child_entry_test.dart: fixture preserves seven independent profiles, age boundaries and exact creation replay
+00:16 +388 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/sign_in_test.dart: verified email retries a failed authentication check without reusing the OTP
+00:16 +389 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/sign_in_test.dart: verified email retries a failed authentication check without reusing the OTP
+00:16 +390 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/terms_reacceptance_test.dart: expired Parent auth shows safe account entry guidance
+00:16 +391 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/terms_reacceptance_test.dart: expired Parent auth shows safe account entry guidance
+00:16 +392 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/terms_reacceptance_test.dart: expired Parent auth shows safe account entry guidance
+00:16 +393 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/terms_reacceptance_test.dart: expired Parent auth shows safe account entry guidance
+00:16 +394 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/terms_reacceptance_test.dart: expired Parent auth shows safe account entry guidance
+00:16 +395 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/terms_reacceptance_test.dart: expired Parent auth shows safe account entry guidance
+00:16 +396 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/terms_reacceptance_test.dart: expired Parent auth shows safe account entry guidance
+00:16 +397 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/terms_reacceptance_test.dart: expired Parent auth shows safe account entry guidance
+00:16 +398 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/terms_reacceptance_test.dart: expired Parent auth shows safe account entry guidance
+00:16 +399 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/terms_reacceptance_test.dart: expired Parent auth shows safe account entry guidance
+00:16 +399 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/sign_in_test.dart: landing offers sign in and validates empty/invalid input before API calls
+
+Warning: A call to tap() with finder "Found 1 widget with key [<'signInSubmit'>]: [
+  FilledButton-[<'signInSubmit'>](dependencies: [IconTheme, InheritedCupertinoTheme, MediaQuery, _InheritedTheme, _LocalizationsScope-[GlobalKey#bfcae]], state: _ButtonStyleState#091bd),
+]" derived an Offset (Offset(400.0, 606.0)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(400.0, 606.0) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderSemanticsAnnotations#f57b9 relayoutBoundary=up27
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#5f56e(_ReusableRenderView#a06a1), HitTestEntry<HitTestTarget>#427ab(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2165:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1947:12)
+#2      WidgetController.tap (package:flutter_test/src/controller.dart:1080:7)
+#3      submitSignIn (file:///D:/Projects/MimiGo/MimiGo-Frontend/test/sign_in_test.dart:130:16)
+#4      main.<anonymous closure> (file:///D:/Projects/MimiGo/MimiGo-Frontend/test/sign_in_test.dart:184:13)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+<asynchronous suspension>
+#7      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "tap()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+00:16 +400 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/terms_reacceptance_test.dart: expired Parent auth shows safe account entry guidance
+00:16 +401 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/terms_reacceptance_test.dart: expired Parent auth shows safe account entry guidance
+00:16 +402 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/terms_reacceptance_test.dart: expired Parent auth shows safe account entry guidance
+00:16 +403 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/terms_reacceptance_test.dart: expired Parent auth shows safe account entry guidance
+00:17 +404 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/terms_reacceptance_test.dart: expired Parent auth shows safe account entry guidance
+00:17 +405 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/widget_test.dart: terms and consent are unchecked and gate child input
+00:17 +406 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/widget_test.dart: terms and consent are unchecked and gate child input
+00:17 +407 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/widget_test.dart: terms and consent are unchecked and gate child input
+00:17 +408 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/widget_test.dart: terms and consent are unchecked and gate child input
+00:17 +409 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/widget_test.dart: terms and consent are unchecked and gate child input
+00:17 +410 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/widget_test.dart: terms and consent are unchecked and gate child input
+00:17 +411 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/widget_test.dart: terms and consent are unchecked and gate child input
+00:17 +412 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/widget_test.dart: terms and consent are unchecked and gate child input
+00:17 +413 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/widget_test.dart: terms and consent are unchecked and gate child input
+00:17 +414 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/widget_test.dart: terms and consent are unchecked and gate child input
+00:17 +415 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/widget_test.dart: terms and consent are unchecked and gate child input
+00:17 +416 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/widget_test.dart: terms and consent are unchecked and gate child input
+00:17 +417 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/widget_test.dart: terms and consent are unchecked and gate child input
+00:17 +418 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/widget_test.dart: terms and consent are unchecked and gate child input
+00:17 +419 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/widget_test.dart: terms and consent are unchecked and gate child input
+00:17 +420 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: Child Mode, switch and exit require actual token transitions; no Parent data appears before PIN
+00:17 +421 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: Child Mode, switch and exit require actual token transitions; no Parent data appears before PIN
+00:17 +422 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: Child Mode, switch and exit require actual token transitions; no Parent data appears before PIN
+00:17 +423 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/po_mobile_test.dart: preview family selects child and PIN gates both mode transitions
+00:17 +424 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/po_mobile_test.dart: preview family selects child and PIN gates both mode transitions
+00:17 +425 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/po_mobile_test.dart: preview family selects child and PIN gates both mode transitions
+00:18 +426 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: revoked Child session refresh failure removes all protected app state and returns to login
+00:18 +427 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: revoked Child session refresh failure removes all protected app state and returns to login
+00:18 +428 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: revoked Child session refresh failure removes all protected app state and returns to login
+00:18 +429 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: revoked Child session refresh failure removes all protected app state and returns to login
+00:18 +430 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/parent_gate_widget_test.dart: revoked Child session refresh failure removes all protected app state and returns to login
+00:18 +431 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/terms_reacceptance_test.dart: required Terms during create discards pending child form and rechecks notices separately
+00:18 +432 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/terms_reacceptance_test.dart: required Terms during create discards pending child form and rechecks notices separately
+00:18 +433 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/terms_reacceptance_test.dart: required Terms during create discards pending child form and rechecks notices separately
+00:18 +434 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/po_mobile_test.dart: narrow phone and large type have no overflow
+00:18 +435 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/po_mobile_test.dart: narrow phone and large type have no overflow
+00:18 +436 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/po_mobile_test.dart: narrow phone and large type have no overflow
+00:18 +437 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/po_mobile_test.dart: narrow phone and large type have no overflow
+00:18 +438 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/po_mobile_test.dart: narrow phone and large type have no overflow
+00:18 +439 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/po_mobile_test.dart: public child and settings screens render and navigate
+00:19 +440 ~4: D:/Projects/MimiGo/MimiGo-Frontend/test/po_mobile_test.dart: (tearDownAll)
+00:19 +440 ~4: All tests passed!

@@ -440,7 +440,7 @@ class _GatedParentAreaState extends State<GatedParentArea> {
       activity = null;
     });
     final value = await widget.api.getChild(child.id);
-    if (value.id != child.id || value.dateOfBirth == null)
+    if (value.id != child.id)
       throw const ApiInvalidResponse('Invalid protected child detail.');
     if (mounted) setState(() => detail = value);
   });
@@ -518,11 +518,12 @@ class _GatedParentAreaState extends State<GatedParentArea> {
             childId: detail!.id,
           ),
         Text('Hồ sơ: ${detail!.alias}', key: const Key('protectedChildAlias')),
-        Text(
-          'Ngày sinh: ${viDate(detail!.dateOfBirth!)}',
-          key: const Key('protectedChildDob'),
-        ),
-        Text('${detail!.ageYears} tuổi'),
+        if (detail!.dateOfBirth != null)
+          Text(
+            'Ngày sinh: ${viDate(detail!.dateOfBirth!)}',
+            key: const Key('protectedChildDob'),
+          ),
+        if (detail!.ageYears != null) Text('${detail!.ageYears} tuổi'),
         for (final decision in detail!.recordedDecisions)
           Text(
             '${viPurpose(decision.purposeCode)}: ${viState(decision.recordedState)}',

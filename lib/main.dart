@@ -79,12 +79,12 @@ class ApiConfiguration {
     ApiMode.live,
     const String.fromEnvironment(
       'MIMIGO_API_BASE_URL',
-      defaultValue: 'https://mimigo-api-staging.onrender.com/api/v1',
+      defaultValue: 'https://mimigo-api-pilot.onrender.com/api/v1',
     ),
     parentGateEnabled: true,
     childMediaEnabled: const bool.fromEnvironment(
       'MIMIGO_CHILD_MEDIA_ENABLED',
-      defaultValue: false,
+      defaultValue: true,
     ),
     childMediaBaseUrl: const String.fromEnvironment(
       'MIMIGO_CHILD_MEDIA_BASE_URL',
@@ -926,7 +926,10 @@ class LiveMimiGoApi
   @override
   final bool parentGateEnabled;
   @override
-  bool get childMediaEnabled => _privateMediaOrigin != null;
+  bool get childMediaEnabled =>
+      parentGateEnabled &&
+      _childMediaRequested &&
+      (childMediaBaseUrl.isEmpty || _privateMediaOrigin != null);
   final bool _childMediaRequested;
   final String childMediaBaseUrl;
   Uri? get _privateMediaOrigin {
@@ -948,7 +951,7 @@ class LiveMimiGoApi
   @override
   bool mediaSessionIsCurrent(String childId, String bearer) {
     final current = gateSession?.current;
-    return _privateMediaOrigin != null &&
+    return childMediaEnabled &&
         current?.mode == SessionMode.child &&
         current?.childId == childId &&
         current?.token == bearer &&
@@ -962,25 +965,45 @@ class LiveMimiGoApi
     String revisionId,
   ) async {
     final origin = _privateMediaOrigin;
-    if (origin == null || gateSession == null) {
+    if (!childMediaEnabled || gateSession == null) {
       throw const ApiFailure(
         'Private media is unavailable.',
         code: 'MEDIA_DISABLED',
         status: 404,
       );
     }
-    return gateSession!.authorized(
-      (token, _) async => ChildMediaSource(
-        origin.replace(
-          path:
-              '/private/media/children/lessons/'
-              '${Uri.encodeComponent(lessonId)}/revisions/'
-              '${Uri.encodeComponent(revisionId)}/main-video',
-        ),
-        token,
-      ),
-      childId: childId,
-    );
+    return gateSession!.authorized((token, _) async {
+      if (origin != null)
+        return ChildMediaSource(
+          origin.replace(
+            path:
+                '/private/media/children/lessons/'
+                '${Uri.encodeComponent(lessonId)}/revisions/'
+                '${Uri.encodeComponent(revisionId)}/main-video',
+          ),
+          token,
+        );
+      final json = await _rawRequest(
+        'GET',
+        'children/${Uri.encodeComponent(childId)}/lessons/'
+            '${Uri.encodeComponent(lessonId)}/media',
+        token: token,
+      );
+      final uri = Uri.tryParse(_string(json, 'url'));
+      final expiry = _date(json, 'expiresAt');
+      if (json['kind'] != 'VIDEO' ||
+          !_string(json, 'mimeType').startsWith('video/') ||
+          _string(json, 'assetId').trim().isEmpty ||
+          uri == null ||
+          uri.scheme != 'https' ||
+          uri.host.isEmpty ||
+          uri.userInfo.isNotEmpty ||
+          uri.hasFragment ||
+          !expiry.isAfter(DateTime.now())) {
+        throw const ApiInvalidResponse('Invalid private playback grant.');
+      }
+      return ChildMediaSource(uri, token, sendBearer: false, expiresAt: expiry);
+    }, childId: childId);
   }
 
   @override
@@ -1566,11 +1589,15 @@ ChildSummary _child(Map<String, dynamic> x, {bool rosterOnly = false}) =>
       alias: _string(x, 'childAlias'),
       dateOfBirth: rosterOnly
           ? null
+          : x['dateOfBirth'] == null
+          ? null
           : parseDate(_string(x, 'dateOfBirth')) ??
                 (throw const ApiInvalidResponse(
                   'Child response has an invalid dateOfBirth.',
                 )),
       ageYears: rosterOnly
+          ? null
+          : x['ageYears'] == null
           ? null
           : x['ageYears'] is int
           ? x['ageYears'] as int
@@ -3731,6 +3758,10 @@ class _PrivacyState extends State<Privacy> {
     final allowed =
         guardian &&
         notices.isNotEmpty &&
+        (widget.fixture ||
+            {'CHILD_PROFILE_AGE', 'LEARNING_PROGRESS'}.every(
+              (purpose) => notices.any((n) => n.purposeCode == purpose),
+            )) &&
         !busy &&
         notices.every(
           (n) =>
@@ -3959,13 +3990,12 @@ class _ChildInputState extends State<ChildInput> {
 
   void submit() {
     final date = parseDate(dob.text);
-    if (!alias.text.trim().startsWith('SYN-') ||
-        alias.text.trim().length > 40 ||
+    if (!acceptableChildNickname(alias.text) ||
         date == null ||
         !acceptableChildDob(date, vietnamToday())) {
       setState(
         () => error = const ApiFailure(
-          'Use a SYN- alias up to 40 characters and a past date from 1900-01-01 (YYYY-MM-DD).',
+          'Use a nickname of 1-30 characters without contact details and a valid past date.',
           code: 'INVALID_CHILD_PROFILE',
         ),
       );
@@ -3988,7 +4018,7 @@ class _ChildInputState extends State<ChildInput> {
         controller: alias,
         decoration: const InputDecoration(
           labelText: 'Tên gọi của bé',
-          helperText: 'Bản thử nghiệm hiện yêu cầu tên bắt đầu bằng SYN-.',
+          helperText: 'Tên gọi 1–30 ký tự, không dùng thông tin liên hệ hoặc đường dẫn.',
           prefixIcon: Icon(Icons.person_outline),
         ),
       ),

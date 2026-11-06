@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../api_failure.dart';
+import '../child_onboarding.dart' show acceptableChildNickname;
 import 'mobile_services.dart';
 import 'po_design.dart';
 import '../user_messages.dart';
@@ -115,11 +116,9 @@ class _ProfilePanelState extends State<ProfilePanel> {
             TextFormField(
               controller: alias,
               enabled: !busy && key == null,
-              maxLength: 40,
+              maxLength: 30,
               decoration: const InputDecoration(labelText: 'Tên gọi của bé'),
-              validator: (v) =>
-                  (v ?? '').trim().startsWith('SYN-') &&
-                      (v ?? '').trim().length > 4
+              validator: (v) => acceptableChildNickname(v ?? '')
                   ? null
                   : 'Tên này chưa được phiên bản hiện tại hỗ trợ.',
             ),

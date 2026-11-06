@@ -1,0 +1,5 @@
+Direct command: flutter build apk --debug --no-pub
+Exit code: 0
+Gradle: 2,543ms
+Built build/app/outputs/flutter-apk/app-debug.apk
+No install/device playback acceptance performed.

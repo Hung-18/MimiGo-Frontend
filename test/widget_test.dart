@@ -39,10 +39,10 @@ void main() {
   });
 
   test(
-    'live configuration defaults to staging; local URL remains build-time',
+    'live configuration defaults to pilot; local URL remains build-time',
     () {
       final config = ApiConfiguration.fromEnvironment();
-      expect(config.baseUrl, 'https://mimigo-api-staging.onrender.com/api/v1');
+      expect(config.baseUrl, 'https://mimigo-api-pilot.onrender.com/api/v1');
       expect(LiveMimiGoApi(Uri.parse(config.baseUrl)), isA<LiveMimiGoApi>());
     },
   );
