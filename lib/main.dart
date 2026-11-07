@@ -3868,9 +3868,13 @@ class _PrivacyState extends State<Privacy> {
                     onChanged:
                         busy || (!widget.fixture && !n.hasApprovedDocument)
                         ? null
-                        : (v) => setState(
-                            () => choices[n.purposeCode] = v ?? false,
-                          ),
+                        : (v) {
+                            if (v == true && !widget.fixture) {
+                              readNotice(n);
+                            } else {
+                              setState(() => choices[n.purposeCode] = v ?? false);
+                            }
+                          },
                     title: Text(
                       'Tôi đồng ý mục đích: ${_purposeDescription(n.purposeCode)}.',
                     ),

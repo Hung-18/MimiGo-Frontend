@@ -101,14 +101,24 @@ Future<void> openChildOnboarding(WidgetTester tester, ChildApi api) async {
 }
 
 Future<void> affirmNotices(WidgetTester tester) async {
+  await tapVisible(tester, 'guardianAssertion');
   for (final key in [
-    'guardianAssertion',
     'consent-CHILD_PROFILE_AGE',
     'consent-LEARNING_PROGRESS',
   ]) {
-    await tapVisible(tester, key);
+    await affirmPurpose(tester, key);
   }
   await tapVisible(tester, 'privacyContinue');
+}
+
+Future<void> affirmPurpose(WidgetTester tester, String key) async {
+  await tapVisible(tester, key);
+  if (find.byKey(const Key('legalExplicitChoice')).evaluate().isNotEmpty) {
+    await tester.tap(find.byKey(const Key('legalExplicitChoice')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('legalAgree')));
+    await tester.pumpAndSettle();
+  }
 }
 
 Future<void> reviewChild(
@@ -254,6 +264,10 @@ void main() {
       );
       await tapVisible(tester, 'guardianAssertion');
       await tapVisible(tester, 'consent-CHILD_PROFILE_AGE');
+      if (find.byKey(const Key('legalClose')).evaluate().isNotEmpty) {
+        await tester.tap(find.byKey(const Key('legalClose')));
+        await tester.pumpAndSettle();
+      }
       expect(
         tester
             .widget<FilledButton>(find.byKey(const Key('privacyContinue')))
@@ -276,7 +290,7 @@ void main() {
         ..eligible = false;
       await openChildOnboarding(tester, api);
       await tapVisible(tester, 'guardianAssertion');
-      await tapVisible(tester, 'consent-CHILD_PROFILE_AGE');
+      await affirmPurpose(tester, 'consent-CHILD_PROFILE_AGE');
       await tapVisible(tester, 'reloadPrivacyNotices');
       expect(api.attempts, 2);
       for (final tile in tester.widgetList<CheckboxListTile>(

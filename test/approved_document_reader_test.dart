@@ -143,6 +143,62 @@ void main() {
       );
     },
   );
+  testWidgets('child purpose checkbox opens its full notice before agreement', (t) async {
+    await t.pumpWidget(
+      visualApp(
+        Privacy(
+          attempt: OnboardingAttempt('attempt', DateTime(2030), noticeSnapshot()),
+          begin: () async {},
+          declined: () {},
+          next: () {},
+        ),
+      ),
+    );
+    await t.pumpAndSettle();
+    await tapVisible(t, 'consent-CHILD_PROFILE_AGE');
+    expect(find.byKey(const Key('legalFullText')), findsOneWidget);
+    await t.tap(find.byKey(const Key('legalClose')));
+    await t.pumpAndSettle();
+    expect(
+      t.widget<CheckboxListTile>(
+        find.byKey(const Key('consent-CHILD_PROFILE_AGE')),
+      ).value,
+      isFalse,
+    );
+    await tapVisible(t, 'consent-CHILD_PROFILE_AGE');
+    await t.tap(find.byKey(const Key('legalExplicitChoice')));
+    await t.pump();
+    await t.tap(find.byKey(const Key('legalAgree')));
+    await t.pumpAndSettle();
+    expect(
+      t.widget<CheckboxListTile>(
+        find.byKey(const Key('consent-CHILD_PROFILE_AGE')),
+      ).value,
+      isTrue,
+    );
+  });
+  testWidgets('fixture purpose checkbox keeps its direct demo choice', (t) async {
+    await t.pumpWidget(
+      visualApp(
+        Privacy(
+          attempt: OnboardingAttempt('fixture-attempt', DateTime(2030), noticeSnapshot()),
+          begin: () async {},
+          declined: () {},
+          next: () {},
+          fixture: true,
+        ),
+      ),
+    );
+    await t.pumpAndSettle();
+    await tapVisible(t, 'consent-CHILD_PROFILE_AGE');
+    expect(find.byKey(const Key('legalFullText')), findsNothing);
+    expect(
+      t.widget<CheckboxListTile>(
+        find.byKey(const Key('consent-CHILD_PROFILE_AGE')),
+      ).value,
+      isTrue,
+    );
+  });
   testWidgets(
     'an obsolete open reader cannot accept a replaced attempt snapshot',
     (t) async {

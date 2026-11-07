@@ -10,6 +10,7 @@ import 'package:mimigo_frontend/terms_reacceptance.dart';
 import 'sign_in_test.dart' show AuthApi, openSignIn, fillSignIn, submitSignIn;
 import 'learning_widget_test.dart' show tapVisible;
 import 'learning_api_test.dart' show Transport, Reply, authenticated;
+import 'child_onboarding_test.dart' show affirmPurpose;
 
 const termsVersion = '99999999-1111-4111-8111-111111111111';
 
@@ -343,8 +344,8 @@ void main() {
       await tapVisible(tester, 'addChild');
       await tapVisible(tester, 'loadAttempt');
       await tapVisible(tester, 'guardianAssertion');
-      await tapVisible(tester, 'consent-CHILD_PROFILE_AGE');
-      await tapVisible(tester, 'consent-LEARNING_PROGRESS');
+      await affirmPurpose(tester, 'consent-CHILD_PROFILE_AGE');
+      await affirmPurpose(tester, 'consent-LEARNING_PROGRESS');
       await tapVisible(tester, 'privacyContinue');
       await tester.enterText(find.byKey(const Key('childName')), 'SYN-Terms');
       await tester.enterText(find.byKey(const Key('childDob')), '2023-01-01');
