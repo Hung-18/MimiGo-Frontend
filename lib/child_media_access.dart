@@ -27,3 +27,14 @@ abstract interface class ChildMediaAccess {
     String revisionId,
   );
 }
+
+
+abstract interface class ChildLearningMediaAccess implements ChildMediaAccess {
+  Future<ChildMediaSource> childLearningAsset(
+    String childId,
+    String lessonId,
+    String sessionId,
+    String assetId,
+    String kind,
+  );
+}

@@ -7,6 +7,7 @@ import 'child_media_access.dart';
 import 'child_media_player.dart';
 import 'learning_models.dart';
 import 'learning_session_memory.dart';
+import 'interactive_learning.dart';
 import 'mimigo_design.dart';
 import 'po/po_design.dart';
 
@@ -213,13 +214,14 @@ class _LearningLessonViewState extends State<LearningLessonView> {
   @override
   void initState() {
     super.initState();
+    if (widget.api is InteractiveLearningApi) return;
     memory.addListener(syncMemory);
     loadDetail();
   }
 
   @override
   void dispose() {
-    memory.removeListener(syncMemory);
+    if (widget.api is! InteractiveLearningApi) memory.removeListener(syncMemory);
     if (widget.sessions == null) memory.dispose();
     super.dispose();
   }
@@ -490,6 +492,16 @@ class _LearningLessonViewState extends State<LearningLessonView> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.api case final InteractiveLearningApi interactive) {
+      return InteractiveLearningView(
+        api: widget.api,
+        interactive: interactive,
+        childId: widget.childId,
+        lessonId: widget.lessonId,
+        domainCode: widget.domainCode,
+        pending: widget.pending,
+      );
+    }
     if (loadingDetail)
       return const Column(
         children: [

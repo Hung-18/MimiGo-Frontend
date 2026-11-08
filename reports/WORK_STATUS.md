@@ -1,3 +1,7 @@
+# Interactive learning 0079–0081 Flutter integration - 2026-11-08
+
+Continues `d495f4b`. Live Child learning now follows server cue states, two-attempt resolution, session-scoped required audio/images, and 0080 playback events/state through video-end. Missing media blocks answers; fixture Learning and Parent Gate remain separate. Focused suites 55 PASS, full Flutter suite 449 PASS / 5 opt-in SKIPPED, analyzer clean, Android debug APK PASS. Real Pilot signed bytes, published interactive content and authorized family persistence remain unverified. [Slice report](INTERACTIVE_LEARNING_0079_0081_FLUTTER_20261108.md).
+
 # Final Flutter mobile completion check - 2026-11-07
 
 Continues `94e77a9` on the existing feature branch. Fixed a live consent interaction that allowed a child-purpose checkbox to be selected from its short preview; each purpose now opens its full approved version/hash-bound reader for an explicit choice. Focused reader regressions 7 PASS, final serial suite 442 PASS / 5 opt-in SKIPPED, Android public synthetic walkthrough 1 PASS, analyzer clean and Android debug APK PASS. [Full completion report](FINAL_FLUTTER_MOBILE_COMPLETION_20261107.md). Authenticated real-family/media/progress acceptance and attempt-attached notice documents remain open; no invented Pilot guardian/content.

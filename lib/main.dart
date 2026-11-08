@@ -812,7 +812,8 @@ class LiveMimiGoApi
     implements
         MimiGoApi,
         ParentGateApi,
-        ChildMediaAccess,
+        ChildLearningMediaAccess,
+        InteractiveLearningApi,
         MobileCapabilities,
         PasswordResetApi {
   @override
@@ -1007,6 +1008,42 @@ class LiveMimiGoApi
   }
 
   @override
+  Future<ChildMediaSource> childLearningAsset(
+    String childId,
+    String lessonId,
+    String sessionId,
+    String assetId,
+    String kind,
+  ) async {
+    if (!childMediaEnabled || gateSession == null ||
+        !{'AUDIO', 'IMAGE'}.contains(kind)) {
+      throw const ApiFailure('Private learning media is unavailable.',
+          code: 'MEDIA_NOT_AVAILABLE', status: 404);
+    }
+    return gateSession!.authorized((token, _) async {
+      final json = await _rawRequest(
+        'GET',
+        'children/${Uri.encodeComponent(childId)}/lessons/'
+            '${Uri.encodeComponent(lessonId)}/media/'
+            '${Uri.encodeComponent(assetId)}',
+        token: token,
+        query: {'sessionId': sessionId},
+      );
+      final uri = Uri.tryParse(_string(json, 'url'));
+      final expiry = _date(json, 'expiresAt');
+      if (_string(json, 'assetId') != assetId || json['kind'] != kind ||
+          !_string(json, 'mimeType').startsWith(
+              kind == 'AUDIO' ? 'audio/' : 'image/') ||
+          uri == null || uri.scheme != 'https' || uri.host.isEmpty ||
+          uri.userInfo.isNotEmpty || uri.hasFragment ||
+          !expiry.isAfter(DateTime.now())) {
+        throw const ApiInvalidResponse('Invalid learning media grant.');
+      }
+      return ChildMediaSource(uri, token, sendBearer: false, expiresAt: expiry);
+    }, childId: childId);
+  }
+
+  @override
   late final GateSessionCoordinator? gateSession = parentGateEnabled
       ? GateSessionCoordinator(
           _gateWire,
@@ -1176,6 +1213,25 @@ class LiveMimiGoApi
     ),
   );
   @override
+  Future<CueStates> cueStates(String childId, String sessionId) async =>
+      CueStates.fromJson(await _request(
+        'GET', 'children/$childId/learning-sessions/$sessionId/cue-states',
+        auth: true, learningChildId: childId,
+      ));
+  @override
+  Future<PlaybackState> playbackState(String childId, String sessionId) async =>
+      PlaybackState.fromJson(await _request(
+        'GET', 'children/$childId/learning-sessions/$sessionId/playback-state',
+        auth: true, learningChildId: childId,
+      ));
+  @override
+  Future<PlaybackVerdict> playbackEvent(
+    String childId, String sessionId, PlaybackEventRequest request,
+  ) async => PlaybackVerdict.fromJson(await _request(
+        'POST', 'children/$childId/learning-sessions/$sessionId/playback-events',
+        auth: true, learningChildId: childId, body: request.toJson(),
+      ));
+  @override
   void clearSession() {
     cancelPendingRequests();
     _token = null;
@@ -1344,6 +1400,7 @@ class LiveMimiGoApi
     bool requireProof = false,
     bool includeProof = false,
     Map<String, String>? headers,
+    Map<String, String>? query,
   }) async {
     if (gateSession != null && auth) {
       return gateSession!.authorized(
@@ -1354,6 +1411,7 @@ class LiveMimiGoApi
           token: token,
           proof: requireProof || includeProof ? proof : null,
           headers: headers,
+          query: query,
         ),
         childId: learningChildId,
         proofRequired: requireProof,
@@ -1371,6 +1429,7 @@ class LiveMimiGoApi
       body: body,
       token: auth ? _token : null,
       headers: headers,
+      query: query,
     );
   }
 
@@ -1382,10 +1441,12 @@ class LiveMimiGoApi
     String? proof,
     Set<int>? statuses,
     Map<String, String>? headers,
+    Map<String, String>? query,
   }) async {
     final encoded = path.split('/').map(Uri.encodeComponent).join('/');
     final uri = baseUri.replace(
       path: '${baseUri.path.replaceFirst(RegExp(r'/+$'), '')}/$encoded',
+      queryParameters: query,
     );
     final generation = _transportGeneration;
     HttpClientRequest? pendingRequest;
