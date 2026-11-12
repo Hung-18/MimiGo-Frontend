@@ -106,51 +106,17 @@ class _LiveChildHomeState extends State<LiveChildHome> {
                     width: MediaQuery.textScalerOf(context).scale(16) > 24
                         ? c.maxWidth
                         : (c.maxWidth - 12) / 2,
-                    child: PoCard(
+                    child: BrandDomainCard(
                       key: Key('live-domain-${domain.code}'),
-                      color: model.inDomain(domain).isEmpty
-                          ? Colors.white
-                          : [
-                              PoPalette.peach,
-                              PoPalette.lavender,
-                              PoPalette.sky,
-                              PoPalette.mint,
-                              PoPalette.lavender,
-                              PoPalette.peach,
-                            ][domain.index],
+                      index: domain.index,
+                      label: model.domainName(domain),
+                      caption: model.inDomain(domain).isEmpty
+                          ? 'Chưa có bài học'
+                          : 'Khám phá',
+                      locked: model.inDomain(domain).isEmpty,
                       onTap: model.inDomain(domain).isEmpty
                           ? null
                           : () => widget.openDomain(domain),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          PoDomainMark(domain.index),
-                          Text(
-                            model.domainName(domain),
-                            style: const TextStyle(fontWeight: FontWeight.w800),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  model.inDomain(domain).isEmpty
-                                      ? 'Chưa có bài học'
-                                      : 'Khám phá',
-                                  style: const TextStyle(fontSize: 13),
-                                ),
-                              ),
-                              Icon(
-                                model.inDomain(domain).isEmpty
-                                    ? Icons.lock_outline
-                                    : Icons.arrow_forward_rounded,
-                                size: 20,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
                     ),
                   ),
               ],

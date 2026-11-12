@@ -398,35 +398,12 @@ class _PoPreviewState extends State<PoPreview> with WidgetsBindingObserver {
                 width: MediaQuery.textScalerOf(context).scale(16) > 24
                     ? c.maxWidth
                     : (c.maxWidth - 12) / 2,
-                child: PoCard(
-                  color: [
-                    PoPalette.peach,
-                    PoPalette.lavender,
-                    PoPalette.sky,
-                    PoPalette.mint,
-                    PoPalette.lavender,
-                    PoPalette.peach,
-                  ][i],
+                child: BrandDomainCard(
+                  index: i,
+                  label: previewDomains[i].name,
+                  caption: 'Khám phá',
                   onTap: () => push(
                     PreviewSubject(domain: previewDomains[i], model: model),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      PoDomainMark(i),
-                      Text(
-                        previewDomains[i].name,
-                        style: const TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                      const SizedBox(height: 6),
-                      const Row(
-                        children: [
-                          Text('Khám phá', style: TextStyle(fontSize: 13)),
-                          Spacer(),
-                          Icon(Icons.arrow_forward_rounded, size: 18),
-                        ],
-                      ),
-                    ],
                   ),
                 ),
               ),

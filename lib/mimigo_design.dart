@@ -26,11 +26,11 @@ abstract final class MimiColors {
   static const purple = Color(0xFF9C6BFF);
   static const ink = Color(0xFF102665);
   static const muted = Color(0xFF4F6387);
-  static const action = Color(0xFFB71467);
+  static const action = Color(0xFF0B5FB0);
   static const blueText = Color(0xFF075DA9);
   static const border = Color(0xFFDCE4F2);
-  static const canvas = Color(0xFFFFFCF6);
-  static const sky = Color(0xFFE9F6FF);
+  static const canvas = Color(0xFFF4FAFF);
+  static const sky = Color(0xFFDDF0FF);
   static const rose = Color(0xFFFFF0F6);
 }
 
@@ -107,10 +107,12 @@ ThemeData mimiTheme() {
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
+        backgroundColor: MimiColors.yellow,
+        foregroundColor: MimiColors.ink,
         minimumSize: const Size(64, 64),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         textStyle: buttonText,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
         disabledBackgroundColor: const Color(0xFFE8EAF0),
         disabledForegroundColor: const Color(0xFF5A6375),
       ),

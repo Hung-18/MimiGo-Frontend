@@ -253,10 +253,14 @@ void main() {
       await t.pumpAndSettle();
       await t.ensureVisible(find.byKey(const Key('live-domain-MATH')));
       expect(t.takeException(), isNull);
-      final disabled = t.widget<PoCard>(
+      final disabled = t.widget<BrandDomainCard>(
         find.byKey(const Key('live-domain-ENGLISH')),
       );
       expect(disabled.onTap, isNull);
+      expect(
+        t.getSize(find.byKey(const Key('live-domain-MATH'))).height,
+        greaterThanOrEqualTo(168),
+      );
     });
   }
 

@@ -185,7 +185,7 @@ void main() {
       expect(api.calls, isEmpty);
       await tester.tap(find.byType(BackButton));
       await tester.pumpAndSettle();
-      expect(find.text('Ba mẹ đã có tài khoản? Đăng nhập'), findsOneWidget);
+      expect(find.text('Đã có tài khoản? Đăng nhập'), findsOneWidget);
     },
   );
 

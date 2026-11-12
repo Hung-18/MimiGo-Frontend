@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../mimigo_design.dart';
+import 'brand_ui.dart';
 import 'mimi_world.dart';
 
 /// A text-rendered brand mark, not a crop of the supplied logo artwork.
@@ -74,7 +75,7 @@ class StorybookCanvas extends StatelessWidget {
           left: 0,
           right: 0,
           height: height,
-          child: const StorybookBackdrop(alignment: Alignment.topCenter),
+          child: BrandSky(height: height),
         ),
         Positioned(
           top: 0,
@@ -88,11 +89,11 @@ class StorybookCanvas extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Color(0x00FFFCF6),
-                    Color(0x00FFFCF6),
+                    Color(0x00F4FAFF),
+                    Color(0x00F4FAFF),
                     MimiColors.canvas,
                   ],
-                  stops: [0, .65, 1],
+                  stops: [0, .9, 1],
                 ),
               ),
             ),

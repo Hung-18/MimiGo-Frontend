@@ -2955,7 +2955,7 @@ class Welcome extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Center(child: MimiWordmark(size: 76)),
+                  const Center(child: MimiWordmark(size: 84)),
                   const SizedBox(height: 6),
                   const Center(
                     child: DecoratedBox(
@@ -2999,16 +2999,28 @@ class Welcome extends StatelessWidget {
                         FilledButton(
                           key: const Key('welcomeStart'),
                           onPressed: busy ? null : start,
-                          child: Text(
-                            busy
-                                ? 'Đang tải phiên bản điều khoản…'
-                                : 'Tạo tài khoản phụ huynh',
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  busy
+                                      ? 'Đang tải phiên bản điều khoản…'
+                                      : 'Bắt đầu ngay',
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              if (!busy) ...[
+                                const SizedBox(width: 8),
+                                const Icon(Icons.arrow_forward_rounded),
+                              ],
+                            ],
                           ),
                         ),
                         TextButton(
                           key: const Key('welcomeSignIn'),
                           onPressed: busy ? null : signIn,
-                          child: const Text('Ba mẹ đã có tài khoản? Đăng nhập'),
+                          child: const Text('Đã có tài khoản? Đăng nhập'),
                         ),
                         if (busy)
                           const LinearProgressIndicator(
@@ -3039,28 +3051,26 @@ class Welcome extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   MimiPanel(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
                       children: [
-                        for (final item in const [
-                          (0, 'Toán học'),
-                          (1, 'Ngôn ngữ'),
-                          (5, 'Khám phá'),
-                        ])
-                          Expanded(
-                            child: Column(
-                              children: [
-                                PoDomainMark(item.$1, size: 64),
-                                const SizedBox(height: 4),
-                                Text(
-                                  item.$2,
-                                  textAlign: TextAlign.center,
-                                  style: Theme.of(c).textTheme.bodySmall,
-                                ),
-                              ],
-                            ),
-                          ),
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: const [
+                            BrandChip('Tư duy', MimiColors.purple),
+                            BrandChip('Toán học', MimiColors.orange),
+                            BrandChip('Ngôn ngữ', MimiColors.blue),
+                            BrandChip('Khám phá thế giới', MimiColors.green),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Dành cho trẻ 2 - 6 tuổi',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(c).textTheme.bodySmall,
+                        ),
                       ],
                     ),
                   ),

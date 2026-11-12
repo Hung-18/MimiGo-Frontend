@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../mimigo_design.dart';
 import 'mimi_world.dart';
 import 'storybook_forms.dart';
+export 'brand_ui.dart';
 export 'mimi_world.dart';
 export 'storybook_forms.dart';
 
@@ -12,7 +13,7 @@ export 'storybook_forms.dart';
 abstract final class PoPalette {
   static const pink = Color(0xFFE92F85);
   static const plum = Color(0xFF49335E);
-  static const cream = Color(0xFFFFFAED);
+  static const cream = Color(0xFFF4FAFF);
   static const mint = Color(0xFFDDF2E5);
   static const lavender = Color(0xFFEDE5FA);
   static const peach = Color(0xFFFFE6CF);
@@ -434,7 +435,10 @@ class PoAction extends StatelessWidget {
           label: Text(label),
         )
       : FilledButton.icon(
-          style: FilledButton.styleFrom(backgroundColor: MimiColors.action),
+          style: FilledButton.styleFrom(
+            backgroundColor: MimiColors.yellow,
+            foregroundColor: MimiColors.ink,
+          ),
           onPressed: onPressed,
           icon: Icon(icon),
           label: Text(label),
