@@ -86,6 +86,17 @@ const brandDomainColors = [
   MimiColors.yellow,
 ];
 
+/// Material icons for domains whose hand-drawn shape was too crude
+/// (English, Life skills); null keeps the custom painter.
+const _domainIcons = <IconData?>[
+  null,
+  null,
+  Icons.menu_book_rounded,
+  Icons.volunteer_activism_rounded,
+  null,
+  null,
+];
+
 /// Large rounded brand-colored domain card. Label sits on a white pill so
 /// text keeps strong contrast on every brand color.
 class BrandDomainCard extends StatefulWidget {
@@ -132,10 +143,25 @@ class _BrandDomainCardState extends State<BrandDomainCard> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ExcludeSemantics(
-                  child: CustomPaint(
-                    size: const Size.square(84),
-                    painter: _DomainShapePainter(index),
-                  ),
+                  child: _domainIcons[index % 6] == null
+                      ? CustomPaint(
+                          size: const Size.square(84),
+                          painter: _DomainShapePainter(index),
+                        )
+                      : Container(
+                          width: 84,
+                          height: 84,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: .35),
+                          ),
+                          child: Icon(
+                            _domainIcons[index % 6],
+                            size: 52,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
                 const SizedBox(height: 8),
                 Container(
