@@ -13,6 +13,7 @@ import 'parent_gate_api.dart';
 import 'parent_gate_session.dart';
 import 'gate_screen_security.dart';
 import 'po/mobile_services.dart';
+import 'po/parent_ui.dart';
 import 'po/premium_panel.dart';
 import 'po/profile_panel.dart';
 
@@ -240,9 +241,23 @@ class _GatePinScreenState extends State<GatePinScreen>
             LengthLimitingTextInputFormatter(6),
           ]
         : null,
-    decoration: InputDecoration(labelText: label),
+    decoration: InputDecoration(
+      labelText: label,
+      // Digits: label stays above the field so it never overlaps the dots.
+      floatingLabelBehavior: digits ? FloatingLabelBehavior.always : null,
+      floatingLabelAlignment: digits ? FloatingLabelAlignment.center : null,
+      counterText: '',
+    ),
     textInputAction: TextInputAction.done,
     onSubmitted: (_) => submit(),
+  );
+
+  /// Calm 6-dot indicator under a PIN field (decorative, length only).
+  Widget dots(TextEditingController controller) => ExcludeSemantics(
+    child: ListenableBuilder(
+      listenable: controller,
+      builder: (_, _) => PinDots(filled: controller.text.length),
+    ),
   );
   @override
   Widget build(BuildContext context) {
@@ -283,6 +298,7 @@ class _GatePinScreenState extends State<GatePinScreen>
                 : 'Mã PIN mới gồm 6 chữ số',
             digits: true,
           ),
+          dots(pin),
           if (widget.pinAction != null) ...[
             const SizedBox(height: 12),
             secret(
@@ -291,6 +307,7 @@ class _GatePinScreenState extends State<GatePinScreen>
               'Nhập lại PIN mới',
               digits: true,
             ),
+            dots(confirmation),
           ],
           if (busy)
             const LinearProgressIndicator(semanticsLabel: 'Đang xác minh'),
