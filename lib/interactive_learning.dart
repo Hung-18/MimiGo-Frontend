@@ -6,6 +6,7 @@ import 'package:video_player/video_player.dart';
 import 'api_failure.dart';
 import 'child_media_access.dart';
 import 'learning_models.dart';
+import 'po/learning_ui.dart';
 import 'user_messages.dart';
 
 bool cueHasRequiredInteractiveMedia(LessonDetail lesson, LearningCue cue) {
@@ -614,11 +615,14 @@ class _InteractiveLearningViewState extends State<InteractiveLearningView>
               child: const Text('Thử xác nhận video lại')),
       ],
       if (cue != null && reachedCue == cue.cueId) ...[
-        Text(cue.promptText, style: Theme.of(context).textTheme.titleLarge),
-        IconButton(key: const Key('replayQuestionAudio'),
-            tooltip: 'Nghe lại câu hỏi', icon: const Icon(Icons.volume_up),
-            onPressed: loadingAssets || blockedMessage != null
-                ? null : () => playAudio(cue.promptAssetId!, 'CUE_AUDIO')),
+        if (cues != null)
+          StepProgress(
+              done: cues!.cues.where((c) => c.resolved).length,
+              total: cues!.cues.length),
+        QuestionBubble(prompt: cue.promptText,
+            replayKey: const Key('replayQuestionAudio'),
+            replayEnabled: !loadingAssets && blockedMessage == null,
+            replay: () => playAudio(cue.promptAssetId!, 'CUE_AUDIO')),
         if (cue.hintText != null) Text(cue.hintText!),
         if (cue.hintAssetId != null &&
             hasRole(cue.hintAssetId, 'CUE_HINT_AUDIO', 'AUDIO'))
@@ -626,8 +630,10 @@ class _InteractiveLearningViewState extends State<InteractiveLearningView>
               tooltip: 'Nghe gợi ý', icon: const Icon(Icons.lightbulb_outline),
               onPressed: () => playAudio(cue.hintAssetId!, 'CUE_HINT_AUDIO')),
         if (loadingAssets) const LinearProgressIndicator(),
-        for (final option in cue.options) ...[
+        for (final (index, option) in cue.options.indexed) ...[
           OutlinedButton(key: Key('interactiveOption-${option.optionId}'),
+            style: answerCardStyle(index,
+                selected: selectedOption == option.optionId),
             onPressed: canAnswer ? () => setState(() =>
                 selectedOption = option.optionId) : null,
             child: Column(children: [
@@ -657,11 +663,19 @@ class _InteractiveLearningViewState extends State<InteractiveLearningView>
             onPressed: canAnswer && selectedOption != null
                 ? () => answer(cue) : null,
             child: const Text('Chọn đáp án')),
-        if (answeredFeedback != null) Text(answeredFeedback!),
+        if (answeredFeedback != null && state != null && !state.resolved)
+          FeedbackPanel(kind: FeedbackKind.retry, children: [
+            const Text('Chưa đúng, mình thử lại nhé!'),
+            Text(answeredFeedback!),
+          ])
+        else if (answeredFeedback != null) Text(answeredFeedback!),
       ],
       if (cues != null && cues!.cues.isNotEmpty) ...[
         for (final resolved in cues!.cues.where((c) => c.resolved))
-          Card(child: Column(children: [
+          FeedbackPanel(
+              kind: resolved.state == 'EXHAUSTED'
+                  ? FeedbackKind.exhausted : FeedbackKind.correct,
+              children: [
             Text(resolved.state == 'EXHAUSTED'
                 ? 'Mimi sẽ chỉ đáp án đúng nhé.' : 'Đúng rồi!'),
             if (resolved.feedbackText != null) Text(resolved.feedbackText!),
@@ -671,7 +685,7 @@ class _InteractiveLearningViewState extends State<InteractiveLearningView>
               Text('Đáp án đúng: ${lesson!.cues.firstWhere(
                 (c) => c.cueId == resolved.cueId).options.firstWhere(
                 (o) => o.optionId == resolved.correctOptionId).labelText}'),
-          ])),
+          ]),
       ],
       if (session?.state == 'IN_PROGRESS' && cues?.resolved == true) ...[
         if (playback?.videoEndRequired == true && !videoEnded)

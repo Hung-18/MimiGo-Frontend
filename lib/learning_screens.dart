@@ -9,6 +9,7 @@ import 'learning_models.dart';
 import 'learning_session_memory.dart';
 import 'interactive_learning.dart';
 import 'mimigo_design.dart';
+import 'po/learning_ui.dart';
 import 'po/po_design.dart';
 
 class LearningLabel extends StatelessWidget {
@@ -221,7 +222,8 @@ class _LearningLessonViewState extends State<LearningLessonView> {
 
   @override
   void dispose() {
-    if (widget.api is! InteractiveLearningApi) memory.removeListener(syncMemory);
+    if (widget.api is! InteractiveLearningApi)
+      memory.removeListener(syncMemory);
     if (widget.sessions == null) memory.dispose();
     super.dispose();
   }
@@ -903,50 +905,36 @@ class _LearningLessonViewState extends State<LearningLessonView> {
                           );
                       },
               ),
-            Semantics(
-              header: true,
-              child: Text(
-                cue.promptText,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-            ),
+            QuestionBubble(prompt: cue.promptText),
             if (options.isEmpty) const Text('Chưa có lựa chọn trả lời.'),
             const SizedBox(height: 12),
             MimiTileGrid(
               minimumWidth: 210,
-              children: options
+              children: options.indexed
                   .map(
-                    (option) => Padding(
+                    (entry) => Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(minHeight: 80),
+                        constraints: const BoxConstraints(minHeight: 96),
                         child: Semantics(
-                          key: Key('choice-semantics-${option.optionId}'),
-                          selected: chosen == option.optionId,
+                          key: Key('choice-semantics-${entry.$2.optionId}'),
+                          selected: chosen == entry.$2.optionId,
                           inMutuallyExclusiveGroup: true,
                           child: OutlinedButton(
-                            key: Key('option-${option.optionId}'),
-                            style: chosen == option.optionId
-                                ? OutlinedButton.styleFrom(
-                                    backgroundColor: Theme.of(context)
-                                        .colorScheme
-                                        .primaryContainer,
-                                    side: BorderSide(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .primary,
-                                      width: 2,
-                                    ),
-                                  )
-                                : null,
+                            key: Key('option-${entry.$2.optionId}'),
+                            style: answerCardStyle(
+                              entry.$1,
+                              selected: chosen == entry.$2.optionId,
+                            ),
                             onPressed: canAnswer && pending == null
                                 ? () => setState(
-                                    () => selected[cue.cueId] = option.optionId,
+                                    () =>
+                                        selected[cue.cueId] = entry.$2.optionId,
                                   )
                                 : null,
                             child: ActivityChoice(
-                              label: option.labelText,
-                              selected: chosen == option.optionId,
+                              label: entry.$2.labelText,
+                              selected: chosen == entry.$2.optionId,
                             ),
                           ),
                         ),
@@ -991,36 +979,24 @@ class _LearningLessonViewState extends State<LearningLessonView> {
                 key: Key('feedback-announcement-${cue.cueId}'),
                 container: true,
                 liveRegion: true,
-                child: MimiNotice(
-                  icon: Icons.chat_bubble_outline,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Center(
-                        child: MimiBee(
-                          key: ValueKey((
-                            current.sessionId,
-                            cue.cueId,
-                            value.attemptNo,
-                          )),
-                          size: 108,
-                          mood: value.isCorrect == true
-                              ? MimiMood.correct
-                              : MimiMood.encourage,
-                        ),
-                      ),
-                      Text(
-                        value.isCorrect == true
-                            ? 'Đúng rồi! Mình cùng xem lời giải nhé.'
-                            : 'Đã lưu câu trả lời. Mình cùng xem lời giải nhé.',
-                      ),
-                      Text(
-                        'Lời giải (lần ${value.attemptNo}): ${value.feedbackText}',
-                        key: Key('feedback-${cue.cueId}'),
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                    ],
-                  ),
+                child: FeedbackPanel(
+                  kind: value.isCorrect == true
+                      ? FeedbackKind.correct
+                      : value.attemptNo >= 2
+                      ? FeedbackKind.exhausted
+                      : FeedbackKind.retry,
+                  children: [
+                    Text(
+                      value.isCorrect == true
+                          ? 'Đúng rồi! Mình cùng xem lời giải nhé.'
+                          : 'Đã lưu câu trả lời. Mình cùng xem lời giải nhé.',
+                    ),
+                    Text(
+                      'Lời giải (lần ${value.attemptNo}): ${value.feedbackText}',
+                      key: Key('feedback-${cue.cueId}'),
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ],
                 ),
               ),
             ...recorded.map(
