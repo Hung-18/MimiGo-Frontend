@@ -3912,6 +3912,7 @@ class _PrivacyState extends State<Privacy> {
                             enabled: !busy,
                             read: () => readNotice(n),
                           ),
+                        if (kDebugMode || widget.fixture)
                         ExpansionTile(
                           tilePadding: EdgeInsets.zero,
                           title: const Text('Chi tiết kỹ thuật'),

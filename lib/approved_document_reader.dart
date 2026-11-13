@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'account_availability.dart';
+import 'light_markdown.dart';
 import 'mimigo_design.dart';
 
 /// A decision is returned only by an explicit action. Closing never accepts.
@@ -40,7 +41,7 @@ class ApprovedDocumentCard extends StatelessWidget {
         Text(document.title, style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: 6),
         Text(
-          document.body,
+          plainFromMarkdown(document.body).replaceAll('\n', ' '),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.bodySmall,
@@ -102,10 +103,9 @@ class _DocumentReaderState extends State<_DocumentReader> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  SelectableText(
+                  LightMarkdownText(
                     widget.document.body,
                     key: const Key('legalFullText'),
-                    style: Theme.of(context).textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 24),
                   const Divider(height: 1),

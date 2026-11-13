@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mimigo_frontend/light_markdown.dart';
 import 'package:mimigo_frontend/main.dart';
 
 import 'learning_api_test.dart' show Transport, Reply, authenticated;
@@ -209,7 +210,13 @@ void main() {
         ),
       );
       await t.pumpAndSettle();
-      expect(find.text(reference.terms!.document!.body), findsOneWidget);
+      final body = reference.terms!.document!.body;
+      expect(
+        find.text(plainFromMarkdown(body).replaceAll('\n', ' ')),
+        findsOneWidget,
+      );
+      expect(find.text(body), findsNothing);
+      expect(find.textContaining('# '), findsNothing);
       expect(find.byKey(const Key('registerEmail')), findsOneWidget);
       final checkbox = t.widget<CheckboxListTile>(
         find.byType(CheckboxListTile),
