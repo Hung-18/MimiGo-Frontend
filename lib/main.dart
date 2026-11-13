@@ -3027,12 +3027,6 @@ class Welcome extends StatelessWidget {
                             semanticsLabel: 'Đang tải thông tin đăng ký',
                           ),
                         OnboardingError(error),
-                        if (live)
-                          const Text(
-                            'Đăng ký theo khả năng cung cấp của dịch vụ.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 12),
-                          ),
                         if (!live)
                           OutlinedButton.icon(
                             key: const Key('welcomeMobileDemo'),

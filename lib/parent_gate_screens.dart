@@ -2,6 +2,7 @@ import 'user_messages.dart';
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -521,14 +522,14 @@ class _GatedParentAreaState extends State<GatedParentArea> {
             service: (widget.api as MobileCapabilities).profiles,
             childId: detail!.id,
           ),
-        if (widget.api is MobileCapabilities)
+        if (kDebugMode && widget.api is MobileCapabilities)
           OutlinedButton(
             onPressed: busy
                 ? null
                 : () => setState(() => showPremium = !showPremium),
             child: const Text('Gói học & quyền Premium Core'),
           ),
-        if (showPremium && widget.api is MobileCapabilities)
+        if (kDebugMode && showPremium && widget.api is MobileCapabilities)
           PremiumPanel(
             key: ValueKey(detail!.id),
             service: (widget.api as MobileCapabilities).premium,

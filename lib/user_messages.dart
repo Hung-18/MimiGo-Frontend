@@ -11,7 +11,7 @@ String friendlyError(ApiFailure e) => switch (e.code) {
     'Điều khoản đã thay đổi. Vui lòng tải lại và đọc trước khi lựa chọn.',
   'TERMS_ACCEPTANCE_REQUIRED' =>
     'Ba mẹ cần đọc và đồng ý với điều khoản hiện hành để tiếp tục.',
-  'REGISTRATION_RESTRICTED' => 'Đăng ký hiện chỉ mở cho tài khoản được mời. Ba mẹ có thể đăng nhập nếu đã có tài khoản.',
+  'REGISTRATION_RESTRICTED' => 'Chưa đăng ký được tài khoản lúc này. Ba mẹ vui lòng thử lại sau, hoặc đăng nhập nếu đã có tài khoản.',
   'EMAIL_ALREADY_REGISTERED' => 'Email này đã được đăng ký. Ba mẹ hãy đăng nhập hoặc xác minh email nếu được yêu cầu.',
   'EMAIL_NOT_VERIFIED' => 'Ba mẹ cần xác minh email trước khi đăng nhập.',
   'EMAIL_DELIVERY_UNAVAILABLE' => 'Chưa gửi được email xác nhận. Vui lòng thử gửi lại sau, không cần tạo thêm tài khoản.',
