@@ -78,6 +78,14 @@ Future<void> beginRegistration(WidgetTester tester, RegistrationApi api) async {
   await tapVisible(tester, 'welcomeStart');
 }
 
+Future<void> readAndAcceptTerms(WidgetTester tester) async {
+  await tapVisible(tester, 'registrationReadTerms');
+  await tester.tap(find.byKey(const Key('legalExplicitChoice')));
+  await tester.pump();
+  await tester.tap(find.byKey(const Key('legalAgree')));
+  await tester.pumpAndSettle();
+}
+
 Future<void> fillRegistration(WidgetTester tester) async {
   await tester.enterText(
     find.byKey(const Key('registerEmail')),
@@ -134,13 +142,15 @@ void main() {
             .text,
         isEmpty,
       );
+      expect(
+        tester.widget<FilledButton>(find.byKey(const Key('registerSubmit'))).onPressed,
+        isNull,
+      );
+      await readAndAcceptTerms(tester);
       await tapVisible(tester, 'registerSubmit');
       expect(api.registrations, isEmpty);
       expect(find.text('Mật khẩu cần có từ 10 đến 128 ký tự.'), findsOneWidget);
       await fillRegistration(tester);
-      await tapVisible(tester, 'registerSubmit');
-      expect(api.registrations, isEmpty);
-      await tapVisible(tester, 'termsCheckbox');
       await tapVisible(tester, 'registerSubmit');
       expect(api.registrations.single.termsAccepted, isTrue);
       expect(find.byType(Otp), findsOneWidget);
@@ -164,7 +174,7 @@ void main() {
         );
       await beginRegistration(tester, api);
       await fillRegistration(tester);
-      await tapVisible(tester, 'termsCheckbox');
+      await readAndAcceptTerms(tester);
       await tapVisible(tester, 'registerSubmit');
       expect(find.byType(Register), findsOneWidget);
       expect(find.textContaining('PRIVATE'), findsNothing);
@@ -184,7 +194,7 @@ void main() {
       await tapVisible(tester, 'reloadRegistrationTerms');
       await tapVisible(tester, 'registerSubmit');
       expect(api.registrations, hasLength(1));
-      await tapVisible(tester, 'termsCheckbox');
+      await readAndAcceptTerms(tester);
       await tapVisible(tester, 'registerSubmit');
       expect(api.registrations, hasLength(2));
       expect(find.byType(Otp), findsOneWidget);

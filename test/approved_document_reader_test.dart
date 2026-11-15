@@ -10,6 +10,7 @@ import 'learning_widget_test.dart' show tapVisible;
 import 'pilot_legal_contract_test.dart' show parseReference, legalReference;
 
 void main() {
+  termsGateTests();
   Future<void> openRegister(WidgetTester t) async {
     final reference = await parseReference(legalReference());
     await t.pumpWidget(
@@ -143,11 +144,17 @@ void main() {
       );
     },
   );
-  testWidgets('child purpose checkbox opens its full notice before agreement', (t) async {
+  testWidgets('child purpose checkbox opens its full notice before agreement', (
+    t,
+  ) async {
     await t.pumpWidget(
       visualApp(
         Privacy(
-          attempt: OnboardingAttempt('attempt', DateTime(2030), noticeSnapshot()),
+          attempt: OnboardingAttempt(
+            'attempt',
+            DateTime(2030),
+            noticeSnapshot(),
+          ),
           begin: () async {},
           declined: () {},
           next: () {},
@@ -160,9 +167,11 @@ void main() {
     await t.tap(find.byKey(const Key('legalClose')));
     await t.pumpAndSettle();
     expect(
-      t.widget<CheckboxListTile>(
-        find.byKey(const Key('consent-CHILD_PROFILE_AGE')),
-      ).value,
+      t
+          .widget<CheckboxListTile>(
+            find.byKey(const Key('consent-CHILD_PROFILE_AGE')),
+          )
+          .value,
       isFalse,
     );
     await tapVisible(t, 'consent-CHILD_PROFILE_AGE');
@@ -171,17 +180,25 @@ void main() {
     await t.tap(find.byKey(const Key('legalAgree')));
     await t.pumpAndSettle();
     expect(
-      t.widget<CheckboxListTile>(
-        find.byKey(const Key('consent-CHILD_PROFILE_AGE')),
-      ).value,
+      t
+          .widget<CheckboxListTile>(
+            find.byKey(const Key('consent-CHILD_PROFILE_AGE')),
+          )
+          .value,
       isTrue,
     );
   });
-  testWidgets('fixture purpose checkbox keeps its direct demo choice', (t) async {
+  testWidgets('fixture purpose checkbox keeps its direct demo choice', (
+    t,
+  ) async {
     await t.pumpWidget(
       visualApp(
         Privacy(
-          attempt: OnboardingAttempt('fixture-attempt', DateTime(2030), noticeSnapshot()),
+          attempt: OnboardingAttempt(
+            'fixture-attempt',
+            DateTime(2030),
+            noticeSnapshot(),
+          ),
           begin: () async {},
           declined: () {},
           next: () {},
@@ -193,9 +210,11 @@ void main() {
     await tapVisible(t, 'consent-CHILD_PROFILE_AGE');
     expect(find.byKey(const Key('legalFullText')), findsNothing);
     expect(
-      t.widget<CheckboxListTile>(
-        find.byKey(const Key('consent-CHILD_PROFILE_AGE')),
-      ).value,
+      t
+          .widget<CheckboxListTile>(
+            find.byKey(const Key('consent-CHILD_PROFILE_AGE')),
+          )
+          .value,
       isTrue,
     );
   });
@@ -285,4 +304,47 @@ void main() {
       expect(find.byKey(const Key('legalFullText')), findsNothing);
     },
   );
+}
+
+void termsGateTests() {
+  testWidgets('T16: box and button stay disabled until terms are read', (
+    t,
+  ) async {
+    final reference = await parseReference(legalReference());
+    await t.pumpWidget(
+      visualApp(
+        Register(
+          reference: reference,
+          fixture: false,
+          live: true,
+          back: () {},
+          submitted: (_) async {},
+        ),
+      ),
+    );
+    await t.pumpAndSettle();
+    CheckboxListTile box() =>
+        t.widget<CheckboxListTile>(find.byKey(const Key('termsCheckbox')));
+    FilledButton submit() =>
+        t.widget<FilledButton>(find.byKey(const Key('registerSubmit')));
+    expect(box().onChanged, isNull);
+    expect(submit().onPressed, isNull);
+    expect(find.byKey(const Key('termsReadHint')), findsOneWidget);
+    await tapVisible(t, 'registrationReadTerms');
+    await t.tap(find.byKey(const Key('legalClose')));
+    await t.pumpAndSettle();
+    expect(box().onChanged, isNull);
+    await tapVisible(t, 'registrationReadTerms');
+    await t.tap(find.byKey(const Key('legalExplicitChoice')));
+    await t.pump();
+    await t.tap(find.byKey(const Key('legalAgree')));
+    await t.pumpAndSettle();
+    expect(box().value, isTrue);
+    expect(box().onChanged, isNotNull);
+    expect(submit().onPressed, isNotNull);
+    expect(find.byKey(const Key('termsReadHint')), findsNothing);
+    await tapVisible(t, 'termsCheckbox');
+    expect(box().value, isFalse);
+    expect(submit().onPressed, isNull);
+  });
 }

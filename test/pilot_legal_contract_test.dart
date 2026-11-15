@@ -222,7 +222,18 @@ void main() {
         find.byType(CheckboxListTile),
       );
       expect(checkbox.value, isFalse);
-      expect(checkbox.onChanged, isNotNull);
+      expect(checkbox.onChanged, isNull);
+      expect(find.byKey(const Key('termsReadHint')), findsOneWidget);
+      expect(
+        find.text('Vui lòng mở và đọc điều khoản trước khi đồng ý'),
+        findsOneWidget,
+      );
+      expect(
+        t
+            .widget<FilledButton>(find.byKey(const Key('registerSubmit')))
+            .onPressed,
+        isNull,
+      );
     },
   );
 }

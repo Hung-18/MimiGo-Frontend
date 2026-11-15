@@ -3355,6 +3355,7 @@ class _RegisterState extends State<Register> {
       );
   late OnboardingReference current = widget.reference;
   bool terms = false, busy = false;
+  bool termsRead = false;
   bool versionChanged = false;
   bool passwordVisible = false, confirmationVisible = false;
   ApiFailure? error;
@@ -3366,7 +3367,10 @@ class _RegisterState extends State<Register> {
     if (current.terms?.hasApprovedDocument == true &&
         current.terms!.id == snapshot.id &&
         current.terms!.contentHash == snapshot.contentHash) {
-      setState(() => terms = decision);
+      setState(() {
+        terms = decision;
+        if (decision) termsRead = true;
+      });
     }
   }
 
@@ -3421,6 +3425,7 @@ class _RegisterState extends State<Register> {
           error = e;
           if (e.code == 'TERMS_VERSION_NOT_CURRENT') {
             terms = false;
+            termsRead = false;
             versionChanged = true;
           }
         });
@@ -3434,6 +3439,7 @@ class _RegisterState extends State<Register> {
     setState(() {
       busy = true;
       terms = false;
+      termsRead = false;
       error = null;
     });
     try {
@@ -3606,11 +3612,17 @@ class _RegisterState extends State<Register> {
             busy ||
                 versionChanged ||
                 current.terms == null ||
-                (!widget.fixture && !current.terms!.hasApprovedDocument)
+                (!widget.fixture && !current.terms!.hasApprovedDocument) ||
+                (current.terms!.hasApprovedDocument && !termsRead)
             ? null
             : (v) => setState(() => terms = v ?? false),
         title: const Text('Tôi đã đọc và đồng ý với điều khoản sử dụng'),
       ),
+      if (current.terms?.hasApprovedDocument == true && !termsRead)
+        const Text(
+          'Vui lòng mở và đọc điều khoản trước khi đồng ý',
+          key: Key('termsReadHint'),
+        ),
       OnboardingError(error),
       if (widget.reloadReference != null)
         OutlinedButton(
@@ -3625,6 +3637,7 @@ class _RegisterState extends State<Register> {
           onPressed:
               busy ||
                   versionChanged ||
+                  !terms ||
                   (!widget.fixture &&
                       current.terms?.hasApprovedDocument != true)
               ? null
