@@ -116,16 +116,73 @@ Map<String, dynamic> object(Object? value) {
   return value;
 }
 
+enum BillingMode { none, simulator, real }
+
 class PremiumService {
   PremiumService(this.request);
   final MobileRequest request;
   Future<Map<String, dynamic>> plans() async {
-    final j = await request('GET', 'billing/premium-plans', protected: true);
-    if (j['synthetic'] != true ||
-        j['channel'] != 'SIMULATOR' ||
+    // Parent token only (no Parent Gate proof): a 403/404 here must never wipe the proof.
+    final j = await request('GET', 'billing/premium-plans');
+    if (j['synthetic'] is! bool ||
+        j['channel'] is! String ||
+        (j['synthetic'] == true && j['channel'] != 'SIMULATOR') ||
         j['plans'] is! List ||
         j['checkoutAvailable'] is! bool)
-      throw const ApiInvalidResponse('Expected simulator plans.');
+      throw const ApiInvalidResponse('Invalid billing plans.');
+    return j;
+  }
+
+  /// What the server offers right now, learned only from the server's own answer
+  /// (no BE change): a locked/unavailable/failed billing read means [BillingMode.none].
+  /// A simulator offer is returned as such so a release build can refuse to show it.
+  Future<BillingMode> mode() async {
+    try {
+      final j = await plans();
+      if (j['checkoutAvailable'] != true || (j['plans'] as List).isEmpty)
+        return BillingMode.none;
+      return j['synthetic'] == true ? BillingMode.simulator : BillingMode.real;
+    } catch (_) {
+      return BillingMode.none;
+    }
+  }
+
+  /// Bank-transfer (VietQR) instructions. Granting nothing: the response is never proof of payment.
+  Future<Map<String, dynamic>> createTransfer(
+    String childId,
+    String planId,
+  ) async {
+    final j = await request(
+      'POST',
+      'billing/sepay/payment-intents',
+      body: {'childId': childId, 'planId': planId},
+      protected: true,
+    );
+    if (j['intentId'] is! String ||
+        j['orderCode'] is! String ||
+        j['amountMinor'] is! int ||
+        j['currency'] is! String ||
+        j['accountNumber'] is! String ||
+        j['bankCode'] is! String ||
+        j['transferContent'] is! String ||
+        j['status'] != 'AWAITING_TRANSFER')
+      throw const ApiInvalidResponse('Invalid transfer instructions.');
+    return j;
+  }
+
+  Future<Map<String, dynamic>> transferStatus(
+    String childId,
+    String intentId,
+  ) async {
+    final j = await request(
+      'GET',
+      'children/$childId/payments/SEPAY/$intentId',
+      protected: true,
+    );
+    if (j['paymentId'] != intentId ||
+        j['childId'] != childId ||
+        j['status'] is! String)
+      throw const ApiInvalidResponse('Invalid payment status.');
     return j;
   }
 
@@ -136,7 +193,7 @@ class PremiumService {
       protected: true,
     );
     if (j['childId'] != childId ||
-        j['synthetic'] != true ||
+        j['synthetic'] is! bool ||
         j['terms'] is! List ||
         j['checkoutAvailable'] is! bool)
       throw const ApiInvalidResponse('Invalid child eligibility.');
@@ -150,7 +207,7 @@ class PremiumService {
       protected: true,
     );
     if (j['childId'] != childId ||
-        j['synthetic'] != true ||
+        j['synthetic'] is! bool ||
         !['NONE', 'ACTIVE', 'EXPIRED'].contains(j['status']))
       throw const ApiInvalidResponse('Invalid child entitlement.');
     return j;

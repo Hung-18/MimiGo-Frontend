@@ -390,6 +390,8 @@ class _GatedParentAreaState extends State<GatedParentArea> {
   ApiFailure? error;
   bool busy = false;
   bool showPremium = false, showProfileEdit = false;
+  // Premium entry: only when the server itself offers billing (any locked/failed read = hidden, no error).
+  BillingMode premiumMode = BillingMode.none;
   String? info;
   @override
   void initState() {
@@ -454,6 +456,7 @@ class _GatedParentAreaState extends State<GatedParentArea> {
     setState(() {
       showPremium = false;
       showProfileEdit = false;
+      premiumMode = BillingMode.none;
       detail = null;
       activity = null;
     });
@@ -461,7 +464,17 @@ class _GatedParentAreaState extends State<GatedParentArea> {
     if (value.id != child.id)
       throw const ApiInvalidResponse('Invalid protected child detail.');
     if (mounted) setState(() => detail = value);
+    // Not awaited: the optional Premium entry must never delay or fail the child detail.
+    if (widget.api is MobileCapabilities) unawaited(probePremium(child.id));
   });
+  Future<void> probePremium(String childId) async {
+    final mode = await (widget.api as MobileCapabilities).premium.mode();
+    if (mounted && detail?.id == childId) setState(() => premiumMode = mode);
+  }
+
+  bool get _premiumShown =>
+      premiumMode == BillingMode.real ||
+      (kDebugMode && premiumMode == BillingMode.simulator);
   @override
   Widget build(BuildContext context) => Frame(
     title: 'Cài đặt của ba mẹ',
@@ -522,16 +535,22 @@ class _GatedParentAreaState extends State<GatedParentArea> {
             service: (widget.api as MobileCapabilities).profiles,
             childId: detail!.id,
           ),
-        if (kDebugMode && widget.api is MobileCapabilities)
+        if (widget.api is MobileCapabilities && _premiumShown)
           OutlinedButton(
+            key: const Key('premiumEntry'),
             onPressed: busy
                 ? null
                 : () => setState(() => showPremium = !showPremium),
-            child: const Text('Gói học & quyền Premium Core'),
+            child: Text(
+              premiumMode == BillingMode.real
+                  ? 'Gói học trả phí'
+                  : 'Gói học & quyền Premium Core',
+            ),
           ),
-        if (kDebugMode && showPremium && widget.api is MobileCapabilities)
+        if (showPremium && widget.api is MobileCapabilities && _premiumShown)
           PremiumPanel(
             key: ValueKey(detail!.id),
+            allowSimulator: kDebugMode,
             service: (widget.api as MobileCapabilities).premium,
             childId: detail!.id,
           ),
