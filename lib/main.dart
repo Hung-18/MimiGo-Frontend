@@ -26,6 +26,7 @@ import 'mobile_demo.dart';
 import 'po/po_design.dart';
 import 'po/avatar_choice.dart';
 import 'po/mobile_services.dart';
+import 'po/data_rights.dart' show DataRightsService;
 import 'po/resend_button.dart';
 import 'po/code_input.dart';
 import 'po/po_boot.dart';
@@ -926,6 +927,29 @@ class LiveMimiGoApi
     );
   });
   @override
+  late final DataRightsService dataRights = DataRightsService((
+    method,
+    path, {
+    body,
+    bool protected = false,
+    Map<String, String>? headers,
+  }) {
+    if (!parentGateEnabled)
+      throw const ApiFailure(
+        'Parent Gate unavailable.',
+        code: 'PARENT_GATE_REQUIRED',
+        status: 403,
+      );
+    return _request(
+      method,
+      path,
+      body: body,
+      auth: true,
+      requireProof: true,
+      headers: headers,
+    );
+  });
+  @override
   final bool parentGateEnabled;
   @override
   bool get childMediaEnabled =>
@@ -1497,7 +1521,9 @@ class LiveMimiGoApi
       checkCurrent();
       Map<String, dynamic> json;
       try {
-        json = _map(jsonDecode(raw));
+        final decoded = jsonDecode(raw);
+        // A bare JSON array (e.g. the privacy-requests list) is exposed as {items: [...]}.
+        json = decoded is List ? {'items': decoded} : _map(decoded);
       } catch (_) {
         throw ApiInvalidResponse(
           'The server returned malformed JSON.',

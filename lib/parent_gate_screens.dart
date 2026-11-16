@@ -15,6 +15,7 @@ import 'parent_gate_session.dart';
 import 'gate_screen_security.dart';
 import 'po/mobile_services.dart';
 import 'po/parent_ui.dart';
+import 'po/data_rights.dart';
 import 'po/premium_panel.dart';
 import 'po/profile_panel.dart';
 
@@ -405,7 +406,7 @@ class _GatedParentAreaState extends State<GatedParentArea> {
   List<ParentActivityItem>? activity;
   ApiFailure? error;
   bool busy = false;
-  bool showPremium = false, showProfileEdit = false;
+  bool showPremium = false, showProfileEdit = false, showRights = false;
   // Premium entry: only when the server itself offers billing (any locked/failed read = hidden, no error).
   BillingMode premiumMode = BillingMode.none;
   String? info;
@@ -530,6 +531,19 @@ class _GatedParentAreaState extends State<GatedParentArea> {
           key: const Key('gatedRefresh'),
           onPressed: busy ? null : load,
           child: const Text('Tải lại danh sách bé được phép xem'),
+        ),
+      if (protected && widget.api is MobileCapabilities)
+        OutlinedButton(
+          key: const Key('dataRightsEntry'),
+          onPressed: busy
+              ? null
+              : () => setState(() => showRights = !showRights),
+          child: const Text('Quyền về dữ liệu'),
+        ),
+      if (protected && showRights && widget.api is MobileCapabilities)
+        DataRightsPanel(
+          service: (widget.api as MobileCapabilities).dataRights,
+          children: [for (final c in children) (id: c.id, alias: c.alias)],
         ),
       for (final child in children)
         OutlinedButton(

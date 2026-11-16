@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import '../api_failure.dart';
+import 'data_rights.dart' show DataRightsService;
 
 typedef MobileRequest = Future<Map<String, dynamic>> Function(
   String method,
@@ -41,6 +42,7 @@ abstract interface class MobileCapabilities {
   Future<ResendResult> resendVerification(String email);
   PremiumService get premium;
   ProfileService get profiles;
+  DataRightsService get dataRights;
 }
 
 class ProfileService {
