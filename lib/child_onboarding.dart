@@ -2,7 +2,8 @@ import 'user_messages.dart';
 
 import 'package:flutter/material.dart';
 
-import 'main.dart' show MimiGoApi, CreateChildRequest, ChildSummary, dateText;
+import 'main.dart'
+    show MimiGoApi, CreateChildRequest, ChildSummary, dateText, productAge;
 import 'api_failure.dart';
 
 /// One immutable creation request per review. An unknown outcome must retry
@@ -88,6 +89,42 @@ DateTime vietnamToday([DateTime? now]) {
 
 bool acceptableChildDob(DateTime date, DateTime today) =>
     !date.isBefore(DateTime(1900, 1, 1)) && date.isBefore(today);
+
+/// Program age band is 2..6 completed years (same rule as the server's
+/// withinProgramAgeRange). Used only to warn before creating the profile.
+bool dobOutsideProgramAge(DateTime dob, DateTime today) {
+  final age = productAge(dob, today);
+  return age < 2 || age > 6;
+}
+
+/// Returns true when the parent chooses to create the profile anyway.
+Future<bool> confirmOutOfRangeAge(BuildContext context) async {
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (c) => AlertDialog(
+      key: const Key('ageRangeWarning'),
+      title: const Text('Bé ngoài độ tuổi của MimiGo'),
+      content: const Text(
+        'MimiGo được thiết kế cho bé từ 2 đến 6 tuổi. Ba mẹ vẫn có thể tạo hồ sơ này, '
+        'nhưng bé có thể chưa vào học được các bài học. '
+        'Ba mẹ kiểm tra lại ngày sinh giúp nhé.',
+      ),
+      actions: [
+        TextButton(
+          key: const Key('ageWarningEditDob'),
+          onPressed: () => Navigator.of(c).pop(false),
+          child: const Text('Sửa ngày sinh'),
+        ),
+        FilledButton(
+          key: const Key('ageWarningCreateAnyway'),
+          onPressed: () => Navigator.of(c).pop(true),
+          child: const Text('Vẫn tạo hồ sơ'),
+        ),
+      ],
+    ),
+  );
+  return result ?? false;
+}
 
 /// Pilot nickname shape; server validation remains authoritative.
 bool acceptableChildNickname(String value) {

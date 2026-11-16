@@ -4191,6 +4191,16 @@ class _ReviewState extends State<Review> {
   bool leaving = false;
   Future<void> submit() async {
     if (leaving) return;
+    // Warn once, before the first send; a retry of the same payload is not re-asked.
+    if (!widget.model.sent &&
+        dobOutsideProgramAge(widget.draft.dob, vietnamToday())) {
+      final proceed = await confirmOutOfRangeAge(context);
+      if (!mounted) return;
+      if (!proceed) {
+        if (widget.model.canEdit) widget.back();
+        return;
+      }
+    }
     final value = await widget.model.submit();
     if (!mounted) return;
     if (widget.model.error?.code == 'TERMS_ACCEPTANCE_REQUIRED') {
