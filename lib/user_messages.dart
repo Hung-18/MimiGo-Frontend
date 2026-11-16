@@ -18,8 +18,8 @@ String friendlyError(ApiFailure e) => switch (e.code) {
   'INVALID_EMAIL' => 'Ba mẹ kiểm tra lại địa chỉ email nhé.',
   'INVALID_PASSWORD' =>
     'Mật khẩu chưa đáp ứng yêu cầu. Ba mẹ kiểm tra lại nhé.',
-  'INVALID_CREDENTIALS' ||
-  'STEP_UP_FAILED' => 'Email hoặc mật khẩu chưa đúng. Ba mẹ kiểm tra lại nhé.',
+  'INVALID_CREDENTIALS' => 'Email hoặc mật khẩu chưa đúng. Ba mẹ kiểm tra lại nhé.',
+  'STEP_UP_FAILED' => 'Mật khẩu chưa đúng. Ba mẹ kiểm tra lại nhé.',
   'INVALID_OTP' => 'Mã xác nhận chưa đúng hoặc đã hết hạn. Vui lòng dùng mã mới nhất trong email.',
   'INVALID_OTP_FORMAT' => 'Vui lòng nhập đủ 6 chữ số của mã xác nhận.',
   'PARENT_GATE_FAILED' => 'Mã PIN chưa đúng. Ba mẹ thử lại nhé.',

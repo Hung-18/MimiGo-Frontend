@@ -213,6 +213,8 @@ class _GatePinScreenState extends State<GatePinScreen>
     }
   }
 
+  bool passwordVisible = false;
+
   Widget secret(
     TextEditingController controller,
     String key,
@@ -222,7 +224,7 @@ class _GatePinScreenState extends State<GatePinScreen>
     key: Key(key),
     controller: controller,
     enabled: !busy && !leaving,
-    obscureText: true,
+    obscureText: !(passwordVisible && !digits),
     autocorrect: false,
     enableSuggestions: false,
     enableIMEPersonalizedLearning: false,
@@ -248,6 +250,20 @@ class _GatePinScreenState extends State<GatePinScreen>
       floatingLabelBehavior: digits ? FloatingLabelBehavior.always : null,
       floatingLabelAlignment: digits ? FloatingLabelAlignment.center : null,
       counterText: '',
+      suffixIcon: digits
+          ? null
+          : IconButton(
+              key: const Key('gatePasswordToggle'),
+              onPressed: busy || leaving
+                  ? null
+                  : () => setState(() => passwordVisible = !passwordVisible),
+              tooltip: passwordVisible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu',
+              icon: Icon(
+                passwordVisible
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+              ),
+            ),
     ),
     textInputAction: TextInputAction.done,
     onSubmitted: (_) => submit(),
