@@ -24,6 +24,7 @@ import 'parent_gate_screens.dart';
 import 'mimigo_design.dart';
 import 'mobile_demo.dart';
 import 'po/po_design.dart';
+import 'po/avatar_choice.dart';
 import 'po/mobile_services.dart';
 import 'po/resend_button.dart';
 import 'po/code_input.dart';
@@ -4129,19 +4130,19 @@ class _ChildInputState extends State<ChildInput> {
         spacing: 12,
         runSpacing: 12,
         children: [
-          for (final option in const [
-            ('bear-blue', 'Gấu xanh', Icons.pets_outlined),
-            ('bee-yellow', 'Ong vàng', Icons.emoji_nature_outlined),
-          ])
+          for (final option in childAvatarOptions)
             ChoiceChip(
-              key: Key('avatar-${option.$1}'),
-              selected: avatar == option.$1,
-              onSelected: (_) => setState(() => avatar = option.$1),
-              avatar: Icon(option.$3),
-              label: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                child: Text(option.$2),
+              key: Key('avatar-${option.key}'),
+              selected: avatar == option.key,
+              showCheckmark: false,
+              onSelected: (_) => setState(() => avatar = option.key),
+              avatar: AvatarBadge(stockKey: option.key, size: 40),
+              avatarBoxConstraints: const BoxConstraints.tightFor(
+                width: 40,
+                height: 40,
               ),
+              labelPadding: const EdgeInsets.fromLTRB(8, 12, 12, 12),
+              label: Text(option.name),
             ),
         ],
       ),
@@ -4222,16 +4223,27 @@ class _ReviewState extends State<Review> {
       children: [
         const OnboardingTrail(step: 2),
         ListTile(
+          contentPadding: EdgeInsets.zero,
+          visualDensity: VisualDensity.compact,
           title: const Text('Tên gọi'),
           subtitle: Text(widget.draft.alias),
         ),
         ListTile(
+          contentPadding: EdgeInsets.zero,
+          visualDensity: VisualDensity.compact,
           title: const Text('Ngày sinh'),
           subtitle: Text(
             '${viDate(widget.draft.dob)} · độ tuổi và quyền học sẽ được xác nhận khi lưu',
           ),
         ),
-        const Text('Ảnh đại diện đã chọn'),
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: AvatarBadge(stockKey: widget.draft.avatar, size: 52),
+          title: const Text('Ảnh đại diện'),
+          subtitle: Text(
+            avatarOptionFor(widget.draft.avatar)?.name ?? 'Ảnh có sẵn',
+          ),
+        ),
         const Text('Lựa chọn riêng cho hồ sơ này:'),
         for (final notice in widget.attempt.notices)
           Text(viPurpose(notice.purposeCode)),

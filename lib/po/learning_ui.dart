@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../mimigo_design.dart';
 import 'mimi_world.dart';
+import 'motion.dart';
 
 /// One brand color per answer option (cycles). UI only.
 const _optionColors = [
@@ -114,7 +115,7 @@ class FeedbackPanel extends StatelessWidget {
         MimiMood.encourage,
       ),
     };
-    return Container(
+    final panel = Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: color.withValues(alpha: .14),
@@ -140,6 +141,9 @@ class FeedbackPanel extends StatelessWidget {
         ],
       ),
     );
+    return kind == FeedbackKind.correct
+        ? CelebrationBurst(child: panel)
+        : panel;
   }
 }
 

@@ -7,6 +7,7 @@ import 'api_failure.dart';
 import 'child_media_access.dart';
 import 'learning_models.dart';
 import 'po/learning_ui.dart';
+import 'po/motion.dart';
 import 'user_messages.dart';
 
 bool cueHasRequiredInteractiveMedia(LessonDetail lesson, LearningCue cue) {
@@ -631,7 +632,7 @@ class _InteractiveLearningViewState extends State<InteractiveLearningView>
               onPressed: () => playAudio(cue.hintAssetId!, 'CUE_HINT_AUDIO')),
         if (loadingAssets) const LinearProgressIndicator(),
         for (final (index, option) in cue.options.indexed) ...[
-          OutlinedButton(key: Key('interactiveOption-${option.optionId}'),
+          PressScale(child: OutlinedButton(key: Key('interactiveOption-${option.optionId}'),
             style: answerCardStyle(index,
                 selected: selectedOption == option.optionId),
             onPressed: canAnswer ? () => setState(() =>
@@ -650,7 +651,7 @@ class _InteractiveLearningViewState extends State<InteractiveLearningView>
               Text(option.labelText),
               if (selectedOption == option.optionId)
                 const Icon(Icons.check_circle_outline),
-            ])),
+            ]))),
           if (option.audioAssetId != null &&
               hasRole(option.audioAssetId, 'OPTION_AUDIO', 'AUDIO'))
             IconButton(key: Key('optionAudio-${option.optionId}'),

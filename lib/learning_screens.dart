@@ -10,6 +10,7 @@ import 'learning_session_memory.dart';
 import 'interactive_learning.dart';
 import 'mimigo_design.dart';
 import 'po/learning_ui.dart';
+import 'po/motion.dart';
 import 'po/po_design.dart';
 
 class LearningLabel extends StatelessWidget {
@@ -920,21 +921,23 @@ class _LearningLessonViewState extends State<LearningLessonView> {
                           key: Key('choice-semantics-${entry.$2.optionId}'),
                           selected: chosen == entry.$2.optionId,
                           inMutuallyExclusiveGroup: true,
-                          child: OutlinedButton(
-                            key: Key('option-${entry.$2.optionId}'),
-                            style: answerCardStyle(
-                              entry.$1,
-                              selected: chosen == entry.$2.optionId,
-                            ),
-                            onPressed: canAnswer && pending == null
-                                ? () => setState(
-                                    () =>
-                                        selected[cue.cueId] = entry.$2.optionId,
-                                  )
-                                : null,
-                            child: ActivityChoice(
-                              label: entry.$2.labelText,
-                              selected: chosen == entry.$2.optionId,
+                          child: PressScale(
+                            child: OutlinedButton(
+                              key: Key('option-${entry.$2.optionId}'),
+                              style: answerCardStyle(
+                                entry.$1,
+                                selected: chosen == entry.$2.optionId,
+                              ),
+                              onPressed: canAnswer && pending == null
+                                  ? () => setState(
+                                      () => selected[cue.cueId] =
+                                          entry.$2.optionId,
+                                    )
+                                  : null,
+                              child: ActivityChoice(
+                                label: entry.$2.labelText,
+                                selected: chosen == entry.$2.optionId,
+                              ),
                             ),
                           ),
                         ),

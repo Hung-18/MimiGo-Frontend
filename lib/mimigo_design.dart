@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import 'po/motion.dart';
+
 bool _licensesRegistered = false;
 void registerMimiFontLicenses() {
   if (_licensesRegistered) return;
@@ -79,6 +81,7 @@ ThemeData mimiTheme() {
     useMaterial3: true,
     colorScheme: scheme,
     scaffoldBackgroundColor: MimiColors.canvas,
+    pageTransitionsTheme: mimiPageTransitions,
     fontFamily: 'Nunito',
     textTheme: TextTheme(
       displaySmall: heading(40),
